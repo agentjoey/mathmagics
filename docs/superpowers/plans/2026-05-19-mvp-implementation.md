@@ -4,12 +4,11 @@
 
 **Goal:** Build a 2-question (Q05 + Q18) Math Kangaroo Socratic chat MVP to validate that the Socratic + Feynman pedagogy creates real "aha moments" for G3-G4 kids.
 
-**Architecture:** Next.js App Router + Edge runtime + SSE streaming. Pure prompt-driven Socratic flow (no server-side state machine). LLM abstraction layer supports Kimi K2.6 / MiniMax M2.7 swap via env var (Claude provider deferred — not in MVP scope). Agent dynamically generates inline SVG; static question images pre-rendered; agent avatar one-time generated via MiniMax image-01.
+**Architecture:** Next.js App Router + Edge runtime + SSE streaming. Pure prompt-driven Socratic flow (no server-side state machine). Single LLM provider: MiniMax M2.7-highspeed via Anthropic-compatible SDK. Agent dynamically generates inline SVG; static question images pre-rendered; agent avatar one-time generated via MiniMax image-01.
 
 **Tech Stack:**
 - Next.js 14+ (App Router, Edge runtime)
 - TypeScript + Tailwind CSS
-- `openai` SDK for Kimi (OpenAI-compatible endpoint)
 - `@anthropic-ai/sdk` for MiniMax (Anthropic-compatible endpoint)
 - macOS Keychain for all API keys (no plaintext in repo)
 - Vercel deployment with cookie-based password gate
@@ -79,7 +78,6 @@ mathmagics-mvp/
 │   ├── prompts.ts                  # system prompt template + builder
 │   ├── questions.ts                # JSON loader
 │   └── providers/
-│       ├── kimi.ts
 │       └── minimax.ts
 ├── questions/
 │   ├── Q05.json
@@ -206,7 +204,6 @@ git commit -m "chore: initial Next.js + TypeScript + Tailwind scaffold"
 Run interactively, paste each key when prompted:
 
 ```bash
-read -s -p "KIMI_API_KEY: " KEY && security add-generic-password -s "kimi-api-key" -a "$USER" -w "$KEY" -U && unset KEY
 read -s -p "MINIMAX_API_KEY: " KEY && security add-generic-password -s "minimax-api-key" -a "$USER" -w "$KEY" -U && unset KEY
 read -s -p "Site password (any string): " KEY && security add-generic-password -s "mathmagics-site-password" -a "$USER" -w "$KEY" -U && unset KEY
 ```
@@ -214,12 +211,12 @@ read -s -p "Site password (any string): " KEY && security add-generic-password -
 Verify:
 
 ```bash
-for s in kimi-api-key minimax-api-key mathmagics-site-password; do
+for s in minimax-api-key mathmagics-site-password; do
   security find-generic-password -s "$s" -a "$USER" >/dev/null 2>&1 && echo "✅ $s" || echo "❌ $s missing"
 done
 ```
 
-Expected: 3 ✅ lines.
+Expected: 2 ✅ lines.
 
 - [ ] **Step 2: Create the loader script**
 
@@ -233,12 +230,10 @@ set -euo pipefail
 
 kc() { security find-generic-password -s "$1" -a "$USER" -w 2>/dev/null; }
 
-export KIMI_API_KEY="$(kc kimi-api-key)"
 export MINIMAX_API_KEY="$(kc minimax-api-key)"
 export SITE_PASSWORD="$(kc mathmagics-site-password)"
-export LLM_PROVIDER="${LLM_PROVIDER:-kimi}"
 
-for var in KIMI_API_KEY MINIMAX_API_KEY SITE_PASSWORD; do
+for var in MINIMAX_API_KEY SITE_PASSWORD; do
   if [ -z "${!var:-}" ]; then
     echo "ERROR: $var not found in Keychain" >&2
     exit 1
@@ -261,10 +256,8 @@ Create `.env.example`:
 ```bash
 # Secrets are loaded from macOS Keychain by scripts/load-env-from-keychain.sh
 # This file documents what env vars the app expects. DO NOT put real values here.
-KIMI_API_KEY=
 MINIMAX_API_KEY=
 SITE_PASSWORD=
-LLM_PROVIDER=kimi  # one of: kimi | minimax
 ```
 
 - [ ] **Step 5: Update .gitignore**
@@ -279,10 +272,10 @@ Append to `.gitignore`:
 - [ ] **Step 6: Verify loader works**
 
 ```bash
-./scripts/load-env-from-keychain.sh env | grep -E "(KIMI|MINIMAX|SITE|LLM)" | sed 's/=.*/=<set>/'
+./scripts/load-env-from-keychain.sh env | grep -E "(MINIMAX|SITE)" | sed 's/=.*/=<set>/'
 ```
 
-Expected 4 lines with `=<set>`.
+Expected 2 lines with `=<set>`.
 
 - [ ] **Step 7: Commit**
 
@@ -363,7 +356,7 @@ export interface LLMStream {
   textStream: AsyncIterable<string>;
 }
 
-export type LLMProvider = 'kimi' | 'minimax';
+export type LLMProvider = 'minimax';
 ```
 
 - [ ] **Step 2: Verify it compiles**
@@ -817,37 +810,15 @@ git commit -m "feat: system prompt builder with template injection"
 Create `lib/llm.ts`:
 
 ```typescript
-import type { LLMRequest, LLMStream, LLMProvider } from './types';
-import { kimiChat } from './providers/kimi';
+import type { LLMRequest, LLMStream } from './types';
 import { minimaxChat } from './providers/minimax';
 
-export function getProvider(): LLMProvider {
-  const p = (process.env.LLM_PROVIDER || 'kimi') as LLMProvider;
-  if (!['kimi', 'minimax'].includes(p)) {
-    throw new Error(`Invalid LLM_PROVIDER: ${p}`);
-  }
-  return p;
-}
-
 export async function chat(req: LLMRequest): Promise<LLMStream> {
-  switch (getProvider()) {
-    case 'kimi':    return kimiChat(req);
-    case 'minimax': return minimaxChat(req);
-  }
+  return minimaxChat(req);
 }
 ```
 
-- [ ] **Step 2: Add provider stubs (will implement in Tasks 9-11)**
-
-Create stubs so the dispatcher compiles. Create `lib/providers/kimi.ts`:
-
-```typescript
-import type { LLMRequest, LLMStream } from '../types';
-
-export async function kimiChat(_req: LLMRequest): Promise<LLMStream> {
-  throw new Error('kimiChat not implemented yet');
-}
-```
+- [ ] **Step 2: Add provider stub (will implement in Task 9)**
 
 Create `lib/providers/minimax.ts`:
 

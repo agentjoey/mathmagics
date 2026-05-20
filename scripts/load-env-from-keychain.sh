@@ -12,7 +12,6 @@ get_secret() {
   echo "$val"
 }
 
-export KIMI_API_KEY="$(get_secret kimi-api-key)"
 export MINIMAX_API_KEY="$(get_secret minimax-api-key)"
 export SITE_PASSWORD="$(get_secret mathmagics-site-password)"
 

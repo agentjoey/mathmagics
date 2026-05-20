@@ -1,8 +1,8 @@
 # Agent Execution Progress
 
 ## Current Status
-**Task 8: LLM Abstraction Layer (Dispatcher) — ✅ COMPLETED**
-**Next: Task 9: Kimi Provider Implementation**
+**Task 9+10: MiniMax Provider (merged, Kimi removed) — ✅ COMPLETED**
+**Next: Task 11: Chat API Route**
 
 ---
 
@@ -30,20 +30,28 @@ lib/questions.ts + tests/questions.test.ts — 3 tests passing
 lib/prompts.ts + tests/prompts.test.ts — 3 tests passing (6 total)
 
 ### Task 8: LLM Abstraction Layer ✅ (Commit: f5c7e43)
-lib/llm.ts — dispatcher with getProvider() and chat()
-lib/providers/kimi.ts — stub (throws "not implemented yet")
-lib/providers/minimax.ts — stub (throws "not implemented yet")
-- TypeScript compiles cleanly
+lib/llm.ts — dispatcher with provider stubs
+
+### Task 9+10: MiniMax Provider (merged) ✅ (Commit: 0c272bc)
+**Kimi removed, MiniMax only.**
+- lib/providers/minimax.ts — Anthropic SDK + MiniMax endpoint
+- lib/providers/kimi.ts — deleted
+- lib/types.ts — LLMProvider = 'minimax' only
+- lib/llm.ts — simplified to only minimax
+- tests/providers-smoke.test.ts — MiniMax smoke test passing (256 tokens needed for thinking+text)
+- **Note:** MiniMax returns thinking blocks before text blocks
 
 ---
 
 ## Next Task
 
-### Task 9: Kimi Provider Implementation
-**File:** `lib/providers/kimi.ts`
-**Implementation:** OpenAI SDK with Kimi endpoint (https://api.moonshot.cn/v1)
-**Model:** kimi-k2.6
-**Features:** Streaming via AsyncIterable
+### Task 11: Chat API Route
+**File:** `app/api/chat/route.ts`
+**Features:**
+- Edge runtime SSE streaming
+- POST /api/chat — accepts {questionId, messages}
+- Loads question, builds system prompt, calls LLM
+- Returns SSE stream with JSON deltas
 
 ---
 
