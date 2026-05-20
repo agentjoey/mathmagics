@@ -1,70 +1,22 @@
-# Agent Execution Progress
+# Current Status — MathMagics MVP
 
-## Current Status
-**Task 15: Chat UI — Orchestrator + Page — ✅ COMPLETED**
-**Next: Task 16: Agent Avatar Generation Script**
+Version:        v0.1.0
+Sprint:         001
+Sprint Status:  🔄 In Progress
+Last Updated:   2026-05-19 by claude-sonnet-4-6
+Sprint File:    .agent/sprints/sprint-001.md
 
----
+## Open Bugs（P0/P1 必须本 Sprint 修复）
+🟢 无已知 P0/P1 bug。
 
-## Completed Tasks
+## Current Sprint Summary
+执行 MVP 实现计划（docs/superpowers/plans/2026-05-19-mvp-implementation.md），目标是 Vercel 上线一个能跑 Q05 + Q18 的可分享 demo。
 
-### Task 1: Project Scaffold ✅ (Commit: 5fb91fa)
-Next.js 16.2.6 + React 19.2.4 + Tailwind v4 scaffold with openai, @anthropic-ai/sdk, vitest
+## Next Sprint Candidates
+- [ ] [EP-001] [HIGH] 真孩子测试 + 反馈收集
+- [ ] [EP-002] [MED] 根据测试结果决定是否扩展到 Magic Canvas / 更多题目
 
-### Task 2: Keychain Credential Loader ✅ (Commit: 5edf21b)
-scripts/load-env-from-keychain.sh + .env.example, 3 keychain entries verified
-
-### Task 3: Type Definitions ✅ (Commit: 72ad88b)
-lib/types.ts — Question, SocraticStep, FeynmanTrap, LLM types
-
-### Task 4: Question Bank — Q05 ✅ (Commit: 3cba23b)
-public/images/Q05-dice.png + questions/Q05.json (correct_answer: "4")
-
-### Task 5: Question Bank — Q18 ✅ (Commit: 9f563dd)
-public/images/Q18-snowflake.png + questions/Q18.json (correct_answer: "B")
-
-### Task 6: Question Loader (TDD) ✅ (Commit: 709701e)
-lib/questions.ts + tests/questions.test.ts — 3 tests passing
-
-### Task 7: System Prompt Builder (TDD) ✅ (Commit: f9cacfb)
-lib/prompts.ts + tests/prompts.test.ts — 3 tests passing (6 total)
-
-### Task 8: LLM Abstraction Layer ✅ (Commit: f5c7e43)
-lib/llm.ts — dispatcher with provider stubs
-
-### Task 9+10: MiniMax Provider (merged) ✅ (Commit: 0c272bc)
-Kimi removed, MiniMax only. Smoke test passing.
-
-### Task 11: Chat API Route ✅ (Commit: 00063d9)
-app/api/chat/route.ts — SSE streaming with LLM dispatch
-
-### Task 12: Password Auth ✅ (Commit: b71491a)
-middleware.ts + app/api/auth/route.ts + app/auth/page.tsx
-
-### Task 13: Home Page ✅ (Commit: 9d2a78c)
-app/page.tsx — two question cards
-
-### Task 14: Chat UI Components ✅ (Commit: dc194ad)
-5 components: QuestionCard, MessageBubble, AgentMessage, TextInput, IGotItButton
-
-### Task 15: Chat UI Orchestrator + Page ✅ (Commit: e183c7c)
-- `components/ChatUI.tsx` — main orchestrator:
-  - Auto-starts conversation on mount (sends empty history)
-  - SSE streaming with pending text display
-  - Auto-scroll to bottom
-  - Message history state management
-  - "我懂了" button triggers [USER_SIGNAL]
-- `app/q/[id]/page.tsx` — question chat page with static params
-
----
-
-## Next Task
-
-### Task 16: Agent Avatar Generation Script
-**File:** `scripts/generate-avatar.ts`
-**Purpose:** Generate MathMagics agent avatar via MiniMax image-01 API
-**⚠️ User action required:** Step 3 needs user subjective evaluation of generated avatar
-
----
-
-*Updated at: 2026-05-19*
+## Version History（最近 5 版）
+| Version | Date | Summary |
+|---------|------|---------|
+| v0.1.0 | 2026-05-19 | MVP 初版：Q05+Q18 文本对话，MiniMax M2.7-highspeed |
