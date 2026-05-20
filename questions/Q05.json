@@ -3,10 +3,10 @@
   "source": "Math Kangaroo 2025 Level B Q05",
   "display_name": "骰子之谜",
   "image": "/images/Q05-dice.png",
-  "problem_zh": "一个标准骰子相对两面的点数和为 7。下图展示了三个骰子。问号位置的数字是多少？",
-  "problem_en": "On a standard die, the numbers on opposite faces sum to 7. Three dice are shown below. What number is on the face marked with '?'",
-  "options": ["1", "2", "3", "4", "5"],
-  "correct_answer": "4",
+  "problem_zh": "在一个标准的骰子上，相对的两个面上的点数之和总是7。请问下面哪个骰子可能是一个标准的骰子？",
+  "problem_en": "On a normal dice, the total number of spots on two opposite faces is always 7. Which one of the dice shown could be a normal dice?",
+  "options": ["A", "B", "C", "D", "E"],
+  "correct_answer": "A",
   "topic": ["logic", "spatial"],
   "difficulty": 3,
   "cpa_stage": "pictorial",
@@ -18,33 +18,33 @@
         "你玩过骰子吗？标准骰子相对两面有什么特别的关系？",
         "如果一面是 1，对面是几？为什么？"
       ],
-      "expected_insight": "相对两面之和 = 7"
+      "expected_insight": "相对两面之和 = 7（1-6, 2-5, 3-4）"
     },
     {
       "step": 2,
-      "intent": "引导观察图中三个骰子的可见面",
+      "intent": "引导孩子发现'相邻面不能是相对面'这一关键规则",
       "sample_questions": [
-        "图里第一个骰子，你能看到哪几个面？它们都是哪些数字？",
-        "如果你看到的这一面是 3，那么背面会是几？"
+        "看看选项 B，你能在图上看到哪些数字？2 和 5 在哪里？",
+        "如果 2 和 5 是相邻的，它们能是相对的两面吗？"
       ],
-      "expected_insight": "从可见面推出隐藏面"
+      "expected_insight": "相邻的面不可能是相对面"
     },
     {
       "step": 3,
-      "intent": "推理问号位置",
+      "intent": "让孩子逐一排除错误选项，找到正确答案",
       "sample_questions": [
-        "问号那个面，它跟旁边哪个面是相对的？",
-        "那这一面应该是多少？"
+        "再看看 C、D、E，你能找到哪些相对面数字出现在了相邻的位置？",
+        "那剩下的 A 为什么可能是对的？"
       ],
-      "expected_insight": "应用规则得出 4"
+      "expected_insight": "A 中可见的数字没有相对面同时出现，所以可能是标准骰子"
     }
   ],
   "feynman_trap": {
-    "misconception": "误把'相邻'当成'相对'",
-    "agent_statement": "我刚刚算的时候有点糊涂——我看到旁边那个面是 4，就以为问号也是 4，因为它们靠得最近。但好像哪里不对劲…你能帮我想想为什么吗？",
-    "correct_reasoning": "相邻 ≠ 相对。相加为 7 的是正对面那一面，不是挨着的面。",
-    "trigger_condition": "在孩子完成第 2 步并能正确指出某一面的对面后"
+    "misconception": "认为骰子上的数字排列是任意的，忽略了相邻≠相对的规则",
+    "agent_statement": "我觉得 E 也可能是对的啊——你看它上面是 1，前面是 2，右面是 3，看起来挺正常的。1 的对面可以是 6，只是没显示出来嘛。为什么 E 不行呢？",
+    "correct_reasoning": "E 的右面是 3，而上面是 1——等等，让我再看看。哦！E 的前面和右面能看到 2 和 5，它们是相邻的，但相对面之和应该是 7，所以 2 和 5 应该是相对的，不能相邻！",
+    "trigger_condition": "在孩子完成第 2 步并能正确指出某一选项中的相邻数字对后"
   },
-  "solution_explanation": "标准骰子相对面和为 7。问号面相对的是 3，所以问号 = 7 - 3 = 4。",
+  "solution_explanation": "标准骰子相对面和为 7（1-6, 2-5, 3-4）。B 和 E 中 2 和 5 相邻，C 中 1 和 6 相邻，D 中 3 和 4 相邻，所以它们都不是标准骰子。只有 A 中可见的数字没有违反这一规则。",
   "visual_aids": []
 }
