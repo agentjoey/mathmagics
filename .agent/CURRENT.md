@@ -1,8 +1,8 @@
 # Agent Execution Progress
 
 ## Current Status
-**Task 9+10: MiniMax Provider (merged, Kimi removed) — ✅ COMPLETED**
-**Next: Task 11: Chat API Route**
+**Task 15: Chat UI — Orchestrator + Page — ✅ COMPLETED**
+**Next: Task 16: Agent Avatar Generation Script**
 
 ---
 
@@ -33,25 +33,37 @@ lib/prompts.ts + tests/prompts.test.ts — 3 tests passing (6 total)
 lib/llm.ts — dispatcher with provider stubs
 
 ### Task 9+10: MiniMax Provider (merged) ✅ (Commit: 0c272bc)
-**Kimi removed, MiniMax only.**
-- lib/providers/minimax.ts — Anthropic SDK + MiniMax endpoint
-- lib/providers/kimi.ts — deleted
-- lib/types.ts — LLMProvider = 'minimax' only
-- lib/llm.ts — simplified to only minimax
-- tests/providers-smoke.test.ts — MiniMax smoke test passing (256 tokens needed for thinking+text)
-- **Note:** MiniMax returns thinking blocks before text blocks
+Kimi removed, MiniMax only. Smoke test passing.
+
+### Task 11: Chat API Route ✅ (Commit: 00063d9)
+app/api/chat/route.ts — SSE streaming with LLM dispatch
+
+### Task 12: Password Auth ✅ (Commit: b71491a)
+middleware.ts + app/api/auth/route.ts + app/auth/page.tsx
+
+### Task 13: Home Page ✅ (Commit: 9d2a78c)
+app/page.tsx — two question cards
+
+### Task 14: Chat UI Components ✅ (Commit: dc194ad)
+5 components: QuestionCard, MessageBubble, AgentMessage, TextInput, IGotItButton
+
+### Task 15: Chat UI Orchestrator + Page ✅ (Commit: e183c7c)
+- `components/ChatUI.tsx` — main orchestrator:
+  - Auto-starts conversation on mount (sends empty history)
+  - SSE streaming with pending text display
+  - Auto-scroll to bottom
+  - Message history state management
+  - "我懂了" button triggers [USER_SIGNAL]
+- `app/q/[id]/page.tsx` — question chat page with static params
 
 ---
 
 ## Next Task
 
-### Task 11: Chat API Route
-**File:** `app/api/chat/route.ts`
-**Features:**
-- Edge runtime SSE streaming
-- POST /api/chat — accepts {questionId, messages}
-- Loads question, builds system prompt, calls LLM
-- Returns SSE stream with JSON deltas
+### Task 16: Agent Avatar Generation Script
+**File:** `scripts/generate-avatar.ts`
+**Purpose:** Generate MathMagics agent avatar via MiniMax image-01 API
+**⚠️ User action required:** Step 3 needs user subjective evaluation of generated avatar
 
 ---
 
