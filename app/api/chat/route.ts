@@ -32,9 +32,14 @@ export async function POST(req: NextRequest) {
 
   const system = buildSystemPrompt(question);
 
+  // MiniMax Anthropic API requires at least one message
+  const messages = body.messages.length > 0 
+    ? body.messages 
+    : [{ role: 'user' as const, content: '[CONVERSATION_START]' }];
+
   let llmStream;
   try {
-    llmStream = await chat({ system, messages: body.messages });
+    llmStream = await chat({ system, messages });
   } catch (e) {
     return new Response(`LLM error: ${(e as Error).message}`, { status: 502 });
   }

@@ -20,7 +20,7 @@ export function TextInput({ onSend, disabled }: { onSend: (text: string) => void
         onChange={e => setVal(e.target.value)}
         placeholder="说说你的想法..."
         disabled={disabled}
-        className="flex-1 px-4 py-3 border rounded-2xl text-base"
+        className="flex-1 px-4 py-3 border rounded-2xl text-base text-stone-900"
       />
       <button
         type="submit"
