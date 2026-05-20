@@ -1,89 +1,44 @@
-# Agent Execution Progress
+# Current Status — MathMagics MVP
 
-## Current Status
-**Task 17: P022 Spec — Project Metadata — ✅ COMPLETED**
-**Next: Task 18: Prompt Iteration — Q05**
+Version:        v0.1.0
+Sprint:         001
+Sprint Status:  🔄 In Progress
+Last Updated:   2026-05-20 by agent
+Sprint File:    .agent/sprints/sprint-001.md
 
----
+## Open Bugs（P0/P1 必须本 Sprint 修复）
+🟢 无已知 P0/P1 bug。
 
-## Completed Tasks
+## Current Sprint Summary
+执行 MVP 实现计划（docs/superpowers/plans/2026-05-19-mvp-implementation.md）。
 
-### Task 1: Project Scaffold ✅ (Commit: 5fb91fa)
-Next.js 16.2.6 + React 19.2.4 + Tailwind v4 scaffold with openai, @anthropic-ai/sdk, vitest
+**已完成：**
+- ✅ Task 1-17: 项目脚手架、Keychain 凭证、类型定义、题目库(Q05/Q18)、Question Loader(TDD)、System Prompt(TDD)、LLM Dispatcher、MiniMax Provider、Chat API、密码认证、首页、Chat UI 组件、Chat UI 编排、头像生成、P022 规范文档
+- ✅ Task 18 部分完成：Q05 题目修正（从"3个骰子推问号"改为"5个骰子找标准骰子"）
+- ✅ API 修复：空 messages 处理 + 输入框文字颜色修复
+- ✅ Prompt 调优：Feynman 触发条件更明确
 
-### Task 2: Keychain Credential Loader ✅ (Commit: 5edf21b)
-scripts/load-env-from-keychain.sh + .env.example, 3 keychain entries verified
+**进行中：**
+- 🔄 Task 18: Q05 prompt 迭代测试（用户暂停，待恢复）
 
-### Task 3: Type Definitions ✅ (Commit: 72ad88b)
-lib/types.ts — Question, SocraticStep, FeynmanTrap, LLM types
+**待开始：**
+- ⏳ Task 19: Q18 prompt 迭代 + A/B 对比
+- ⏳ Task 20: Vercel 部署 + 烟雾测试
 
-### Task 4: Question Bank — Q05 ✅ (Commit: 3cba23b)
-public/images/Q05-dice.png + questions/Q05.json (correct_answer: "4")
+## Next Sprint Candidates
+- [ ] [EP-001] [HIGH] 真孩子测试 + 反馈收集
+- [ ] [EP-002] [MED] 根据测试结果决定是否扩展到 Magic Canvas / 更多题目
 
-### Task 5: Question Bank — Q18 ✅ (Commit: 9f563dd)
-public/images/Q18-snowflake.png + questions/Q18.json (correct_answer: "B")
+## Version History（最近 5 版）
+| Version | Date | Summary |
+|---------|------|---------|
+| v0.1.0 | 2026-05-20 | MVP 初版：Q05+Q18 文本对话，MiniMax M2.7-highspeed，Q05 修正为真实题目 |
 
-### Task 6: Question Loader (TDD) ✅ (Commit: 709701e)
-lib/questions.ts + tests/questions.test.ts — 3 tests passing
+## 已知问题记录
+- **已修复：** Q05.json 原题描述与实际 Math Kangaroo 2025 Level B Q05 不符（原写"3个骰子推问号"，实际为"5个骰子找标准骰子"），已在 commit `2171290` 修正
+- **已修复：** MiniMax API 要求 messages 非空，已在 commit `fba610b` 处理
+- **已修复：** 输入框文字颜色为白色（与背景相同），已在 commit `fba610b` 修复
 
-### Task 7: System Prompt Builder (TDD) ✅ (Commit: f9cacfb)
-lib/prompts.ts + tests/prompts.test.ts — 3 tests passing (6 total)
-
-### Task 8: LLM Abstraction Layer ✅ (Commit: f5c7e43)
-lib/llm.ts — dispatcher with provider stubs
-
-### Task 9+10: MiniMax Provider (merged) ✅ (Commit: 0c272bc)
-Kimi removed, MiniMax only. Smoke test passing.
-
-### Task 11: Chat API Route ✅ (Commit: 00063d9)
-app/api/chat/route.ts — SSE streaming with LLM dispatch
-
-### Task 12: Password Auth ✅ (Commit: b71491a)
-middleware.ts + app/api/auth/route.ts + app/auth/page.tsx
-
-### Task 13: Home Page ✅ (Commit: 9d2a78c)
-app/page.tsx — two question cards
-
-### Task 14: Chat UI Components ✅ (Commit: dc194ad)
-5 components: QuestionCard, MessageBubble, AgentMessage, TextInput, IGotItButton
-
-### Task 15: Chat UI Orchestrator + Page ✅ (Commit: e183c7c)
-components/ChatUI.tsx + app/q/[id]/page.tsx
-
-### Task 16: Agent Avatar Generation ✅ (Commit: a5337f3)
-scripts/generate-avatar.ts + public/avatar/mathmagics.png
-
-### Task 17: P022 Spec ✅ (Commit: 9a19bc8)
-**基础架构就绪！**
-- CLAUDE.md (≤150 lines) + GEMINI.md/AGENTS.md symlinks
-- .agent/CURRENT.md, .agent/BACKLOG.md, .agent/sprints/sprint-001.md
-- .claude/settings.json (PostToolUse hook)
-- docs/architecture.md, docs/deployment.md, docs/operations.md
-- README.md
-
----
-
-## Milestone Report: Task 17 完成（基础架构就绪）
-
-**所有核心基础设施已就位：**
-- ✅ Next.js 16 + TypeScript + Tailwind v4
-- ✅ MiniMax M2.7-highspeed LLM provider (Anthropic SDK)
-- ✅ SSE streaming chat API
-- ✅ Cookie-based password auth
-- ✅ Question loader + system prompt builder
-- ✅ Chat UI components + orchestrator
-- ✅ P022 project metadata compliance
-- ✅ 6 unit tests passing
-- ✅ 1 smoke test passing (MiniMax real API)
-
----
-
-## Next Task
-
-### Task 18: Prompt Iteration — Q05
-**Goal:** 端到端自测 Q05，扮演孩子对话，验证 Socratic + Feynman 体验
-**需要用户参与：** 扮演 G3-G4 孩子进行对话测试
-
----
-
-*Updated at: 2026-05-19*
+## 技术债务
+- Next.js 16 中 `params` 为 `Promise` 类型（已在 Task 15 修复）
+- Next.js 16 默认 Turbopack 在 darwin/arm64 不支持，已改用 `--webpack` 模式
