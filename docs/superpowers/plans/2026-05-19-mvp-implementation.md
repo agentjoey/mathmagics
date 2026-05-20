@@ -847,104 +847,11 @@ git commit -m "feat: LLM dispatcher with provider stubs"
 
 ---
 
-## Task 9: Kimi Provider Implementation
-
-**Files:**
-- Modify: `lib/providers/kimi.ts`
-
-- [ ] **Step 1: Implement Kimi via OpenAI SDK**
-
-Replace `lib/providers/kimi.ts` content with:
-
-```typescript
-import OpenAI from 'openai';
-import type { LLMRequest, LLMStream } from '../types';
-
-let client: OpenAI | null = null;
-
-function getClient(): OpenAI {
-  if (!client) {
-    const apiKey = process.env.KIMI_API_KEY;
-    if (!apiKey) throw new Error('KIMI_API_KEY not set');
-    client = new OpenAI({
-      apiKey,
-      baseURL: 'https://api.moonshot.cn/v1',
-    });
-  }
-  return client;
-}
-
-export async function kimiChat(req: LLMRequest): Promise<LLMStream> {
-  const stream = await getClient().chat.completions.create({
-    model: 'kimi-k2.6',
-    messages: [
-      { role: 'system', content: req.system },
-      ...req.messages.map(m => ({ role: m.role, content: m.content })),
-    ],
-    max_tokens: req.maxTokens ?? 1024,
-    stream: true,
-  });
-
-  async function* textStream(): AsyncIterable<string> {
-    for await (const chunk of stream) {
-      const delta = chunk.choices?.[0]?.delta?.content;
-      if (delta) yield delta;
-    }
-  }
-
-  return { textStream: textStream() };
-}
-```
-
-**Note on thinking mode:** OpenAI SDK may not natively support Kimi's `thinking` parameter. For MVP v1 we omit it; if Socratic reasoning quality is insufficient (per Task 20 self-test), revisit by switching to `fetch`-based raw call.
-
-- [ ] **Step 2: Smoke test with real API**
-
-Create `tests/providers-smoke.test.ts`:
-
-```typescript
-import { describe, it, expect } from 'vitest';
-import { kimiChat } from '@/lib/providers/kimi';
-
-const SKIP = !process.env.RUN_SMOKE_TESTS;
-
-describe.skipIf(SKIP)('kimi smoke', () => {
-  it('returns a non-empty stream for a trivial prompt', async () => {
-    const stream = await kimiChat({
-      system: 'You are a calculator. Respond with only digits.',
-      messages: [{ role: 'user', content: 'What is 2+2?' }],
-      maxTokens: 16,
-    });
-    let text = '';
-    for await (const chunk of stream.textStream) text += chunk;
-    expect(text.length).toBeGreaterThan(0);
-    expect(text).toMatch(/4/);
-  }, 15000);
-});
-```
-
-Run smoke test (with secrets loaded):
-
-```bash
-RUN_SMOKE_TESTS=1 ./scripts/load-env-from-keychain.sh npx vitest run tests/providers-smoke.test.ts
-```
-
-Expected: 1 test passes (response contains "4").
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add lib/providers/kimi.ts tests/providers-smoke.test.ts
-git commit -m "feat(llm): Kimi K2.6 provider via OpenAI-compatible API"
-```
-
----
-
-## Task 10: MiniMax Provider Implementation
+## Task 9: MiniMax Provider Implementation
 
 **Files:**
 - Modify: `lib/providers/minimax.ts`
-- Modify: `tests/providers-smoke.test.ts`
+- Create: `tests/providers-smoke.test.ts`
 
 - [ ] **Step 1: Implement MiniMax via Anthropic SDK**
 
@@ -988,12 +895,15 @@ export async function minimaxChat(req: LLMRequest): Promise<LLMStream> {
 }
 ```
 
-- [ ] **Step 2: Add MiniMax smoke test**
+- [ ] **Step 2: Write smoke test**
 
-Append to `tests/providers-smoke.test.ts`:
+Create `tests/providers-smoke.test.ts`:
 
 ```typescript
+import { describe, it, expect } from 'vitest';
 import { minimaxChat } from '@/lib/providers/minimax';
+
+const SKIP = !process.env.RUN_SMOKE_TESTS;
 
 describe.skipIf(SKIP)('minimax smoke', () => {
   it('returns a non-empty stream', async () => {
@@ -1015,7 +925,7 @@ describe.skipIf(SKIP)('minimax smoke', () => {
 RUN_SMOKE_TESTS=1 ./scripts/load-env-from-keychain.sh npx vitest run tests/providers-smoke.test.ts
 ```
 
-Expected: both kimi + minimax tests pass.
+Expected: 1 test passes (response contains "4").
 
 - [ ] **Step 4: Commit**
 
@@ -1795,7 +1705,7 @@ G3-G4 数学 AI 辅导 MVP，2 题 (Q05 骰子 + Q18 折纸雪花)，验证 Socr
 |-------|------|
 | Frontend | Next.js 14 App Router + Tailwind |
 | Backend  | Next.js API routes (nodejs runtime) + SSE streaming |
-| LLM      | Kimi K2.6 (主力) / MiniMax M2.7 (可切换) |
+| LLM      | MiniMax M2.7-highspeed |
 | Image    | MiniMax image-01 (仅一次性头像生成) |
 | Auth     | Cookie-based password gate (middleware.ts) |
 | Deploy   | Vercel |
@@ -1804,7 +1714,7 @@ G3-G4 数学 AI 辅导 MVP，2 题 (Q05 骰子 + Q18 折纸雪花)，验证 Socr
 ## Key Implementation Details
 - **所有 secrets 从 macOS Keychain 加载**，禁止明文写仓库。详见 `scripts/load-env-from-keychain.sh`
 - `npm run dev` / `npm run build` / 任何 npm script 都通过 keychain loader 注入 env
-- **LLM 切换**：`LLM_PROVIDER=kimi|minimax`，重启 dev server 生效
+- **LLM provider**：MiniMax M2.7-highspeed via `@anthropic-ai/sdk`（Anthropic-compat endpoint）
 - **教学逻辑全部在 system prompt** (`lib/prompts.ts`)，不在代码里做 phase 状态机
 - **题目原图在 `public/images/`**，教学示意图由 LLM 内联生成 SVG（不要用 image-01 做几何图）
 - **Edge runtime 不可用**：`/api/chat` 用 nodejs runtime（因 `loadQuestion` 用 fs）
@@ -1859,7 +1769,7 @@ Sprint File:    .agent/sprints/sprint-001.md
 ## Version History（最近 5 版）
 | Version | Date | Summary |
 |---------|------|---------|
-| v0.1.0 | 2026-05-19 | MVP 初版：Q05+Q18 文本对话 + Kimi/MiniMax 双 provider 切换 |
+| v0.1.0 | 2026-05-19 | MVP 初版：Q05+Q18 文本对话，MiniMax M2.7-highspeed |
 ```
 
 - [ ] **Step 4: Write .agent/BACKLOG.md**
@@ -1883,7 +1793,7 @@ Create `.agent/BACKLOG.md`:
 - [ ] [EP-007] 移动端 PWA 优化
 
 ## 📋 研究向（未决策）
-- [ ] Kimi K2.6 thinking 模式是否在 OpenAI SDK 路径下可调用
+- [ ] MiniMax thinking 参数是否值得在 Anthropic-compat 路径下启用
 - [ ] Level C-F 题目是否值得继续扩展
 
 ## ✅ 已完成（按 Sprint 归档）
@@ -1959,7 +1869,7 @@ Create `docs/architecture.md`:
 完整设计文档在 Obsidian: `Brain#2/10_Projects/Active/P012-MathMagics/MVP-Design.md` (v1.1)。
 
 ## 一句话总结
-Next.js App Router + Edge/Node runtime + SSE streaming + LLM 抽象层支持 Kimi/MiniMax/Claude 切换 + 教学逻辑全部在 system prompt。
+Next.js App Router + Edge/Node runtime + SSE streaming + MiniMax M2.7-highspeed + 教学逻辑全部在 system prompt。
 
 ## 关键路径
 - 请求：Browser → `/api/chat` (POST) → `lib/llm.ts` dispatch → provider impl → upstream LLM
@@ -1978,11 +1888,8 @@ Create `docs/deployment.md`:
 
 1. `vercel link` (首次)
 2. Vercel Dashboard → Settings → Environment Variables，添加：
-   - `KIMI_API_KEY`
    - `MINIMAX_API_KEY`
-   - `ANTHROPIC_API_KEY`
    - `SITE_PASSWORD`
-   - `LLM_PROVIDER` = `kimi`
 3. `vercel --prod`
 
 ## 本地构建验证
@@ -2055,9 +1962,9 @@ git commit -m "chore: P022 spec compliance (.agent/, CLAUDE.md, docs/, .claude/s
 
 ---
 
-## Task 18: Prompt Iteration — Q05 (Kimi)
+## Task 18: Prompt Iteration — Q05
 
-**Goal:** Hand-test the Q05 dialogue end-to-end with Kimi until it feels natural and produces an aha-moment.
+**Goal:** Hand-test the Q05 dialogue end-to-end with MiniMax until it feels natural and produces an aha-moment.
 
 - [ ] **Step 1: Self-test scenario A (cooperative kid)**
 
@@ -2115,7 +2022,7 @@ If no edits, just note "Q05 passed self-test" in your sprint notes.
 
 ---
 
-## Task 19: Prompt Iteration — Q18 (Kimi) + A/B Compare (Kimi vs MiniMax)
+## Task 19: Prompt Iteration — Q18
 
 - [ ] **Step 1: Self-test Q18 cooperative path**
 
@@ -2135,43 +2042,23 @@ If no SVG ever appears after 5+ turns:
 - Edit prompt rule 3 to be more directive ("explaining symmetry → MUST embed SVG")
 - Retest
 
-- [ ] **Step 3: A/B compare with MiniMax**
-
-Stop dev server. Restart with:
-
-```bash
-LLM_PROVIDER=minimax npm run dev
-```
-
-Repeat Q18 path. Note differences:
-- Does Socratic stay on track?
-- Is language age-appropriate?
-- Does Feynman feel natural?
-
-- [ ] **Step 4: Decide default provider**
-
-Pick the provider where the Q05+Q18 experience feels best. Update `.env.example` and Vercel env vars accordingly (`LLM_PROVIDER=<choice>`).
-
-- [ ] **Step 5: Document comparison**
+- [ ] **Step 3: Document self-test notes**
 
 Append to `.agent/sprints/sprint-001.md` Sprint 回顾 section:
 
 ```markdown
-## LLM Provider 对比（自测）
-| Provider | Socratic 流畅度 | Feynman 自然度 | 语言适龄 | 速度 | 总评 |
-|----------|----------------|---------------|---------|------|------|
-| Kimi K2.6 | | | | | |
-| MiniMax M2.7-highspeed | | | | | |
-
-**MVP 默认 provider：** <Kimi / MiniMax>
-**理由：** ...
+## Q18 自测记录
+| 维度 | 结论 |
+|------|------|
+| Socratic 流畅度 | |
+| Feynman 自然度 | |
+| SVG 触发 | |
+| 语言适龄 | |
 ```
-
-Fill in the table, then:
 
 ```bash
 git add .agent/sprints/sprint-001.md
-git commit -m "docs: LLM provider self-test comparison and default selection"
+git commit -m "docs: Q18 self-test notes"
 ```
 
 ---
@@ -2189,10 +2076,8 @@ Follow prompts to link to a Vercel project (create new if needed).
 - [ ] **Step 2: Add env vars to Vercel**
 
 In Vercel dashboard → Project → Settings → Environment Variables, add:
-- `KIMI_API_KEY` (value from `security find-generic-password -s kimi-api-key -a $USER -w`)
-- `MINIMAX_API_KEY` (similar)
+- `MINIMAX_API_KEY` (value from `security find-generic-password -s minimax-api-key -a $USER -w`)
 - `SITE_PASSWORD` (similar)
-- `LLM_PROVIDER` = the value chosen in Task 19
 
 Scope: Production + Preview + Development.
 
@@ -2251,21 +2136,21 @@ After all 20 tasks complete, verify against MVP-Design.md v1.1:
 - §3 Data Flow — covered (Tasks 11, 12, 15)
 - §4 Question Schema — covered (Tasks 3, 4, 5)
 - §5 System Prompt — covered (Task 7) and tuned (Tasks 18, 19)
-- §5.4 LLM Abstraction — covered (Tasks 8-10). Claude provider deferred per user decision (2026-05-19); spec §1 still lists Claude as future option.
+- §5.4 LLM Abstraction — covered (Tasks 8-9). MiniMax-only per user decision (2026-05-20); Kimi and Claude providers removed from MVP scope.
 - §6 UI — covered (Tasks 13, 14, 15)
 - §6.2.1 Avatar — covered (Task 16)
 - §7 Auth — covered (Task 12)
 - §8 Error Handling — partial (basic 400/404/502 in route, 401 in auth); deeper UX retries deferred to post-MVP iteration based on real failures
 - §9 Validation — covered (Tasks 18, 19, 20 Step 4)
 - §10 YAGNI — respected (no Canvas, voice, persistence, dashboard, etc. in plan)
-- §11 Risks — Kimi thinking SDK gap acknowledged (Task 9 note); Kimi vs MiniMax differences will surface in Task 19
+- §11 Risks — MiniMax-only; single provider risk mitigated by MiniMax's Anthropic-compat SDK reliability
 - §12 Decisions — all 4 honored (no progress bar, has avatar, no persistence, user picks order)
 - §13 Time — plan reflects ~3.5 days (down from 4 after Claude provider removal)
 - §14 Project init — covered (Tasks 1, 2, 17)
 
 **No placeholders.** Q18.json has one `<TODO: confirm from spec>` which is intentionally flagged for the engineer to verify against the authoritative interaction spec; this is a content data validation step, not a plan failure.
 
-**Type consistency.** `Question`, `LLMRequest`, `LLMStream`, `ChatMessage`, `LLMProvider` are defined once in `lib/types.ts` (Task 3) and reused everywhere. Provider function signatures (`kimiChat`, `minimaxChat`, `claudeChat`) all match `(req: LLMRequest) => Promise<LLMStream>`.
+**Type consistency.** `Question`, `LLMRequest`, `LLMStream`, `ChatMessage`, `LLMProvider` are defined once in `lib/types.ts` (Task 3) and reused everywhere. Single provider function signature `minimaxChat` matches `(req: LLMRequest) => Promise<LLMStream>`.
 
 ---
 
