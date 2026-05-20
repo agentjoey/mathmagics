@@ -1,0 +1,50 @@
+{
+  "id": "Q18",
+  "source": "Math Kangaroo 2025 Level B Q18",
+  "display_name": "折纸雪花",
+  "image": "/images/Q18-snowflake.png",
+  "problem_zh": "将一张正方形纸对折两次得到一个小正方形，然后剪出一个图案。展开后会得到下面哪一个雪花？",
+  "problem_en": "A square paper is folded in half twice and then a pattern is cut. Which of the following snowflakes will appear when the paper is unfolded?",
+  "options": ["A", "B", "C", "D", "E"],
+  "correct_answer": "B",
+  "topic": ["geometry", "symmetry"],
+  "difficulty": 5,
+  "cpa_stage": "pictorial",
+  "socratic_path": [
+    {
+      "step": 1,
+      "intent": "让孩子理解对折产生的对称性",
+      "sample_questions": [
+        "你折过纸吗？把纸对折一下，剪一个洞，展开后会看到什么？",
+        "对折一次会形成几条对称轴？两次呢？"
+      ],
+      "expected_insight": "对折两次 → 四象限对称（上下、左右都对称）"
+    },
+    {
+      "step": 2,
+      "intent": "引导观察小正方形上剪了什么形状",
+      "sample_questions": [
+        "看看那个小正方形被剪掉了哪部分？",
+        "剪掉的部分靠近哪一条边？是折痕那条还是开口那条？"
+      ],
+      "expected_insight": "剪痕位置 + 折痕走向决定展开后形状"
+    },
+    {
+      "step": 3,
+      "intent": "逆向推理：模拟展开",
+      "sample_questions": [
+        "如果把这张小纸打开一次，会变成什么样？",
+        "再打开一次呢？把刚才那个图形上下/左右镜像一下试试。"
+      ],
+      "expected_insight": "应用两次镜像得到完整图案"
+    }
+  ],
+  "feynman_trap": {
+    "misconception": "认为剪掉的区域只在一处出现（忽略对称镜像）",
+    "agent_statement": "我看到小正方形右上角剪了一块，所以展开后应该只在右上角有个洞，对吧？嗯…可是答案里好像没有这种…",
+    "correct_reasoning": "对折两次相当于做了 2 次镜像，剪痕会出现在 4 个对称位置上。",
+    "trigger_condition": "在孩子完成第 2 步并能描述剪痕位置后"
+  },
+  "solution_explanation": "对折两次后纸张分成 4 个象限，剪出的图案会被复制到所有 4 个象限并镜像对齐。",
+  "visual_aids": []
+}
