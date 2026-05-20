@@ -1,134 +1,50 @@
 # Agent Execution Progress
 
 ## Current Status
-**Task 1: Project Scaffold — In Progress (Step 7 blocked, awaiting user decision)**
+**Task 8: LLM Abstraction Layer (Dispatcher) — ✅ COMPLETED**
+**Next: Task 9: Kimi Provider Implementation**
 
 ---
 
-## Completed Steps
+## Completed Tasks
 
-### Step 1: Scaffold Next.js ✅
-- Command: `npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias "@/*" --use-npm`
-- Status: Success
-- Actual versions installed: Next.js 16.2.6, React 19.2.4, Tailwind v4
+### Task 1: Project Scaffold ✅ (Commit: 5fb91fa)
+Next.js 16.2.6 + React 19.2.4 + Tailwind v4 scaffold with openai, @anthropic-ai/sdk, vitest
 
-### Step 2: Verify scaffold ✅
-- Confirmed: app/, package.json, tsconfig.json, next.config.ts, postcss.config.mjs
-- Missing from plan: tailwind.config.ts (Tailwind v4 is CSS-first, no config file needed)
+### Task 2: Keychain Credential Loader ✅ (Commit: 5edf21b)
+scripts/load-env-from-keychain.sh + .env.example, 3 keychain entries verified
 
-### Step 3: Install runtime dependencies ✅
-- `openai@^4` — installed
-- `@anthropic-ai/sdk@^0.30` — installed (actual: 0.30.1)
+### Task 3: Type Definitions ✅ (Commit: 72ad88b)
+lib/types.ts — Question, SocraticStep, FeynmanTrap, LLM types
 
-### Step 4: Install dev dependencies ✅
-- `vitest` — installed (actual: 4.1.6)
-- `@vitest/ui` — installed
-- `@types/node` — installed (actual: 20.19.41)
+### Task 4: Question Bank — Q05 ✅ (Commit: 3cba23b)
+public/images/Q05-dice.png + questions/Q05.json (correct_answer: "4")
 
-### Step 5: Add vitest config ✅
-- File: `vitest.config.ts` created with globals, node environment, and @ alias
+### Task 5: Question Bank — Q18 ✅ (Commit: 9f563dd)
+public/images/Q18-snowflake.png + questions/Q18.json (correct_answer: "B")
 
-### Step 6: Add npm scripts ✅
-- Updated package.json scripts (dev uses loader, build, start, lint, test, test:watch)
-- Note: "dev" script references `./scripts/load-env-from-keychain.sh` which doesn't exist yet (Task 2)
+### Task 6: Question Loader (TDD) ✅ (Commit: 709701e)
+lib/questions.ts + tests/questions.test.ts — 3 tests passing
 
----
+### Task 7: System Prompt Builder (TDD) ✅ (Commit: f9cacfb)
+lib/prompts.ts + tests/prompts.test.ts — 3 tests passing (6 total)
 
-## Blocked Steps
-
-### Step 7: Smoke test — BLOCKED
-- Plan command: `npm run lint` → maps to `next lint`
-- Problem: Next.js 16 CLI removed `next lint` command
-- Error: `Invalid project directory provided, no such directory: .../lint`
-- Status: Waiting for user decision
-
-### Step 8: Initial commit — WAITING
-- Waiting for Step 7 resolution
+### Task 8: LLM Abstraction Layer ✅ (Commit: f5c7e43)
+lib/llm.ts — dispatcher with getProvider() and chat()
+lib/providers/kimi.ts — stub (throws "not implemented yet")
+lib/providers/minimax.ts — stub (throws "not implemented yet")
+- TypeScript compiles cleanly
 
 ---
 
-## Decisions Needed (User)
+## Next Task
 
-### 1. Next.js Version
-- **Plan**: Next.js 14+ (App Router, Edge runtime)
-- **Actual**: Next.js 16.2.6 + React 19.2.4
-- **Question**: Accept Next.js 16 or downgrade to 14?
-
-### 2. Lint Command
-- **Plan**: `"lint": "next lint"` (Next.js built-in linting)
-- **Reality**: Next.js 16 removed `next lint`
-- **Options**:
-  - A) `"lint": "eslint ."` (use ESLint CLI directly)
-  - B) Downgrade to Next.js 14
-- **Question**: Which approach?
-
-### 3. Tailwind Configuration
-- **Plan**: Create `tailwind.config.ts`
-- **Reality**: Tailwind v4 is CSS-first, no config file needed. Uses `@import "tailwindcss"` in CSS.
-- **Options**:
-  - A) Use Tailwind v4 CSS-first (current, no config file)
-  - B) Create `tailwind.config.ts` for backward compatibility
-- **Question**: Which approach?
+### Task 9: Kimi Provider Implementation
+**File:** `lib/providers/kimi.ts`
+**Implementation:** OpenAI SDK with Kimi endpoint (https://api.moonshot.cn/v1)
+**Model:** kimi-k2.6
+**Features:** Streaming via AsyncIterable
 
 ---
 
-## Environment State
-
-### Directory Structure (current)
-```
-mathmagics-mvp/
-├── app/                    # Next.js App Router (auto-generated)
-│   ├── favicon.ico
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx
-├── node_modules/
-├── public/
-├── docs/                   # Plan documents (pre-existing)
-├── .gitignore
-├── eslint.config.mjs
-├── next-env.d.ts
-├── next.config.ts
-├── package.json            # Updated with scripts
-├── postcss.config.mjs
-├── tsconfig.json
-└── vitest.config.ts        # Created in Step 5
-```
-
-### package.json dependencies (current)
-```json
-{
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.30.1",
-    "next": "16.2.6",
-    "openai": "^4.104.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@vitest/ui": "^4.1.6",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
-    "typescript": "^5",
-    "vitest": "^4.1.6"
-  }
-}
-```
-
----
-
-## Next Actions (After User Decision)
-1. Resolve lint approach and run smoke test
-2. Verify `.gitignore` includes `.env.local`
-3. Run `git init && git add -A && git commit`
-4. Proceed to **Task 2: Keychain Credential Loader**
-
----
-
-*Recorded at: 2026-05-19*
-*Waiting for user decision before continuing*
+*Updated at: 2026-05-19*

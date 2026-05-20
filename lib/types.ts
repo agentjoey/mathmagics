@@ -58,4 +58,4 @@ export interface LLMStream {
   textStream: AsyncIterable<string>;
 }
 
-export type LLMProvider = 'kimi' | 'minimax';
+export type LLMProvider = 'minimax';
