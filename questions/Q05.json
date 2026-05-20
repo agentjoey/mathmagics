@@ -1,0 +1,50 @@
+{
+  "id": "Q05",
+  "source": "Math Kangaroo 2025 Level B Q05",
+  "display_name": "骰子之谜",
+  "image": "/images/Q05-dice.png",
+  "problem_zh": "一个标准骰子相对两面的点数和为 7。下图展示了三个骰子。问号位置的数字是多少？",
+  "problem_en": "On a standard die, the numbers on opposite faces sum to 7. Three dice are shown below. What number is on the face marked with '?'",
+  "options": ["1", "2", "3", "4", "5"],
+  "correct_answer": "4",
+  "topic": ["logic", "spatial"],
+  "difficulty": 3,
+  "cpa_stage": "pictorial",
+  "socratic_path": [
+    {
+      "step": 1,
+      "intent": "确认孩子知道标准骰子的相对面规则",
+      "sample_questions": [
+        "你玩过骰子吗？标准骰子相对两面有什么特别的关系？",
+        "如果一面是 1，对面是几？为什么？"
+      ],
+      "expected_insight": "相对两面之和 = 7"
+    },
+    {
+      "step": 2,
+      "intent": "引导观察图中三个骰子的可见面",
+      "sample_questions": [
+        "图里第一个骰子，你能看到哪几个面？它们都是哪些数字？",
+        "如果你看到的这一面是 3，那么背面会是几？"
+      ],
+      "expected_insight": "从可见面推出隐藏面"
+    },
+    {
+      "step": 3,
+      "intent": "推理问号位置",
+      "sample_questions": [
+        "问号那个面，它跟旁边哪个面是相对的？",
+        "那这一面应该是多少？"
+      ],
+      "expected_insight": "应用规则得出 4"
+    }
+  ],
+  "feynman_trap": {
+    "misconception": "误把'相邻'当成'相对'",
+    "agent_statement": "我刚刚算的时候有点糊涂——我看到旁边那个面是 4，就以为问号也是 4，因为它们靠得最近。但好像哪里不对劲…你能帮我想想为什么吗？",
+    "correct_reasoning": "相邻 ≠ 相对。相加为 7 的是正对面那一面，不是挨着的面。",
+    "trigger_condition": "在孩子完成第 2 步并能正确指出某一面的对面后"
+  },
+  "solution_explanation": "标准骰子相对面和为 7。问号面相对的是 3，所以问号 = 7 - 3 = 4。",
+  "visual_aids": []
+}
