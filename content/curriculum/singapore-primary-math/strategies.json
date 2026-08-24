@@ -1,0 +1,8 @@
+[
+  {"id":"STRAT-BAR-PART-WHOLE","name":"Part-whole bar model","description":"Identify a whole and its component parts, then represent known and unknown quantities with aligned bar segments.","sourceRefs":[{"sourceId":"MATHMAGICS-CURATED-2026","locator":"Bar-model problem-solving annotation"}]},
+  {"id":"STRAT-BAR-COMPARISON","name":"Comparison bar model","description":"Represent two quantities as aligned bars to reason about how much more, less, or how many times as much.","sourceRefs":[{"sourceId":"MATHMAGICS-CURATED-2026","locator":"Bar-model problem-solving annotation"}]},
+  {"id":"STRAT-DRAW-DIAGRAM","name":"Draw a diagram","description":"Translate relationships in a problem into a visual diagram before choosing operations.","sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"Mathematical processes / problem-solving heuristics"}]},
+  {"id":"STRAT-LOOK-FOR-PATTERN","name":"Look for a pattern","description":"Identify regularity in examples or sequences and use it to reason about the next case.","sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"Mathematical processes / problem-solving heuristics"}]},
+  {"id":"STRAT-WORK-BACKWARDS","name":"Work backwards","description":"Start from a known final condition and reverse the operations or relationships to recover an earlier value.","sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"Mathematical processes / problem-solving heuristics"}]},
+  {"id":"STRAT-GUESS-CHECK","name":"Guess and check","description":"Make a reasoned trial, test it against the conditions, and refine the trial systematically.","sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"Mathematical processes / problem-solving heuristics"}]}
+]

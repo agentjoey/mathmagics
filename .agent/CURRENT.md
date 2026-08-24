@@ -1,44 +1,75 @@
 # Current Status — MathMagics
 
-Version:        v0.1.0
-Sprint:         001
-Sprint Status:  🔄 In Progress
-Last Updated:   2026-05-20 by agent
-Sprint File:    .agent/sprints/sprint-001.md
+Version:        v0.2.0-dev
+Phase:          Phase 1 — Curriculum Foundation
+Phase Status:   ✅ Completed
+Last Updated:   2026-08-24 by agent
 
-## Open Bugs（P0/P1 必须本 Sprint 修复）
-🟢 无已知 P0/P1 bug。
+## Product Positioning
+MathMagics is a Singapore Math home-education AI learning system / teaching copilot for families.
 
-## Current Sprint Summary
-执行 MVP 实现计划（docs/superpowers/plans/2026-05-19-mvp-implementation.md）。
+Primary users:
+- Parent / Tutor
+- Student
 
-**已完成：**
-- ✅ Task 1-17: 项目脚手架、Keychain 凭证、类型定义、题目库(Q05/Q18)、Question Loader(TDD)、System Prompt(TDD)、LLM Dispatcher、MiniMax Provider、Chat API、密码认证、首页、Chat UI 组件、Chat UI 编排、头像生成、P022 规范文档
-- ✅ Task 18 部分完成：Q05 题目修正（从"3个骰子推问号"改为"5个骰子找标准骰子"）
-- ✅ API 修复：空 messages 处理 + 输入框文字颜色修复
-- ✅ Prompt 调优：Feynman 触发条件更明确
+Initial curriculum scope:
+- Singapore Primary Mathematics
+- Primary 2 and Primary 3
 
-**进行中：**
-- 🔄 Task 18: Q05 prompt 迭代测试（用户暂停，待恢复）
+Core learning loop:
 
-**待开始：**
-- ⏳ Task 19: Q18 prompt 迭代 + A/B 对比
-- ⏳ Task 20: Vercel 部署 + 烟雾测试
+`Plan → Learn → Practice → Correct → Track → Adapt`
 
-## Next Sprint Candidates
-- [ ] [EP-001] [HIGH] 真孩子测试 + 反馈收集
-- [ ] [EP-002] [MED] 根据测试结果决定是否扩展到 Magic Canvas / 更多题目
+The system learning model is authoritative. AI explains, analyzes, generates and recommends; AI does not own curriculum truth, history or mastery state.
 
-## Version History（最近 5 版）
-| Version | Date | Summary |
-|---------|------|---------|
-| v0.1.0 | 2026-05-20 | MVP 初版：Q05+Q18 文本对话，MiniMax M2.7-highspeed，Q05 修正为真实题目 |
+## Phase 1 — Curriculum Foundation
 
-## 已知问题记录
-- **已修复：** Q05.json 原题描述与实际 Math Kangaroo 2025 Level B Q05 不符（原写"3个骰子推问号"，实际为"5个骰子找标准骰子"），已在 commit `2171290` 修正
-- **已修复：** MiniMax API 要求 messages 非空，已在 commit `fba610b` 处理
-- **已修复：** 输入框文字颜色为白色（与背景相同），已在 commit `fba610b` 修复
+**Completed:**
+- ✅ Product reset design and Curriculum Foundation design approved.
+- ✅ Curriculum Truth separated from textbook mapping and MathMagics-curated teaching knowledge.
+- ✅ MOE 2021 Primary Mathematics syllabus established as curriculum truth source.
+- ✅ Primary Mathematics 2022 Edition established as edition-specific textbook mapping source.
+- ✅ Private textbook/source boundary established under ignored `content-private/`.
+- ✅ P2/P3 curriculum graph established with stable nodes and LearningObjective IDs.
+- ✅ Breadth inventory: 68 objectives total (P2=32, P3=36), 25 curriculum nodes.
+- ✅ Three deep slices completed:
+  - P2 Multiplication & Division
+  - P3 Fractions
+  - P2/P3 Word Problems + Bar Model
+- ✅ Teaching knowledge model includes prerequisite edges, CPA representations, strategies, misconceptions, readiness evidence and mastery evidence.
+- ✅ Textbook mapping supports `DIRECT`, `SUPPORTING` and `EXTENSION` relationships; 18 mappings currently loaded.
+- ✅ Deterministic curriculum loader, validator and query API implemented.
+- ✅ Validator prevents textbook sources from being used directly as LearningObjective curriculum provenance.
+- ✅ Legacy Q05/Q18 experience preserved as teaching-engine fixtures, not current product scope.
 
-## 技术债务
-- Next.js 16 中 `params` 为 `Promise` 类型（已在 Task 15 修复）
-- Next.js 16 默认 Turbopack 在 darwin/arm64 不支持，已改用 `--webpack` 模式
+## Verification — 2026-08-24
+
+Local worktree acceptance:
+- ✅ `npm test`: 24 passed, 1 provider smoke test skipped
+- ✅ `npm run typecheck`
+- ✅ `npm run validate:curriculum`: 25 nodes, 68 objectives (P2=32, P3=36), 18 textbook mappings
+- ✅ `npm run lint`
+- ✅ `npm run build` (Next.js 16.2.6 production build)
+
+GrandeGPT controlled verification:
+- ✅ test profile: 24 passed, 1 skipped
+- ✅ lint profile
+- ⚠ build profile is network-constrained by `next/font` Google Fonts fetch; the same production build passes on the host. This is an environment limitation, not a curriculum implementation failure.
+
+## Next Phase
+
+**Phase 2 — Student & Mastery Model**
+
+Primary scope:
+- Student entity/profile
+- `Student × LearningObjective → Mastery`
+- mastery states: `NOT_STARTED`, `INTRODUCED`, `DEVELOPING`, `MASTERED`
+- Evidence model and deterministic mastery transition policy
+- Attempt vs Mistake separation
+- curriculum query integration as the knowledge-source boundary
+
+Explicitly defer OCR/photo homework, full practice generation, UI redesign and adaptive planner until their roadmap phases.
+
+## Known Non-blocking Technical Debt
+- Next.js warns that the `middleware` convention is deprecated in favor of `proxy`.
+- Provider smoke test remains skipped because it requires external provider credentials/network.

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import type { Question, ChatMessage } from '@/lib/types';
 import { QuestionCard } from './QuestionCard';
 import { AgentMessage } from './AgentMessage';
@@ -78,7 +79,7 @@ export function ChatUI({ question }: { question: Question }) {
   return (
     <main className="flex flex-col h-screen bg-amber-50">
       <header className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
-        <a href="/" className="text-sm text-stone-500">← 返回</a>
+        <Link href="/" className="text-sm text-stone-500">← 返回</Link>
         <span className="font-semibold">{question.display_name}</span>
         <IGotItButton onClick={onIGotIt} disabled={sending} />
       </header>

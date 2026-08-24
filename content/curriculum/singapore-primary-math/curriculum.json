@@ -1,0 +1,12 @@
+{
+  "id": "SG-MATH-2021",
+  "name": "Singapore Primary Mathematics",
+  "country": "Singapore",
+  "version": "2021 cohort",
+  "sourceRefs": [
+    {
+      "sourceId": "MOE-PM-2021-OCT-2025",
+      "locator": "Primary Mathematics Syllabus / Primary 2 and Primary 3"
+    }
+  ]
+}

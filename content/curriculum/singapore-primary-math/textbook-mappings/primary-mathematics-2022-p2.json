@@ -1,0 +1,9 @@
+[
+  {"id":"PM-2022-2A-CH4-4A","sourceId":"PM-2022-2A","series":"Primary Mathematics","edition":"2022","book":"2A","chapter":"Chapter 4: Addition and Subtraction Using Bar Models","lesson":"4A: Sum and Difference","relationship":"SUPPORTING","objectiveIds":["P2-AS-002"]},
+  {"id":"PM-2022-2A-CH4-4B","sourceId":"PM-2022-2A","series":"Primary Mathematics","edition":"2022","book":"2A","chapter":"Chapter 4: Addition and Subtraction Using Bar Models","lesson":"4B: Part-Whole Model","relationship":"SUPPORTING","objectiveIds":["P2-AS-002"]},
+  {"id":"PM-2022-2A-CH4-4C","sourceId":"PM-2022-2A","series":"Primary Mathematics","edition":"2022","book":"2A","chapter":"Chapter 4: Addition and Subtraction Using Bar Models","lesson":"4C: Comparison Model","relationship":"SUPPORTING","objectiveIds":["P2-AS-002"]},
+  {"id":"PM-2022-2A-CH4-4D","sourceId":"PM-2022-2A","series":"Primary Mathematics","edition":"2022","book":"2A","chapter":"Chapter 4: Addition and Subtraction Using Bar Models","lesson":"4D: Word Problems","relationship":"DIRECT","objectiveIds":["P2-AS-002"]},
+  {"id":"PM-2022-2B-CH6-6A","sourceId":"PM-2022-2B","series":"Primary Mathematics","edition":"2022","book":"2B","chapter":"Chapter 6: Multiplication","lesson":"6A: Equal Groups","relationship":"SUPPORTING","objectiveIds":["P2-MD-001"]},
+  {"id":"PM-2022-2B-CH6-6C","sourceId":"PM-2022-2B","series":"Primary Mathematics","edition":"2022","book":"2B","chapter":"Chapter 6: Multiplication","lesson":"6C: Skip Count by 2, 5, and 10","relationship":"SUPPORTING","objectiveIds":["P2-MD-001"]},
+  {"id":"PM-2022-2B-CH6-6D","sourceId":"PM-2022-2B","series":"Primary Mathematics","edition":"2022","book":"2B","chapter":"Chapter 6: Multiplication","lesson":"6D: Multiplication","relationship":"DIRECT","objectiveIds":["P2-MD-001","P2-MD-004"]}
+]
