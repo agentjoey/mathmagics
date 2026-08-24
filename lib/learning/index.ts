@@ -1,4 +1,6 @@
 export { deriveMastery, orderEvidence } from './mastery-policy';
+export { MemoryLearningStateRepository } from './memory-repository';
+export type { LearningStateRepository } from './repository';
 export {
   assertValidCurrentPosition,
   assertValidEvidenceRecord,
