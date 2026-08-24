@@ -1,3 +1,4 @@
+export { listLearningCandidates } from './candidates';
 export { listLevelObjectivesInCurriculumOrder } from './curriculum-order';
 export { deriveLessonExecutionState } from './execution';
 export { deriveLearningPosition } from './position';
