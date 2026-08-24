@@ -1,5 +1,12 @@
 export { deriveMastery, orderEvidence } from './mastery-policy';
 export { MemoryLearningStateRepository } from './memory-repository';
+export {
+  getObjectiveMastery,
+  getObjectiveReadiness,
+  getStudent,
+  getStudentLearningSummary,
+  listTopicMastery,
+} from './queries';
 export { classifyReadiness } from './readiness';
 export type { LearningStateRepository } from './repository';
 export {
