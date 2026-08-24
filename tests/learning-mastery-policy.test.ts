@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { deriveMastery, orderEvidence } from '@/lib/learning';
-import type { EvidenceRecord, EvidenceType } from '@/lib/learning';
+import { classifyReadiness, deriveMastery, orderEvidence } from '@/lib/learning';
+import type { EvidenceRecord, EvidenceType, MasteryState, PrerequisiteStatus } from '@/lib/learning';
 
 const studentId = 'student-1';
 const objectiveId = 'P2-MD-005';
@@ -18,6 +18,10 @@ function e(type: EvidenceType, minute: number, overrides: Partial<EvidenceRecord
     origin: { kind: 'LESSON', refId: 'lesson-1' },
     ...overrides,
   };
+}
+
+function p(mastery: MasteryState, objective = `prerequisite-${mastery}`, reviewDue = false): PrerequisiteStatus {
+  return { objectiveId: objective, mastery, reviewDue };
 }
 
 describe('deterministic mastery policy', () => {
@@ -124,5 +128,45 @@ describe('deterministic mastery policy', () => {
     const snapshot = deriveMastery(studentId, objectiveId, [later, earlier]);
     expect(snapshot.evidenceCount).toBe(2);
     expect(snapshot.lastEvidenceAt).toBe(later.observedAt);
+  });
+});
+
+describe('prerequisite readiness policy', () => {
+  it('is READY with no prerequisites or when all prerequisites are mastered', () => {
+    expect(classifyReadiness(studentId, 'target', [])).toMatchObject({ state: 'READY', ready: true });
+    expect(classifyReadiness(studentId, 'target', [p('MASTERED')])).toMatchObject({ state: 'READY', ready: true });
+  });
+
+  it('is NEEDS_SUPPORT for introduced or developing prerequisites when none are not started', () => {
+    expect(classifyReadiness(studentId, 'target', [p('DEVELOPING')])).toMatchObject({
+      state: 'NEEDS_SUPPORT',
+      ready: false,
+    });
+    expect(classifyReadiness(studentId, 'target', [p('INTRODUCED')])).toMatchObject({
+      state: 'NEEDS_SUPPORT',
+      ready: false,
+    });
+  });
+
+  it('is BLOCKED when any prerequisite is not started', () => {
+    expect(classifyReadiness(studentId, 'target', [p('DEVELOPING'), p('NOT_STARTED', 'not-started')])).toMatchObject({
+      state: 'BLOCKED',
+      ready: false,
+    });
+  });
+
+  it('does not block on reviewDue for an otherwise mastered prerequisite', () => {
+    expect(classifyReadiness(studentId, 'target', [p('MASTERED', 'mastered-review', true)])).toMatchObject({
+      state: 'READY',
+      ready: true,
+    });
+  });
+
+  it('returns every non-mastered prerequisite as blocking and defensively copies arrays', () => {
+    const prerequisites = [p('DEVELOPING', 'developing'), p('INTRODUCED', 'introduced'), p('MASTERED', 'mastered')];
+    const result = classifyReadiness(studentId, 'target', prerequisites);
+    expect(result.blockingPrerequisites.map((item) => item.objectiveId)).toEqual(['developing', 'introduced']);
+    result.prerequisites[0]!.objectiveId = 'tampered';
+    expect(prerequisites[0]!.objectiveId).toBe('developing');
   });
 });
