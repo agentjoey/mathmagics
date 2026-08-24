@@ -8,10 +8,12 @@ export function generateStaticParams() {
 
 export default async function QuestionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  let question;
   try {
-    const question = loadQuestion(id);
-    return <ChatUI question={question} />;
+    question = loadQuestion(id);
   } catch {
     notFound();
   }
+
+  return <ChatUI question={question} />;
 }

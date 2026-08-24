@@ -1,0 +1,13 @@
+[
+  {"id":"PM-2022-3A-CH2-2D","sourceId":"PM-2022-3A","series":"Primary Mathematics","edition":"2022","book":"3A","chapter":"Chapter 2: Addition and Subtraction Within 10,000","lesson":"2D: Word Problems","relationship":"DIRECT","objectiveIds":["P3-AS-002"]},
+  {"id":"PM-2022-3A-CH3-3G","sourceId":"PM-2022-3A","series":"Primary Mathematics","edition":"2022","book":"3A","chapter":"Chapter 3: Multiplication and Division","lesson":"3G: Word Problems","relationship":"SUPPORTING","objectiveIds":["P3-MD-005"]},
+  {"id":"PM-2022-3A-CH3-3N","sourceId":"PM-2022-3A","series":"Primary Mathematics","edition":"2022","book":"3A","chapter":"Chapter 3: Multiplication and Division","lesson":"3N: Word Problems","relationship":"SUPPORTING","objectiveIds":["P3-MD-005"]},
+  {"id":"PM-2022-3A-CH4-4G","sourceId":"PM-2022-3A","series":"Primary Mathematics","edition":"2022","book":"3A","chapter":"Chapter 4: Multiplication and Division of 6, 7, 8, and 9","lesson":"4G: Word Problems","relationship":"DIRECT","objectiveIds":["P3-MD-005"]},
+  {"id":"PM-2022-3B-CH7-7A","sourceId":"PM-2022-3B","series":"Primary Mathematics","edition":"2022","book":"3B","chapter":"Chapter 7: Fractions","lesson":"7A: Unit Fractions","relationship":"SUPPORTING","objectiveIds":["P3-FRA-003"]},
+  {"id":"PM-2022-3B-CH7-7B","sourceId":"PM-2022-3B","series":"Primary Mathematics","edition":"2022","book":"3B","chapter":"Chapter 7: Fractions","lesson":"7B: More Fractions","relationship":"SUPPORTING","objectiveIds":["P3-FRA-003"]},
+  {"id":"PM-2022-3B-CH7-7C","sourceId":"PM-2022-3B","series":"Primary Mathematics","edition":"2022","book":"3B","chapter":"Chapter 7: Fractions","lesson":"7C: Fractions Greater Than 1","relationship":"EXTENSION","objectiveIds":["P3-FRA-003"]},
+  {"id":"PM-2022-3B-CH7-7D","sourceId":"PM-2022-3B","series":"Primary Mathematics","edition":"2022","book":"3B","chapter":"Chapter 7: Fractions","lesson":"7D: Compare and Order Fractions","relationship":"DIRECT","objectiveIds":["P3-FRA-003"]},
+  {"id":"PM-2022-3B-CH7-7E","sourceId":"PM-2022-3B","series":"Primary Mathematics","edition":"2022","book":"3B","chapter":"Chapter 7: Fractions","lesson":"7E: Equivalent Fractions","relationship":"DIRECT","objectiveIds":["P3-FRA-001","P3-FRA-002","P3-FRA-004"]},
+  {"id":"PM-2022-3B-CH7-7F","sourceId":"PM-2022-3B","series":"Primary Mathematics","edition":"2022","book":"3B","chapter":"Chapter 7: Fractions","lesson":"7F: Fractions on a Number Line","relationship":"SUPPORTING","objectiveIds":["P3-FRA-003"]},
+  {"id":"PM-2022-3B-CH7-7G","sourceId":"PM-2022-3B","series":"Primary Mathematics","edition":"2022","book":"3B","chapter":"Chapter 7: Fractions","lesson":"7G: Fractions of a Set","relationship":"EXTENSION","objectiveIds":["P3-FRA-001"]}
+]

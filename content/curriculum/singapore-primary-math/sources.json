@@ -37,5 +37,11 @@
     "edition": "2022",
     "isbn": "9789814911412",
     "url": "https://www.singaporemath.com/products/primary-mathematics-student-book-3b-2022-edition"
+  },
+  {
+    "id": "MATHMAGICS-CURATED-2026",
+    "type": "HOUSEHOLD_NOTE",
+    "title": "MathMagics curated teaching annotations",
+    "version": "2026-08-24"
   }
 ]

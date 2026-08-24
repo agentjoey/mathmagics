@@ -2,6 +2,7 @@ export type SourceType = 'MOE_SYLLABUS' | 'TEXTBOOK' | 'TEACHER_GUIDE' | 'HOUSEH
 export type CurriculumNodeType = 'level' | 'strand' | 'topic' | 'subtopic';
 export type CpaStage = 'CONCRETE' | 'PICTORIAL' | 'ABSTRACT';
 export type DifficultyBand = 'FOUNDATION' | 'CORE' | 'APPLICATION' | 'CHALLENGE';
+export type TextbookRelationship = 'DIRECT' | 'SUPPORTING' | 'EXTENSION';
 
 export interface SourceRef {
   sourceId: string;
@@ -83,6 +84,7 @@ export interface TextbookReference {
   book: string;
   chapter: string;
   lesson: string;
+  relationship: TextbookRelationship;
   pageStart?: number;
   pageEnd?: number;
   objectiveIds: string[];
