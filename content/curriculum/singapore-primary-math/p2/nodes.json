@@ -1,0 +1,14 @@
+[
+  {"id":"P2","type":"level","name":"Primary 2","parentId":null,"sequence":2,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"Primary 2"}]},
+  {"id":"P2-NUMBER","type":"strand","name":"Number and Algebra","parentId":"P2","sequence":1,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Number and Algebra"}]},
+  {"id":"P2-MEASURE-GEOM","type":"strand","name":"Measurement and Geometry","parentId":"P2","sequence":2,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Measurement and Geometry"}]},
+  {"id":"P2-STATISTICS","type":"strand","name":"Statistics","parentId":"P2","sequence":3,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Statistics"}]},
+  {"id":"P2-WHOLE","type":"topic","name":"Whole Numbers","parentId":"P2-NUMBER","sequence":1,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Number and Algebra / Whole Numbers"}]},
+  {"id":"P2-FRACTIONS","type":"topic","name":"Fractions","parentId":"P2-NUMBER","sequence":2,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Number and Algebra / Fractions"}]},
+  {"id":"P2-MONEY","type":"topic","name":"Money","parentId":"P2-NUMBER","sequence":3,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Money"}]},
+  {"id":"P2-LMV","type":"topic","name":"Length, Mass and Volume","parentId":"P2-MEASURE-GEOM","sequence":1,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Measurement and Geometry / Length, Mass and Volume"}]},
+  {"id":"P2-TIME","type":"topic","name":"Time","parentId":"P2-MEASURE-GEOM","sequence":2,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Measurement and Geometry / Time"}]},
+  {"id":"P2-2D","type":"topic","name":"2D Shapes","parentId":"P2-MEASURE-GEOM","sequence":3,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Measurement and Geometry / 2-D and 3-D Figures"}]},
+  {"id":"P2-3D","type":"topic","name":"3D Shapes","parentId":"P2-MEASURE-GEOM","sequence":4,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Measurement and Geometry / 2-D and 3-D Figures"}]},
+  {"id":"P2-PICTURE-GRAPHS","type":"topic","name":"Picture Graphs with Scales","parentId":"P2-STATISTICS","sequence":1,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P2 / Statistics / Picture Graphs with Scales"}]}
+]

@@ -1,0 +1,15 @@
+[
+  {"id":"P3","type":"level","name":"Primary 3","parentId":null,"sequence":3,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"Primary 3"}]},
+  {"id":"P3-NUMBER","type":"strand","name":"Number and Algebra","parentId":"P3","sequence":1,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Number and Algebra"}]},
+  {"id":"P3-MEASURE-GEOM","type":"strand","name":"Measurement and Geometry","parentId":"P3","sequence":2,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Measurement and Geometry"}]},
+  {"id":"P3-STATISTICS","type":"strand","name":"Statistics","parentId":"P3","sequence":3,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Statistics"}]},
+  {"id":"P3-WHOLE","type":"topic","name":"Whole Numbers","parentId":"P3-NUMBER","sequence":1,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Number and Algebra / Whole Numbers"}]},
+  {"id":"P3-FRACTIONS","type":"topic","name":"Fractions","parentId":"P3-NUMBER","sequence":2,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Number and Algebra / Fractions"}]},
+  {"id":"P3-MONEY","type":"topic","name":"Money","parentId":"P3-NUMBER","sequence":3,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Money"}]},
+  {"id":"P3-LMV","type":"topic","name":"Length, Mass and Volume","parentId":"P3-MEASURE-GEOM","sequence":1,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Measurement and Geometry / Length, Mass and Volume"}]},
+  {"id":"P3-TIME","type":"topic","name":"Time","parentId":"P3-MEASURE-GEOM","sequence":2,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Measurement and Geometry / Time"}]},
+  {"id":"P3-AREA-PERIMETER","type":"topic","name":"Area and Perimeter","parentId":"P3-MEASURE-GEOM","sequence":3,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Measurement and Geometry / Area and Perimeter"}]},
+  {"id":"P3-ANGLES","type":"topic","name":"Angles","parentId":"P3-MEASURE-GEOM","sequence":4,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Measurement and Geometry / Angles"}]},
+  {"id":"P3-LINES","type":"topic","name":"Perpendicular and Parallel Lines","parentId":"P3-MEASURE-GEOM","sequence":5,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Measurement and Geometry / Perpendicular and Parallel Lines"}]},
+  {"id":"P3-BAR-GRAPHS","type":"topic","name":"Bar Graphs","parentId":"P3-STATISTICS","sequence":1,"sourceRefs":[{"sourceId":"MOE-PM-2021-OCT-2025","locator":"P3 / Statistics / Bar Graphs"}]}
+]
