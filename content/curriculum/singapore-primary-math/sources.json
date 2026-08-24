@@ -1,0 +1,41 @@
+[
+  {
+    "id": "MOE-PM-2021-OCT-2025",
+    "type": "MOE_SYLLABUS",
+    "title": "Primary Mathematics Syllabus Primary One to Six",
+    "version": "2021 cohort syllabus; updated October 2025",
+    "url": "https://www.moe.gov.sg/-/media/files/primary/2021-primary-mathematics-syllabus-p1-to-p6-updated-october-2025.pdf"
+  },
+  {
+    "id": "PM-2022-2A",
+    "type": "TEXTBOOK",
+    "title": "Primary Mathematics Student Book 2A",
+    "edition": "2022",
+    "isbn": "9789814911382",
+    "url": "https://www.singaporemath.com/products/primary-mathematics-student-book-2a-2022-edition"
+  },
+  {
+    "id": "PM-2022-2B",
+    "type": "TEXTBOOK",
+    "title": "Primary Mathematics Student Book 2B",
+    "edition": "2022",
+    "isbn": "9789814911399",
+    "url": "https://www.singaporemath.com/products/primary-mathematics-student-book-2b-2022-edition"
+  },
+  {
+    "id": "PM-2022-3A",
+    "type": "TEXTBOOK",
+    "title": "Primary Mathematics Student Book 3A",
+    "edition": "2022",
+    "isbn": "9789814911405",
+    "url": "https://www.singaporemath.com/products/primary-mathematics-student-book-3a-2022-edition"
+  },
+  {
+    "id": "PM-2022-3B",
+    "type": "TEXTBOOK",
+    "title": "Primary Mathematics Student Book 3B",
+    "edition": "2022",
+    "isbn": "9789814911412",
+    "url": "https://www.singaporemath.com/products/primary-mathematics-student-book-3b-2022-edition"
+  }
+]
