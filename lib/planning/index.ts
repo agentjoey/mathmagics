@@ -1,7 +1,9 @@
 export { listLearningCandidates } from './candidates';
 export { listLevelObjectivesInCurriculumOrder } from './curriculum-order';
 export { deriveLessonExecutionState } from './execution';
+export { MemoryPlanningRepository } from './memory-repository';
 export { deriveLearningPosition } from './position';
+export type { PlanningRepository } from './repository';
 export { generateWeeklyPlan } from './weekly-plan';
 export type { WeeklyPlanBundle, WeeklyPlanningInput } from './weekly-plan';
 export {
