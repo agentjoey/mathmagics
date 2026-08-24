@@ -1,3 +1,8 @@
+export {
+  assertValidCurrentPosition,
+  assertValidEvidenceRecord,
+  assertValidStudentProfile,
+} from './validation';
 export type {
   CurrentPositionAssumption,
   EvidenceOrigin,
