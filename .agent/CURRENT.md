@@ -1,11 +1,12 @@
 # Current Status — MathMagics
 
-Version:        v0.3.0-dev
-Phase:          Phase 2 — Student & Mastery Core
-Phase Status:   ✅ Completed
-Last Updated:   2026-08-24 by agent
+Version:        v0.4.0-dev
+Phase:          Phase 3 — Teaching Planner / Lesson Prep
+Phase Status:   ✅ Completed (PR pending)
+Last Updated:   2026-08-25 by agent
 
 ## Product Positioning
+
 MathMagics is a Singapore Math home-education AI learning system / teaching copilot for families.
 
 Primary users:
@@ -20,11 +21,11 @@ Core learning loop:
 
 `Plan → Learn → Practice → Correct → Track → Adapt`
 
-The system learning model is authoritative. AI explains, analyzes, generates and recommends; AI does not own curriculum truth, history or mastery state.
+Curriculum truth and learning history remain application-owned. AI explains, generates and recommends within trusted context; AI does not own curriculum truth, evidence, mastery, readiness or planner objective selection.
 
 ## Phase 1 — Curriculum Foundation
 
-Completed foundation retained as the curriculum authority boundary:
+Completed foundation retained as curriculum authority:
 - ✅ MOE-backed P2/P3 curriculum graph with 25 nodes and 68 LearningObjectives (P2=32, P3=36).
 - ✅ Three teaching-knowledge deep slices: P2 Multiplication & Division, P3 Fractions, P2/P3 Word Problems + Bar Model.
 - ✅ Prerequisite edges, CPA representations, strategies, misconceptions, readiness evidence and mastery evidence.
@@ -35,50 +36,96 @@ Completed foundation retained as the curriculum authority boundary:
 
 ## Phase 2 — Student & Mastery Core
 
-**Completed:**
+Completed learning-state authority boundary:
 - ✅ `StudentProfile` and manual `CurrentPositionAssumption` contracts and validation.
 - ✅ Append-only `EvidenceRecord` ledger with stable student/objective IDs.
-- ✅ P2/P3 level enforcement, including P3 students using P2 remediation evidence while P2 students cannot record P3 evidence.
-- ✅ Deterministic evidence ordering by `observedAt`, `recordedAt`, then evidence ID.
-- ✅ Mastery projection states: `NOT_STARTED`, `INTRODUCED`, `DEVELOPING`, `MASTERED`.
-- ✅ Mastery is derived from immutable evidence; there is no mutable `setMastery` path.
-- ✅ Sticky mastery via earliest qualifying history prefix; post-mastery errors drive `reviewDue` rather than silent demotion.
-- ✅ Deterministic `READY`, `NEEDS_SUPPORT`, `BLOCKED` prerequisite readiness using direct Phase 1 prerequisite links.
-- ✅ Storage-agnostic asynchronous `LearningStateRepository` contract.
-- ✅ `MemoryLearningStateRepository` for Phase 2 tests/fixtures; no production database selected yet.
-- ✅ Public learning-state queries: student lookup, objective mastery, topic mastery, prerequisite readiness and active-level learning summary.
-- ✅ End-to-end acceptance scenarios for P2 mastery/review recovery and P3 cross-level fraction readiness.
-- ✅ `Attempt` intentionally deferred to Phase 4 Practice; `Mistake` intentionally deferred to Phase 6 Correction.
+- ✅ P2/P3 level enforcement, including P3 remediation against P2 objectives.
+- ✅ Deterministic evidence ordering and mastery projection: `NOT_STARTED`, `INTRODUCED`, `DEVELOPING`, `MASTERED`.
+- ✅ Sticky mastery with post-mastery `reviewDue`; no mutable `setMastery` path.
+- ✅ Deterministic `READY`, `NEEDS_SUPPORT`, `BLOCKED` prerequisite readiness.
+- ✅ Storage-agnostic asynchronous `LearningStateRepository` contract and memory adapter.
+- ✅ `Attempt` remains deferred to Phase 4; `Mistake` remains deferred to Phase 6.
 
-## Verification — 2026-08-24
+## Phase 3 — Teaching Planner / Lesson Prep
 
-Current Phase 2 worktree evidence:
-- ✅ `npm test`: 60 passed, 1 provider smoke test skipped
-- ✅ `npm run typecheck`
-- ✅ `npm run validate:curriculum`: 25 nodes, 68 objectives (P2=32, P3=36), 18 textbook mappings
-- ✅ `npm run lint`
-- ✅ `npm run build` in normal host environment (Next.js 16.2.6 production build)
+**Completed implementation:**
+- ✅ Household auth hardened from password-in-cookie to stateless HMAC-signed `mm_session`; `SITE_PASSWORD` remains server-only.
+- ✅ Next.js 16 access guard migrated from deprecated `middleware.ts` to `proxy.ts`.
+- ✅ Deterministic `LearningPosition` derived from Student Profile, manual current position, curriculum order and Evidence-derived state.
+- ✅ Deterministic candidate precedence: `REVIEW_DUE → PREREQUISITE_SUPPORT → CURRENT_POSITION → NEXT_IN_SEQUENCE`.
+- ✅ Pre-anchor `NOT_STARTED` objectives are not blanket-classified as gaps.
+- ✅ `BLOCKED` targets are never emitted as `LEARN`; prerequisite remediation remains explicit and explainable.
+- ✅ `reviewDue` schedules review without freezing valid forward learning.
+- ✅ Immutable `WeeklyPlan` and `DailyLesson` creation snapshots using StudentProfile schedule values.
+- ✅ Append-only `LessonExecutionEvent`; execution status is projected rather than stored as a second mutable truth.
+- ✅ `PlanningRepository` plus memory adapter; plan + lessons are created atomically at repository boundary.
+- ✅ Trusted `LessonPreparationContext` assembled only from immutable planned objective IDs plus curriculum/mastery/readiness facts.
+- ✅ `MiniMaxLessonBriefGenerator` implements a narrow provider-agnostic `LessonBriefGenerator` boundary; AI cannot choose objectives or write Evidence/Mastery.
+- ✅ AI failure leaves deterministic plans untouched; generated lesson briefs are append-only versioned records.
+- ✅ Real P3 fraction E2E scenarios cover normal forward learning, prerequisite remediation, review + forward learning, and execution/Evidence separation.
 
-GrandeGPT controlled verification:
-- ✅ test profile: 60 passed, 1 skipped
-- ✅ lint profile
-- ⚠ build profile remains network-constrained by `next/font` Google Fonts fetch; the same current worktree passes the host production build.
+## Persistence & Deployment Foundation
+
+Approved deployment architecture:
+
+```text
+Browser
+→ Vercel CDN
+→ Next.js 16 Node Functions @ sin1
+   ├→ deterministic curriculum / learning / planning core
+   ├→ MiniMax provider adapter
+   └→ repository adapters
+        ↓
+   Neon PostgreSQL @ Singapore
+```
+
+Implemented:
+- ✅ `drizzle-orm`, `drizzle-kit`, `@neondatabase/serverless`.
+- ✅ Drizzle schema for `students`, `current_positions`, `evidence_records`, `weekly_plans`, `daily_lessons`, `lesson_execution_events`, `lesson_briefs`.
+- ✅ Drizzle Kit generated migration: `migrations/0000_old_bushwacker.sql` plus metadata.
+- ✅ `NeonLearningStateRepository` and `NeonPlanningRepository` implement existing domain repository contracts.
+- ✅ Durable schema contains facts, immutable plan snapshots and events only; no mutable mastery/readiness/LearningPosition tables.
+- ✅ Vercel region fixed to `sin1`; deployment runbook documents Preview/Production DB separation and explicit migrations.
+- ✅ No startup or Preview auto-migration.
+
+**Activation gate before first real durable-data deployment:**
+- provision separated Neon development/Preview and production databases in Singapore;
+- run committed migration explicitly against non-production first;
+- run `tests/persistence-neon-contract.test.ts` with an explicit `TEST_DATABASE_URL`;
+- only after that promote the same reviewed migration to production;
+- never point tests or Vercel Preview at production `DATABASE_URL`.
+
+No Neon migration was applied to any real database during Phase 3 implementation.
+
+## Verification — Phase 3
+
+Controlled local/sandbox evidence:
+- ✅ `npm test`: 113 passed, 2 intentionally skipped (provider smoke and Neon live contract without explicit credentials).
+- ✅ `npm run lint`.
+- ✅ generated migration schema test verifies approved 7 tables and absence of persisted mastery/readiness/LearningPosition.
+- ⚠ GrandeGPT sandbox `next build` remains blocked only by outbound Google Fonts fetch for Geist/Geist Mono, the existing environment limitation.
+
+Host exact-code verification at commit `3f5968fb1b050177dcaad4b83b59841bba62d23f`:
+- ✅ `npm run typecheck`.
+- ✅ `npm run validate:curriculum`: 25 nodes, 68 objectives (P2=32, P3=36), 18 textbook mappings.
+- ✅ `npm run build`: Next.js 16.2.6 production build compiled, typechecked, generated pages and finalized successfully.
 
 ## Next Phase
 
-**Phase 3 — Teaching Planner / Lesson Prep**
+**Phase 4 — Practice / Attempt Core**
 
 Primary scope:
-- define `LearningPosition`, `WeeklyPlan`, `DailyLesson` and plan execution records;
-- combine Student Profile, Current Position, Mastery, Prerequisite Readiness and curriculum sequence into deterministic planning context;
-- generate parent/tutor lesson-preparation briefs from trusted curriculum/mastery state;
-- keep AI as explanation/recommendation layer rather than curriculum/mastery authority;
-- decide durable household persistence before the first planner feature that requires state to survive process restarts.
+- introduce `PracticeSession` and immutable `Attempt` records;
+- generate objective-aligned practice using existing curriculum/planner contracts;
+- convert validated practice outcomes into Phase 2 `EvidenceRecord`s through explicit rules;
+- keep raw wrong Attempts separate from persistent Mistake/misconception confirmation;
+- preserve deterministic mastery authority and existing repository boundaries.
 
-Explicitly defer `PracticeSession`/`Attempt`, homework OCR/photo grading, `Mistake` lifecycle and progress dashboards to their roadmap phases.
+Homework image/OCR remains Phase 5. Persistent `Mistake` lifecycle remains Phase 6.
 
-## Known Non-blocking Technical Debt
-- Next.js warns that the `middleware` convention is deprecated in favor of `proxy`.
-- GrandeGPT sandbox production build cannot fetch Google-hosted Geist fonts; host build passes.
-- Provider smoke test remains skipped because it requires external provider credentials/network.
-- `npm ci` currently reports dependency audit findings; no forced dependency upgrade is part of Phase 2.
+## Known Non-blocking Technical Debt / Gates
+
+- Self-host/package Geist fonts if sandbox production builds need to be network-independent.
+- `npm install` with Drizzle tooling reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental feature work.
+- Neon live repository contract remains intentionally gated on explicit `TEST_DATABASE_URL` and must pass before first real durable-data activation.
+- Multi-household identity/tenancy is deliberately deferred; V1 remains single-household signed-session access.

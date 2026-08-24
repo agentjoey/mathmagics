@@ -1,51 +1,103 @@
 # MathMagics — Claude Code Context
 
-## ⭐ Session 启动（每次必执行）
+## Session startup
+
 ```bash
 git status -sb
 cat .agent/CURRENT.md
 ```
 
-## Project Overview
-G3-G4 数学 AI 辅导 MVP，2 题 (Q05 骰子 + Q18 折纸雪花)，验证 Socratic + Feynman 教学体验。
+## Product
 
-**Location:** ~/AgentWorks/GPT_Workspace/mathmagics
-**Version:**  v0.1.0
-**Design:**   Obsidian Brain#2/10_Projects/Active/P012-MathMagics/MVP-Design.md (v1.1)
+MathMagics is a Singapore Math home-education AI learning system / teaching copilot for families.
 
-**Technical docs:** [Architecture](docs/architecture.md) · [Deployment](docs/deployment.md) · [Operations](docs/operations.md)
+Primary users:
+- Parent / Tutor
+- Student
 
-## Tech Stack
+V1 curriculum scope:
+- Singapore Primary Mathematics
+- Primary 2 and Primary 3
+
+Core loop:
+
+`Plan → Learn → Practice → Correct → Track → Adapt`
+
+Legacy Q05/Q18 remain only as teaching-engine fixtures. They are not the current product scope.
+
+## Architecture authority
+
+- Curriculum truth lives in version-controlled Phase 1 curriculum data.
+- Learning history is append-only `EvidenceRecord` data.
+- Mastery and prerequisite readiness are deterministic derived state, never mutable database facts.
+- Phase 3 planning is deterministic and explainable: `LearningPosition → LearningCandidate → WeeklyPlan → DailyLesson`.
+- Lesson execution is append-only `LessonExecutionEvent` history projected into state.
+- AI receives trusted `LessonPreparationContext`; it may write teaching prose/examples but cannot change curriculum, objective IDs, mastery, readiness, or evidence.
+- `PracticeSession` / `Attempt` remain Phase 4; `Mistake` remains Phase 6.
+
+## Tech stack
+
 | Layer | Tech |
-|-------|------|
-| Frontend | Next.js 14 App Router + Tailwind |
-| Backend  | Next.js API routes (nodejs runtime) + SSE streaming |
-| LLM      | MiniMax M2.7-highspeed |
-| Image    | MiniMax image-01 (仅一次性头像生成) |
-| Auth     | Cookie-based password gate (middleware.ts) |
-| Deploy   | Vercel |
-| Tests    | Vitest |
+|---|---|
+| App | Next.js 16 App Router + React 19 + TypeScript |
+| Runtime | Node.js Functions |
+| Curriculum | Version-controlled JSON + deterministic loaders/queries |
+| Learning core | TypeScript domain modules + repository boundary |
+| Planner | Deterministic `lib/planning` domain core |
+| Persistence | Neon PostgreSQL + Drizzle ORM / Drizzle Kit |
+| AI | MiniMax M2.7-highspeed through existing Anthropic-compatible adapter |
+| Auth | Signed stateless `mm_session` via `proxy.ts`; cookie never contains `SITE_PASSWORD` |
+| Deploy | Vercel `sin1` + Neon Singapore |
+| Tests | Vitest |
 
-## Key Implementation Details
-- **所有 secrets 从 macOS Keychain 加载**，禁止明文写仓库。详见 `scripts/load-env-from-keychain.sh`
-- `npm run dev` / `npm run build` / 任何 npm script 都通过 keychain loader 注入 env
-- **LLM provider**：MiniMax M2.7-highspeed via `@anthropic-ai/sdk`（Anthropic-compat endpoint）
-- **教学逻辑全部在 system prompt** (`lib/prompts.ts`)，不在代码里做 phase 状态机
-- **题目原图在 `public/images/`**，教学示意图由 LLM 内联生成 SVG（不要用 image-01 做几何图）
-- **Edge runtime 不可用**：`/api/chat` 用 nodejs runtime（因 `loadQuestion` 用 fs）
+## Hard boundaries
 
-## Dev Commands
-```bash
-npm run dev              # 启动，自动从 keychain 加载 env
-npm test                 # 运行 vitest
-RUN_SMOKE_TESTS=1 ./scripts/load-env-from-keychain.sh npx vitest run tests/providers-smoke.test.ts
-                         # 跑真实 API 烟雾测试
-LLM_PROVIDER=minimax npm run dev  # 切换到 MiniMax 验证
-./scripts/load-env-from-keychain.sh npx tsx scripts/generate-avatar.ts
-                         # 重生成头像
+- Do not add mutable `setMastery` or persisted mastery/readiness state.
+- Do not let `lib/planning` import Drizzle, Neon, Next.js request objects, or LLM SDKs.
+- Do not copy curriculum truth into Postgres.
+- Do not make AI select/reorder curriculum objectives autonomously.
+- Do not use production `DATABASE_URL` for tests. Neon integration tests require `TEST_DATABASE_URL` explicitly.
+- Do not auto-migrate the production database during app startup or Vercel Preview builds.
+- Do not introduce Redis, queues, workers, object storage, microservices, or vector search without a new approved need.
+
+## Secrets
+
+Local secrets remain in macOS Keychain and must never be committed. Production/Preview secrets are configured in Vercel with environment separation.
+
+Phase 3 environment names:
+
+```text
+MINIMAX_API_KEY
+SITE_PASSWORD
+SESSION_SECRET
+DATABASE_URL
 ```
 
-## Release 后必做
-1. `.agent/CURRENT.md`：补充 Version History 描述
-2. 更新 Current Sprint Summary
-3. 如有架构变更：更新 `docs/architecture.md`
+Optional integration-test-only variable:
+
+```text
+TEST_DATABASE_URL
+```
+
+## Commands
+
+```bash
+npm run dev
+npm test
+npm run typecheck
+npm run validate:curriculum
+npm run lint
+npm run build
+npm run db:generate
+```
+
+Real provider smoke tests require credentials/network and are not part of the default unit suite.
+
+## Source docs
+
+- Current status: `.agent/CURRENT.md`
+- Product backlog: `.agent/BACKLOG.md`
+- Architecture summary: `docs/architecture.md`
+- Deployment/runbook: `docs/deployment.md`
+- Phase 3 approved design: `docs/superpowers/specs/2026-08-24-mathmagics-phase3-teaching-planner-and-persistence-design.md`
+- Phase 3 implementation plan: `docs/superpowers/plans/2026-08-24-mathmagics-phase3-teaching-planner.md`

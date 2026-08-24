@@ -1,15 +1,27 @@
 # MathMagics
 
-G3-G4 数学 Agent 教学体验验证 MVP。
+Singapore Math home-education AI learning system / teaching copilot for families.
 
-详见 [CLAUDE.md](CLAUDE.md)。
+Current V1 curriculum scope: Singapore Primary Mathematics P2/P3.
 
-## 快速开始
+Core loop:
+
+`Plan → Learn → Practice → Correct → Track → Adapt`
+
+Current foundation includes curriculum truth, append-only learning evidence, derived mastery/readiness, deterministic teaching planning, parent/tutor lesson preparation, and Neon/PostgreSQL persistence adapters.
+
+See [CLAUDE.md](CLAUDE.md), [Architecture](docs/architecture.md), and [Deployment](docs/deployment.md).
+
+## Development
 
 ```bash
-# 1. 把 4 个 API key + site password 存入 Keychain (一次性):
-#    见 docs/superpowers/plans/2026-05-19-mvp-implementation.md Task 2
-
-# 2. 启动:
+npm ci
 npm run dev
+npm test
+npm run typecheck
+npm run validate:curriculum
+npm run lint
+npm run build
 ```
+
+Secrets are never committed. Local secrets are loaded through the existing macOS Keychain workflow; deployed secrets are configured in Vercel environment variables.
