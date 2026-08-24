@@ -1,4 +1,4 @@
-# MathMagics MVP
+# MathMagics
 
 G3-G4 数学 Agent 教学体验验证 MVP。
 

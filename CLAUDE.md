@@ -1,4 +1,4 @@
-# MathMagics MVP — Claude Code Context
+# MathMagics — Claude Code Context
 
 ## ⭐ Session 启动（每次必执行）
 ```bash
@@ -9,7 +9,7 @@ cat .agent/CURRENT.md
 ## Project Overview
 G3-G4 数学 AI 辅导 MVP，2 题 (Q05 骰子 + Q18 折纸雪花)，验证 Socratic + Feynman 教学体验。
 
-**Location:** ~/AgentWorks/CodeSpace/mathmagics-mvp
+**Location:** ~/AgentWorks/GPT_Workspace/mathmagics
 **Version:**  v0.1.0
 **Design:**   Obsidian Brain#2/10_Projects/Active/P012-MathMagics/MVP-Design.md (v1.1)
 

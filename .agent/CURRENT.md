@@ -1,4 +1,4 @@
-# Current Status — MathMagics MVP
+# Current Status — MathMagics
 
 Version:        v0.1.0
 Sprint:         001
