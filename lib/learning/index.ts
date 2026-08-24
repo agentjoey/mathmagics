@@ -1,3 +1,4 @@
+export { deriveMastery, orderEvidence } from './mastery-policy';
 export {
   assertValidCurrentPosition,
   assertValidEvidenceRecord,
