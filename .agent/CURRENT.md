@@ -1,7 +1,7 @@
 # Current Status — MathMagics
 
-Version:        v0.2.0-dev
-Phase:          Phase 1 — Curriculum Foundation
+Version:        v0.3.0-dev
+Phase:          Phase 2 — Student & Mastery Core
 Phase Status:   ✅ Completed
 Last Updated:   2026-08-24 by agent
 
@@ -24,52 +24,61 @@ The system learning model is authoritative. AI explains, analyzes, generates and
 
 ## Phase 1 — Curriculum Foundation
 
+Completed foundation retained as the curriculum authority boundary:
+- ✅ MOE-backed P2/P3 curriculum graph with 25 nodes and 68 LearningObjectives (P2=32, P3=36).
+- ✅ Three teaching-knowledge deep slices: P2 Multiplication & Division, P3 Fractions, P2/P3 Word Problems + Bar Model.
+- ✅ Prerequisite edges, CPA representations, strategies, misconceptions, readiness evidence and mastery evidence.
+- ✅ 18 Primary Mathematics 2022 textbook mappings using `DIRECT`, `SUPPORTING` and `EXTENSION` relationships.
+- ✅ Deterministic curriculum loader, validator and query API.
+- ✅ Curriculum provenance rejects direct textbook sources as LearningObjective truth.
+- ✅ Legacy Q05/Q18 retained only as teaching-engine fixtures.
+
+## Phase 2 — Student & Mastery Core
+
 **Completed:**
-- ✅ Product reset design and Curriculum Foundation design approved.
-- ✅ Curriculum Truth separated from textbook mapping and MathMagics-curated teaching knowledge.
-- ✅ MOE 2021 Primary Mathematics syllabus established as curriculum truth source.
-- ✅ Primary Mathematics 2022 Edition established as edition-specific textbook mapping source.
-- ✅ Private textbook/source boundary established under ignored `content-private/`.
-- ✅ P2/P3 curriculum graph established with stable nodes and LearningObjective IDs.
-- ✅ Breadth inventory: 68 objectives total (P2=32, P3=36), 25 curriculum nodes.
-- ✅ Three deep slices completed:
-  - P2 Multiplication & Division
-  - P3 Fractions
-  - P2/P3 Word Problems + Bar Model
-- ✅ Teaching knowledge model includes prerequisite edges, CPA representations, strategies, misconceptions, readiness evidence and mastery evidence.
-- ✅ Textbook mapping supports `DIRECT`, `SUPPORTING` and `EXTENSION` relationships; 18 mappings currently loaded.
-- ✅ Deterministic curriculum loader, validator and query API implemented.
-- ✅ Validator prevents textbook sources from being used directly as LearningObjective curriculum provenance.
-- ✅ Legacy Q05/Q18 experience preserved as teaching-engine fixtures, not current product scope.
+- ✅ `StudentProfile` and manual `CurrentPositionAssumption` contracts and validation.
+- ✅ Append-only `EvidenceRecord` ledger with stable student/objective IDs.
+- ✅ P2/P3 level enforcement, including P3 students using P2 remediation evidence while P2 students cannot record P3 evidence.
+- ✅ Deterministic evidence ordering by `observedAt`, `recordedAt`, then evidence ID.
+- ✅ Mastery projection states: `NOT_STARTED`, `INTRODUCED`, `DEVELOPING`, `MASTERED`.
+- ✅ Mastery is derived from immutable evidence; there is no mutable `setMastery` path.
+- ✅ Sticky mastery via earliest qualifying history prefix; post-mastery errors drive `reviewDue` rather than silent demotion.
+- ✅ Deterministic `READY`, `NEEDS_SUPPORT`, `BLOCKED` prerequisite readiness using direct Phase 1 prerequisite links.
+- ✅ Storage-agnostic asynchronous `LearningStateRepository` contract.
+- ✅ `MemoryLearningStateRepository` for Phase 2 tests/fixtures; no production database selected yet.
+- ✅ Public learning-state queries: student lookup, objective mastery, topic mastery, prerequisite readiness and active-level learning summary.
+- ✅ End-to-end acceptance scenarios for P2 mastery/review recovery and P3 cross-level fraction readiness.
+- ✅ `Attempt` intentionally deferred to Phase 4 Practice; `Mistake` intentionally deferred to Phase 6 Correction.
 
 ## Verification — 2026-08-24
 
-Local worktree acceptance:
-- ✅ `npm test`: 24 passed, 1 provider smoke test skipped
+Current Phase 2 worktree evidence:
+- ✅ `npm test`: 60 passed, 1 provider smoke test skipped
 - ✅ `npm run typecheck`
 - ✅ `npm run validate:curriculum`: 25 nodes, 68 objectives (P2=32, P3=36), 18 textbook mappings
 - ✅ `npm run lint`
-- ✅ `npm run build` (Next.js 16.2.6 production build)
+- ✅ `npm run build` in normal host environment (Next.js 16.2.6 production build)
 
 GrandeGPT controlled verification:
-- ✅ test profile: 24 passed, 1 skipped
+- ✅ test profile: 60 passed, 1 skipped
 - ✅ lint profile
-- ⚠ build profile is network-constrained by `next/font` Google Fonts fetch; the same production build passes on the host. This is an environment limitation, not a curriculum implementation failure.
+- ⚠ build profile remains network-constrained by `next/font` Google Fonts fetch; the same current worktree passes the host production build.
 
 ## Next Phase
 
-**Phase 2 — Student & Mastery Model**
+**Phase 3 — Teaching Planner / Lesson Prep**
 
 Primary scope:
-- Student entity/profile
-- `Student × LearningObjective → Mastery`
-- mastery states: `NOT_STARTED`, `INTRODUCED`, `DEVELOPING`, `MASTERED`
-- Evidence model and deterministic mastery transition policy
-- Attempt vs Mistake separation
-- curriculum query integration as the knowledge-source boundary
+- define `LearningPosition`, `WeeklyPlan`, `DailyLesson` and plan execution records;
+- combine Student Profile, Current Position, Mastery, Prerequisite Readiness and curriculum sequence into deterministic planning context;
+- generate parent/tutor lesson-preparation briefs from trusted curriculum/mastery state;
+- keep AI as explanation/recommendation layer rather than curriculum/mastery authority;
+- decide durable household persistence before the first planner feature that requires state to survive process restarts.
 
-Explicitly defer OCR/photo homework, full practice generation, UI redesign and adaptive planner until their roadmap phases.
+Explicitly defer `PracticeSession`/`Attempt`, homework OCR/photo grading, `Mistake` lifecycle and progress dashboards to their roadmap phases.
 
 ## Known Non-blocking Technical Debt
 - Next.js warns that the `middleware` convention is deprecated in favor of `proxy`.
+- GrandeGPT sandbox production build cannot fetch Google-hosted Geist fonts; host build passes.
 - Provider smoke test remains skipped because it requires external provider credentials/network.
+- `npm ci` currently reports dependency audit findings; no forced dependency upgrade is part of Phase 2.
