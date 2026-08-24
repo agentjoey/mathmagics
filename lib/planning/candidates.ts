@@ -31,9 +31,11 @@ export async function listLearningCandidates(
     throw new Error('LearningPosition levelId must match student active level');
   }
 
-  const activeObjectives = listLevelObjectivesInCurriculumOrder(student.levelId);
+  const studentId = student.id;
+  const studentLevelId = student.levelId;
+  const activeObjectives = listLevelObjectivesInCurriculumOrder(studentLevelId);
   const activeIndex = new Map(activeObjectives.map((objective, index) => [objective.id, index]));
-  const allOrdered = student.levelId === 'P3'
+  const allOrdered = studentLevelId === 'P3'
     ? [...listLevelObjectivesInCurriculumOrder('P2'), ...activeObjectives]
     : activeObjectives;
   const globalIndex = new Map(allOrdered.map((objective, index) => [objective.id, index]));
@@ -49,11 +51,11 @@ export async function listLearningCandidates(
     const key = `${reason}:${objectiveId}:${targetObjectiveId ?? ''}`;
     if (seen.has(key)) return;
     const objective = getLearningObjective(objectiveId);
-    if (student.levelId === 'P2' && objective.levelId === 'P3') {
+    if (studentLevelId === 'P2' && objective.levelId === 'P3') {
       throw new Error('P2 planner cannot target P3 objective');
     }
-    const mastery = await getObjectiveMastery(repository, student.id, objectiveId);
-    const readiness = await getObjectiveReadiness(repository, student.id, objectiveId);
+    const mastery = await getObjectiveMastery(repository, studentId, objectiveId);
+    const readiness = await getObjectiveReadiness(repository, studentId, objectiveId);
     const curriculumOrder = globalIndex.get(objectiveId);
     if (curriculumOrder === undefined) throw new Error(`Objective ${objectiveId} is outside planner curriculum order`);
     seen.add(key);
@@ -69,7 +71,7 @@ export async function listLearningCandidates(
   }
 
   async function addPrerequisiteSupport(targetObjectiveId: string): Promise<void> {
-    const readiness = await getObjectiveReadiness(repository, student.id, targetObjectiveId);
+    const readiness = await getObjectiveReadiness(repository, studentId, targetObjectiveId);
     const nonMastered = readiness.prerequisites
       .filter((prerequisite) => prerequisite.mastery !== 'MASTERED')
       .sort((left, right) => {
@@ -84,7 +86,7 @@ export async function listLearningCandidates(
   }
 
   for (const reviewObjectiveId of position.reviewObjectiveIds) {
-    const mastery = await getObjectiveMastery(repository, student.id, reviewObjectiveId);
+    const mastery = await getObjectiveMastery(repository, studentId, reviewObjectiveId);
     if (mastery.state === 'MASTERED' && mastery.reviewDue) {
       await addCandidate(reviewObjectiveId, 'REVIEW_DUE');
     }
@@ -92,22 +94,22 @@ export async function listLearningCandidates(
 
   if (!position.anchorObjectiveId) throw new Error('LearningPosition requires anchorObjectiveId');
   const anchor = getLearningObjective(position.anchorObjectiveId);
-  if (anchor.levelId !== student.levelId) {
-    throw new Error(`Anchor objective must belong to student active level ${student.levelId}`);
+  if (anchor.levelId !== studentLevelId) {
+    throw new Error(`Anchor objective must belong to student active level ${studentLevelId}`);
   }
   const anchorOrder = activeIndex.get(anchor.id);
   if (anchorOrder === undefined) throw new Error(`Anchor objective ${anchor.id} is outside active curriculum order`);
 
-  const anchorMastery = await getObjectiveMastery(repository, student.id, anchor.id);
+  const anchorMastery = await getObjectiveMastery(repository, studentId, anchor.id);
   if (anchorMastery.state !== 'MASTERED') {
-    const readiness = await getObjectiveReadiness(repository, student.id, anchor.id);
+    const readiness = await getObjectiveReadiness(repository, studentId, anchor.id);
     if (readiness.state !== 'READY') await addPrerequisiteSupport(anchor.id);
     if (readiness.state !== 'BLOCKED') await addCandidate(anchor.id, 'CURRENT_POSITION');
   } else {
     for (const objective of activeObjectives.slice(anchorOrder + 1)) {
-      const mastery = await getObjectiveMastery(repository, student.id, objective.id);
+      const mastery = await getObjectiveMastery(repository, studentId, objective.id);
       if (mastery.state === 'MASTERED') continue;
-      const readiness = await getObjectiveReadiness(repository, student.id, objective.id);
+      const readiness = await getObjectiveReadiness(repository, studentId, objective.id);
       if (readiness.state !== 'READY') await addPrerequisiteSupport(objective.id);
       if (readiness.state !== 'BLOCKED') await addCandidate(objective.id, 'NEXT_IN_SEQUENCE');
       break;

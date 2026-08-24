@@ -14,14 +14,15 @@ const student: StudentProfile = {
 };
 
 function candidate(overrides: Partial<LearningCandidate> & Pick<LearningCandidate, 'objectiveId' | 'reason'>): LearningCandidate {
+  const { objectiveId, reason, ...rest } = overrides;
   return {
-    objectiveId: overrides.objectiveId,
-    reason: overrides.reason,
+    objectiveId,
+    reason,
     readiness: 'READY',
     mastery: 'NOT_STARTED',
     reviewDue: false,
     curriculumOrder: 0,
-    ...overrides,
+    ...rest,
   };
 }
 

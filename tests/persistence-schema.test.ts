@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { getTableName } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -33,8 +33,11 @@ describe('Phase 3 persistence schema', () => {
     ]);
   });
 
-  it('commits a migration without mutable mastery/readiness persistence', () => {
-    const sql = readFileSync(join(process.cwd(), 'migrations/0000_phase3_learning_and_planning.sql'), 'utf8');
+  it('commits generated migration SQL without mutable mastery/readiness persistence', () => {
+    const migrationsDir = join(process.cwd(), 'migrations');
+    const sqlFiles = readdirSync(migrationsDir).filter((name) => name.endsWith('.sql')).sort();
+    expect(sqlFiles.length).toBeGreaterThan(0);
+    const sql = sqlFiles.map((name) => readFileSync(join(migrationsDir, name), 'utf8')).join('\n');
     expect(sql).toContain('CREATE TABLE "students"');
     expect(sql).toContain('CREATE TABLE "evidence_records"');
     expect(sql).toContain('CREATE TABLE "weekly_plans"');
