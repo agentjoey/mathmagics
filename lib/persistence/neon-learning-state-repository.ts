@@ -110,6 +110,17 @@ export class NeonLearningStateRepository implements LearningStateRepository {
     });
   }
 
+  async getEvidence(evidenceId: string): Promise<EvidenceRecord | undefined> {
+    const [row] = await this.db.select().from(evidenceRecords)
+      .where(eq(evidenceRecords.id, evidenceId)).limit(1);
+    if (!row) return undefined;
+    const record = toEvidence(row);
+    const student = await this.getStudent(record.studentId);
+    if (!student) throw new Error(`Unknown student id: ${record.studentId}`);
+    assertValidEvidenceRecord(student, record);
+    return record;
+  }
+
   async appendEvidence(record: EvidenceRecord): Promise<void> {
     const [existing] = await this.db.select({ id: evidenceRecords.id }).from(evidenceRecords)
       .where(eq(evidenceRecords.id, record.id)).limit(1);

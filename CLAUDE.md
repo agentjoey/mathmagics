@@ -11,29 +11,24 @@ cat .agent/CURRENT.md
 
 MathMagics is a Singapore Math home-education AI learning system / teaching copilot for families.
 
-Primary users:
-- Parent / Tutor
-- Student
+V1 curriculum scope: Singapore Primary Mathematics P2/P3.
 
-V1 curriculum scope:
-- Singapore Primary Mathematics
-- Primary 2 and Primary 3
+Core loop: `Plan → Learn → Practice → Correct → Track → Adapt`.
 
-Core loop:
-
-`Plan → Learn → Practice → Correct → Track → Adapt`
-
-Legacy Q05/Q18 remain only as teaching-engine fixtures. They are not the current product scope.
+Legacy Q05/Q18 remain only as teaching-engine fixtures.
 
 ## Architecture authority
 
 - Curriculum truth lives in version-controlled Phase 1 curriculum data.
 - Learning history is append-only `EvidenceRecord` data.
-- Mastery and prerequisite readiness are deterministic derived state, never mutable database facts.
-- Phase 3 planning is deterministic and explainable: `LearningPosition → LearningCandidate → WeeklyPlan → DailyLesson`.
-- Lesson execution is append-only `LessonExecutionEvent` history projected into state.
-- AI receives trusted `LessonPreparationContext`; it may write teaching prose/examples but cannot change curriculum, objective IDs, mastery, readiness, or evidence.
-- `PracticeSession` / `Attempt` remain Phase 4; `Mistake` remains Phase 6.
+- Mastery and readiness are deterministic derived state, never mutable database facts.
+- Phase 3 planning is deterministic: `LearningPosition → LearningCandidate → WeeklyPlan → DailyLesson`.
+- Phase 4 practice is deterministic: `DailyLesson → PracticePreparationContext → PracticeItem → Attempt → EvidenceRecord`.
+- Practice mathematical truth lives in typed code-owned `problemSpec` / `AnswerSpec`; AI does not own answer keys or grades.
+- Hint use comes from append-only server-observed `PracticeHintReveal`, never client input.
+- Attempts are immutable and retries preserve linear provenance; wrong Attempts are never overwritten.
+- AI may prepare teaching/rendering prose inside narrow trusted boundaries but cannot change curriculum, objective IDs, mathematical structure, grades, Evidence, Mastery or Readiness.
+- Homework Vision is Phase 5; persistent `Mistake` remains Phase 6.
 
 ## Tech stack
 
@@ -42,29 +37,41 @@ Legacy Q05/Q18 remain only as teaching-engine fixtures. They are not the current
 | App | Next.js 16 App Router + React 19 + TypeScript |
 | Runtime | Node.js Functions |
 | Curriculum | Version-controlled JSON + deterministic loaders/queries |
-| Learning core | TypeScript domain modules + repository boundary |
-| Planner | Deterministic `lib/planning` domain core |
+| Learning core | `lib/learning` derived-state domain |
+| Planner | deterministic `lib/planning` domain |
+| Practice | deterministic `lib/practice` domain + repository boundary |
 | Persistence | Neon PostgreSQL + Drizzle ORM / Drizzle Kit |
 | AI | MiniMax M2.7-highspeed through existing Anthropic-compatible adapter |
-| Auth | Signed stateless `mm_session` via `proxy.ts`; cookie never contains `SITE_PASSWORD` |
+| Auth | signed stateless `mm_session` via `proxy.ts` |
 | Deploy | Vercel `sin1` + Neon Singapore |
 | Tests | Vitest |
 
 ## Hard boundaries
 
-- Do not add mutable `setMastery` or persisted mastery/readiness state.
-- Do not let `lib/planning` import Drizzle, Neon, Next.js request objects, or LLM SDKs.
+- Do not add mutable `setMastery`, Evidence update/delete, or persisted mastery/readiness state.
+- Do not let `lib/planning` or `lib/practice` import Drizzle, Neon, Next.js request objects, or LLM SDKs.
 - Do not copy curriculum truth into Postgres.
-- Do not make AI select/reorder curriculum objectives autonomously.
-- Do not use production `DATABASE_URL` for tests. Neon integration tests require `TEST_DATABASE_URL` explicitly.
-- Do not auto-migrate the production database during app startup or Vercel Preview builds.
-- Do not introduce Redis, queues, workers, object storage, microservices, or vector search without a new approved need.
+- Do not let AI select/reorder curriculum objectives, create answer keys, grade Attempts, or choose Evidence types.
+- Do not expose server `problemSpec`, `answerSpec`, solution outline or unrevealed hint in the pre-answer student projection.
+- Do not accept client-supplied Attempt outcome, hintUsed, objectiveId, timestamps or Evidence type.
+- Unsupported practice objectives fail closed; never fall back to unrestricted AI question generation.
+- Do not use production `DATABASE_URL` for tests. Live repository tests require explicit `TEST_DATABASE_URL`.
+- Do not auto-migrate production during app startup or Vercel Preview builds.
+- Do not introduce Redis, queues, workers, object storage, microservices or vector search without a newly approved need.
+
+## Persistence facts
+
+Phase 3 tables:
+`students`, `current_positions`, `evidence_records`, `weekly_plans`, `daily_lessons`, `lesson_execution_events`, `lesson_briefs`.
+
+Phase 4 adds only:
+`practice_sessions`, `practice_items`, `practice_hint_reveals`, `attempts`.
+
+Generated migrations are committed. Running them against any real database is a separate explicit activation step.
 
 ## Secrets
 
-Local secrets remain in macOS Keychain and must never be committed. Production/Preview secrets are configured in Vercel with environment separation.
-
-Phase 3 environment names:
+Production/Preview secrets are configured with environment separation:
 
 ```text
 MINIMAX_API_KEY
@@ -73,7 +80,7 @@ SESSION_SECRET
 DATABASE_URL
 ```
 
-Optional integration-test-only variable:
+Integration-test-only:
 
 ```text
 TEST_DATABASE_URL
@@ -91,13 +98,13 @@ npm run build
 npm run db:generate
 ```
 
-Real provider smoke tests require credentials/network and are not part of the default unit suite.
+Never run `db:migrate` as an incidental implementation step.
 
 ## Source docs
 
 - Current status: `.agent/CURRENT.md`
 - Product backlog: `.agent/BACKLOG.md`
-- Architecture summary: `docs/architecture.md`
-- Deployment/runbook: `docs/deployment.md`
-- Phase 3 approved design: `docs/superpowers/specs/2026-08-24-mathmagics-phase3-teaching-planner-and-persistence-design.md`
-- Phase 3 implementation plan: `docs/superpowers/plans/2026-08-24-mathmagics-phase3-teaching-planner.md`
+- Architecture: `docs/architecture.md`
+- Deployment: `docs/deployment.md`
+- Phase 4 design: `docs/superpowers/specs/2026-08-25-mathmagics-phase4-practice-attempt-design.md`
+- Phase 4 implementation plan: `docs/superpowers/plans/2026-08-25-mathmagics-phase4-practice-attempt.md`

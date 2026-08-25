@@ -1,4 +1,5 @@
 import {
+  boolean,
   date,
   index,
   integer,
@@ -8,7 +9,9 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import type { GeneratedLessonBriefContent, PlanningRationale } from '@/lib/planning';
+import type { AnswerSpec, PracticeProblemSpec } from '@/lib/practice';
 
 const instant = (name: string) => timestamp(name, { withTimezone: true, mode: 'string' });
 
@@ -100,4 +103,68 @@ export const lessonBriefs = pgTable('lesson_briefs', {
   createdAt: instant('created_at').notNull(),
 }, (table) => [
   index('lesson_brief_order_idx').on(table.lessonId, table.createdAt, table.id),
+]);
+
+export const practiceSessions = pgTable('practice_sessions', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  lessonId: text('lesson_id').notNull().references(() => dailyLessons.id, { onDelete: 'cascade' }),
+  objectiveId: text('objective_id').notNull(),
+  policyVersion: text('policy_version').notNull(),
+  createdAt: instant('created_at').notNull(),
+}, (table) => [
+  uniqueIndex('practice_session_lesson_objective_uq').on(table.lessonId, table.objectiveId),
+]);
+
+export const practiceItems = pgTable('practice_items', {
+  id: text('id').primaryKey(),
+  sessionId: text('session_id').notNull().references(() => practiceSessions.id, { onDelete: 'cascade' }),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  objectiveId: text('objective_id').notNull(),
+  sequence: integer('sequence').notNull(),
+  difficultyBand: text('difficulty_band').notNull(),
+  problemSpec: jsonb('problem_spec').$type<PracticeProblemSpec>().notNull(),
+  prompt: text('prompt').notNull(),
+  answerSpec: jsonb('answer_spec').$type<AnswerSpec>().notNull(),
+  hint: text('hint'),
+  solutionOutline: jsonb('solution_outline').$type<string[]>().notNull(),
+  generator: text('generator').notNull(),
+  generatorVersion: text('generator_version').notNull(),
+  createdAt: instant('created_at').notNull(),
+}, (table) => [
+  uniqueIndex('practice_item_session_sequence_uq').on(table.sessionId, table.sequence),
+]);
+
+export const practiceHintReveals = pgTable('practice_hint_reveals', {
+  id: text('id').primaryKey(),
+  sessionId: text('session_id').notNull().references(() => practiceSessions.id, { onDelete: 'cascade' }),
+  itemId: text('item_id').notNull().references(() => practiceItems.id, { onDelete: 'cascade' }),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  revealedAt: instant('revealed_at').notNull(),
+}, (table) => [
+  uniqueIndex('practice_hint_student_item_uq').on(table.studentId, table.itemId),
+]);
+
+export const attempts = pgTable('attempts', {
+  id: text('id').primaryKey(),
+  sessionId: text('session_id').notNull().references(() => practiceSessions.id, { onDelete: 'cascade' }),
+  itemId: text('item_id').notNull().references(() => practiceItems.id, { onDelete: 'cascade' }),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  objectiveId: text('objective_id').notNull(),
+  answerText: text('answer_text').notNull(),
+  outcome: text('outcome').notNull(),
+  hintUsed: boolean('hint_used').notNull(),
+  retryOfAttemptId: text('retry_of_attempt_id').references((): AnyPgColumn => attempts.id),
+  gradingPolicyVersion: text('grading_policy_version').notNull(),
+  submittedAt: instant('submitted_at').notNull(),
+  recordedAt: instant('recorded_at').notNull(),
+}, (table) => [
+  uniqueIndex('attempt_retry_parent_uq').on(table.retryOfAttemptId),
+  index('attempt_item_order_idx').on(table.itemId, table.submittedAt, table.id),
+  index('attempt_student_objective_order_idx').on(
+    table.studentId,
+    table.objectiveId,
+    table.submittedAt,
+    table.id,
+  ),
 ]);
