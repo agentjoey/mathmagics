@@ -1,8 +1,8 @@
 # Current Status — MathMagics
 
-Version:        v0.4.0-dev
-Phase:          Phase 3 — Teaching Planner / Lesson Prep
-Phase Status:   ✅ Completed (PR pending)
+Version:        v0.5.0-dev
+Phase:          Phase 4 — Practice / Attempt Core
+Phase Status:   🟡 In Progress
 Last Updated:   2026-08-25 by agent
 
 ## Product Positioning
@@ -44,11 +44,13 @@ Completed learning-state authority boundary:
 - ✅ Sticky mastery with post-mastery `reviewDue`; no mutable `setMastery` path.
 - ✅ Deterministic `READY`, `NEEDS_SUPPORT`, `BLOCKED` prerequisite readiness.
 - ✅ Storage-agnostic asynchronous `LearningStateRepository` contract and memory adapter.
-- ✅ `Attempt` remains deferred to Phase 4; `Mistake` remains deferred to Phase 6.
+- ✅ `Attempt` is owned by Phase 4; `Mistake` remains deferred to Phase 6.
 
 ## Phase 3 — Teaching Planner / Lesson Prep
 
-**Completed implementation:**
+**✅ Completed / Merged — PR #3, merge `9660870a996b07b165353eaf53a8fd41a971b0b5`.**
+
+Completed implementation:
 - ✅ Household auth hardened from password-in-cookie to stateless HMAC-signed `mm_session`; `SITE_PASSWORD` remains server-only.
 - ✅ Next.js 16 access guard migrated from deprecated `middleware.ts` to `proxy.ts`.
 - ✅ Deterministic `LearningPosition` derived from Student Profile, manual current position, curriculum order and Evidence-derived state.
@@ -110,22 +112,22 @@ Host exact-code verification at commit `3f5968fb1b050177dcaad4b83b59841bba62d23f
 - ✅ `npm run validate:curriculum`: 25 nodes, 68 objectives (P2=32, P3=36), 18 textbook mappings.
 - ✅ `npm run build`: Next.js 16.2.6 production build compiled, typechecked, generated pages and finalized successfully.
 
-## Next Phase
-
-**Phase 4 — Practice / Attempt Core**
+## Current Phase — Phase 4 Practice / Attempt Core
 
 Primary scope:
-- introduce `PracticeSession` and immutable `Attempt` records;
-- generate objective-aligned practice using existing curriculum/planner contracts;
-- convert validated practice outcomes into Phase 2 `EvidenceRecord`s through explicit rules;
+- introduce `PracticeSession`, structured `PracticeItem`, server-observed hint reveal facts, and immutable `Attempt` records;
+- generate objective-aligned deterministic practice using existing curriculum/planner contracts;
+- convert validated practice outcomes into Phase 2 `EvidenceRecord`s through explicit replay-safe rules;
 - keep raw wrong Attempts separate from persistent Mistake/misconception confirmation;
 - preserve deterministic mastery authority and existing repository boundaries.
+
+Phase 4 implementation is in progress. No MM-P4 backlog item is marked complete until its verified slice lands.
 
 Homework image/OCR remains Phase 5. Persistent `Mistake` lifecycle remains Phase 6.
 
 ## Known Non-blocking Technical Debt / Gates
 
 - Self-host/package Geist fonts if sandbox production builds need to be network-independent.
-- `npm install` with Drizzle tooling reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental feature work.
+- `npm ci` reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental feature work.
 - Neon live repository contract remains intentionally gated on explicit `TEST_DATABASE_URL` and must pass before first real durable-data activation.
 - Multi-household identity/tenancy is deliberately deferred; V1 remains single-household signed-session access.
