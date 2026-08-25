@@ -12,6 +12,14 @@ export type { RetryCoordinates } from './hints';
 export { MemoryPracticeRepository } from './memory-repository';
 export { buildPracticePreparationContext } from './preparation';
 export type { PracticePreparationContext } from './preparation';
+export {
+  PassthroughPracticeContentRenderer,
+} from './renderer';
+export type {
+  LockedPracticeRenderInput,
+  PracticeContentRenderer,
+  RenderedPracticeContent,
+} from './renderer';
 export type { PracticeRepository } from './repository';
 export { PracticeServiceImpl } from './service';
 export type { PracticeIdFactory, PracticeService } from './service';
