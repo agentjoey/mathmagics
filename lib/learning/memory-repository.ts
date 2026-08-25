@@ -42,6 +42,11 @@ export class MemoryLearningStateRepository implements LearningStateRepository {
     this.positions.set(position.studentId, clonePosition(position));
   }
 
+  async getEvidence(evidenceId: string): Promise<EvidenceRecord | undefined> {
+    const record = this.evidence.find((candidate) => candidate.id === evidenceId);
+    return record ? cloneEvidence(record) : undefined;
+  }
+
   async appendEvidence(record: EvidenceRecord): Promise<void> {
     if (this.evidenceIds.has(record.id)) throw new Error(`Duplicate evidence id: ${record.id}`);
     const student = this.students.get(record.studentId);

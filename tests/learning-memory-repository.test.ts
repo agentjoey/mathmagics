@@ -52,12 +52,14 @@ describe('MemoryLearningStateRepository', () => {
     expect(await repository.getCurrentPosition(student.id)).toEqual(position);
   });
 
-  it('appends and lists evidence by student and objective', async () => {
+  it('appends, gets, and lists evidence by student and objective', async () => {
     const repository = new MemoryLearningStateRepository();
     await repository.saveStudent(student);
     await repository.appendEvidence(evidence('e1'));
     await repository.appendEvidence(evidence('e2', 'P2-FRA-003'));
 
+    expect(await repository.getEvidence('e1')).toEqual(evidence('e1'));
+    expect(await repository.getEvidence('missing')).toBeUndefined();
     expect((await repository.listEvidenceForStudent(student.id)).map((item) => item.id)).toEqual(['e1', 'e2']);
     expect((await repository.listEvidenceForObjective(student.id, 'P2-FRA-003')).map((item) => item.id)).toEqual(['e2']);
   });
@@ -100,9 +102,9 @@ describe('MemoryLearningStateRepository', () => {
     await repository.saveStudent(student);
     await repository.appendEvidence(evidence('e1'));
 
-    const returned = await repository.listEvidenceForStudent(student.id);
-    returned[0]!.origin.refId = 'tampered';
-    const reread = await repository.listEvidenceForStudent(student.id);
-    expect(reread[0]!.origin.refId).toBe('lesson-1');
+    const returned = await repository.getEvidence('e1');
+    if (!returned) throw new Error('fixture missing');
+    returned.origin.refId = 'tampered';
+    expect((await repository.getEvidence('e1'))?.origin.refId).toBe('lesson-1');
   });
 });
