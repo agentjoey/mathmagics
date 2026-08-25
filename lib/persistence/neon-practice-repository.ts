@@ -20,6 +20,8 @@ import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
 import {
   attempts,
+  homeworkProblems,
+  homeworkSubmissions,
   practiceHintReveals,
   practiceItems,
   practiceSessions,
@@ -72,10 +74,27 @@ function toReveal(row: typeof practiceHintReveals.$inferSelect): PracticeHintRev
 }
 
 function toAttempt(row: typeof attempts.$inferSelect): Attempt {
+  let source: Attempt['source'];
+  if (row.sourceKind === 'PRACTICE') {
+    if (!row.sessionId || !row.itemId || row.homeworkSubmissionId || row.homeworkProblemId) {
+      throw new Error('persisted PRACTICE attempt has invalid source coordinates');
+    }
+    source = { kind: 'PRACTICE', sessionId: row.sessionId, itemId: row.itemId };
+  } else if (row.sourceKind === 'HOMEWORK') {
+    if (row.sessionId || row.itemId || !row.homeworkSubmissionId || !row.homeworkProblemId) {
+      throw new Error('persisted HOMEWORK attempt has invalid source coordinates');
+    }
+    source = {
+      kind: 'HOMEWORK',
+      submissionId: row.homeworkSubmissionId,
+      problemId: row.homeworkProblemId,
+    };
+  } else {
+    throw new Error(`persisted attempt source kind is unsupported: ${row.sourceKind}`);
+  }
   const attempt: Attempt = {
     id: row.id,
-    sessionId: row.sessionId,
-    itemId: row.itemId,
+    source,
     studentId: row.studentId,
     objectiveId: row.objectiveId,
     answerText: row.answerText,
@@ -98,6 +117,25 @@ function coordinatesMatchItem(
     && record.itemId === item.id
     && record.studentId === item.studentId
     && (record.objectiveId === undefined || record.objectiveId === item.objectiveId);
+}
+
+function attemptCoordinatesMatchItem(attempt: Attempt, item: PracticeItem): boolean {
+  return attempt.source.kind === 'PRACTICE'
+    && attempt.source.sessionId === item.sessionId
+    && attempt.source.itemId === item.id
+    && attempt.studentId === item.studentId
+    && attempt.objectiveId === item.objectiveId;
+}
+
+function sameAttemptSource(left: Attempt, right: Attempt): boolean {
+  if (left.source.kind !== right.source.kind) return false;
+  if (left.source.kind === 'PRACTICE' && right.source.kind === 'PRACTICE') {
+    return left.source.sessionId === right.source.sessionId && left.source.itemId === right.source.itemId;
+  }
+  if (left.source.kind === 'HOMEWORK' && right.source.kind === 'HOMEWORK') {
+    return left.source.submissionId === right.source.submissionId && left.source.problemId === right.source.problemId;
+  }
+  return false;
 }
 
 export class NeonPracticeRepository implements PracticeRepository {
@@ -221,23 +259,49 @@ export class NeonPracticeRepository implements PracticeRepository {
     const [sameId] = await this.db.select({ id: attempts.id }).from(attempts)
       .where(eq(attempts.id, attempt.id)).limit(1);
     if (sameId) throw new Error('attempt id already exists');
-    const item = await this.getPracticeItem(attempt.itemId);
-    if (!item) throw new Error(`Unknown practice item id: ${attempt.itemId}`);
-    if (!coordinatesMatchItem(attempt, item)) throw new Error('attempt coordinates must match practice item');
-    if (Date.parse(attempt.submittedAt) < Date.parse(item.createdAt)) {
-      throw new Error('attempt submittedAt must not precede practice item createdAt');
+
+    if (attempt.source.kind === 'PRACTICE') {
+      const item = await this.getPracticeItem(attempt.source.itemId);
+      if (!item) throw new Error(`Unknown practice item id: ${attempt.source.itemId}`);
+      if (!attemptCoordinatesMatchItem(attempt, item)) throw new Error('attempt coordinates must match practice item');
+      if (Date.parse(attempt.submittedAt) < Date.parse(item.createdAt)) {
+        throw new Error('attempt submittedAt must not precede practice item createdAt');
+      }
+    } else {
+      const [problem] = await this.db.select({
+        id: homeworkProblems.id,
+        submissionId: homeworkProblems.submissionId,
+        studentId: homeworkProblems.studentId,
+      }).from(homeworkProblems).where(eq(homeworkProblems.id, attempt.source.problemId)).limit(1);
+      if (!problem) throw new Error(`Unknown homework problem id: ${attempt.source.problemId}`);
+      if (problem.submissionId !== attempt.source.submissionId || problem.studentId !== attempt.studentId) {
+        throw new Error('attempt coordinates must match homework problem');
+      }
+      const [submission] = await this.db.select({ studentId: homeworkSubmissions.studentId })
+        .from(homeworkSubmissions).where(eq(homeworkSubmissions.id, attempt.source.submissionId)).limit(1);
+      if (!submission || submission.studentId !== attempt.studentId) {
+        throw new Error('attempt coordinates must match homework submission');
+      }
     }
+
     if (attempt.retryOfAttemptId) {
       const parent = await this.getAttempt(attempt.retryOfAttemptId);
       if (!parent) throw new Error('retry parent does not exist');
+      if (!sameAttemptSource(parent, attempt) || parent.studentId !== attempt.studentId || parent.objectiveId !== attempt.objectiveId) {
+        throw new Error('retry parent coordinates must match attempt');
+      }
       const [existingChild] = await this.db.select({ id: attempts.id }).from(attempts)
         .where(eq(attempts.retryOfAttemptId, attempt.retryOfAttemptId)).limit(1);
       if (existingChild) throw new Error('retry parent already has a retry child');
     }
+
     await this.db.insert(attempts).values({
       id: attempt.id,
-      sessionId: attempt.sessionId,
-      itemId: attempt.itemId,
+      sourceKind: attempt.source.kind,
+      sessionId: attempt.source.kind === 'PRACTICE' ? attempt.source.sessionId : null,
+      itemId: attempt.source.kind === 'PRACTICE' ? attempt.source.itemId : null,
+      homeworkSubmissionId: attempt.source.kind === 'HOMEWORK' ? attempt.source.submissionId : null,
+      homeworkProblemId: attempt.source.kind === 'HOMEWORK' ? attempt.source.problemId : null,
       studentId: attempt.studentId,
       objectiveId: attempt.objectiveId,
       answerText: attempt.answerText,
@@ -252,14 +316,14 @@ export class NeonPracticeRepository implements PracticeRepository {
 
   async listAttemptsForItem(itemId: string): Promise<Attempt[]> {
     const rows = await this.db.select().from(attempts)
-      .where(eq(attempts.itemId, itemId))
+      .where(and(eq(attempts.sourceKind, 'PRACTICE'), eq(attempts.itemId, itemId)))
       .orderBy(asc(attempts.submittedAt), asc(attempts.recordedAt), asc(attempts.id));
     return rows.map(toAttempt);
   }
 
   async listAttemptsForSession(sessionId: string): Promise<Attempt[]> {
     const rows = await this.db.select().from(attempts)
-      .where(eq(attempts.sessionId, sessionId))
+      .where(and(eq(attempts.sourceKind, 'PRACTICE'), eq(attempts.sessionId, sessionId)))
       .orderBy(asc(attempts.submittedAt), asc(attempts.recordedAt), asc(attempts.id));
     return rows.map(toAttempt);
   }

@@ -11,7 +11,11 @@ const coordinates: RetryCoordinates = {
 
 function attempt(id: string, outcome: Attempt['outcome'], submittedAt: string, overrides: Partial<Attempt> = {}): Attempt {
   return {
-    id, ...coordinates, answerText: outcome === 'CORRECT' ? '6' : '5', outcome, hintUsed: false,
+    id,
+    source: { kind: 'PRACTICE', sessionId: coordinates.sessionId, itemId: coordinates.itemId },
+    studentId: coordinates.studentId,
+    objectiveId: coordinates.objectiveId,
+    answerText: outcome === 'CORRECT' ? '6' : '5', outcome, hintUsed: false,
     gradingPolicyVersion: 'grading-v1', submittedAt, recordedAt: submittedAt, ...overrides,
   };
 }

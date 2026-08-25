@@ -16,7 +16,7 @@ const item: PracticeItem = {
 
 function attempt(overrides: Partial<Attempt> = {}): Attempt {
   return {
-    id: 'attempt-1', sessionId: item.sessionId, itemId: item.id, studentId: item.studentId,
+    id: 'attempt-1', source: { kind: 'PRACTICE', sessionId: item.sessionId, itemId: item.id }, studentId: item.studentId,
     objectiveId: item.objectiveId, answerText: '6', outcome: 'CORRECT', hintUsed: false,
     gradingPolicyVersion: 'grading-v1', submittedAt: '2026-08-25T00:01:00.000Z',
     recordedAt: '2026-08-25T00:01:00.000Z', ...overrides,

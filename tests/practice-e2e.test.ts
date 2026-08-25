@@ -171,7 +171,7 @@ describe('Phase 4 practice / Attempt end-to-end', () => {
     if (!item) throw new Error('missing generated item');
     const answer = answerText(item.answerSpec);
     const seeded: Attempt = {
-      id: 'repair-e2e', sessionId: session.id, itemId: item.id, studentId: session.studentId,
+      id: 'repair-e2e', source: { kind: 'PRACTICE', sessionId: session.id, itemId: item.id }, studentId: session.studentId,
       objectiveId: session.objectiveId, answerText: answer, outcome: 'CORRECT', hintUsed: false,
       gradingPolicyVersion: 'grading-v1', submittedAt: '2026-08-25T01:02:00.000Z', recordedAt: '2026-08-25T01:02:00.000Z',
     };

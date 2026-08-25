@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   date,
   index,
   integer,
@@ -10,6 +12,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
+import type { HomeworkProblemExtraction } from '@/lib/homework';
 import type { GeneratedLessonBriefContent, PlanningRationale } from '@/lib/planning';
 import type { AnswerSpec, PracticeProblemSpec } from '@/lib/practice';
 
@@ -145,10 +148,53 @@ export const practiceHintReveals = pgTable('practice_hint_reveals', {
   uniqueIndex('practice_hint_student_item_uq').on(table.studentId, table.itemId),
 ]);
 
+export const homeworkSubmissions = pgTable('homework_submissions', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  sourceSha256: text('source_sha256').notNull(),
+  mimeType: text('mime_type').notNull(),
+  byteLength: integer('byte_length').notNull(),
+  provider: text('provider').notNull(),
+  model: text('model').notNull(),
+  schemaVersion: text('schema_version').notNull(),
+  createdAt: instant('created_at').notNull(),
+}, (table) => [
+  uniqueIndex('homework_submission_student_hash_uq').on(table.studentId, table.sourceSha256),
+  index('homework_submission_student_order_idx').on(table.studentId, table.createdAt, table.id),
+]);
+
+export const homeworkProblems = pgTable('homework_problems', {
+  id: text('id').primaryKey(),
+  submissionId: text('submission_id').notNull().references(() => homeworkSubmissions.id, { onDelete: 'cascade' }),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  sequence: integer('sequence').notNull(),
+  extraction: jsonb('extraction').$type<HomeworkProblemExtraction>().notNull(),
+  trustPolicyVersion: text('trust_policy_version').notNull(),
+  createdAt: instant('created_at').notNull(),
+}, (table) => [
+  uniqueIndex('homework_problem_submission_sequence_uq').on(table.submissionId, table.sequence),
+  index('homework_problem_submission_order_idx').on(table.submissionId, table.sequence, table.id),
+]);
+
+export const homeworkConfirmations = pgTable('homework_confirmations', {
+  id: text('id').primaryKey(),
+  problemId: text('problem_id').notNull().references(() => homeworkProblems.id, { onDelete: 'cascade' }),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  corrections: jsonb('corrections').$type<Record<string, string>>().notNull(),
+  confirmerRole: text('confirmer_role').notNull(),
+  policyVersion: text('policy_version').notNull(),
+  confirmedAt: instant('confirmed_at').notNull(),
+}, (table) => [
+  index('homework_confirmation_problem_order_idx').on(table.problemId, table.confirmedAt, table.id),
+]);
+
 export const attempts = pgTable('attempts', {
   id: text('id').primaryKey(),
-  sessionId: text('session_id').notNull().references(() => practiceSessions.id, { onDelete: 'cascade' }),
-  itemId: text('item_id').notNull().references(() => practiceItems.id, { onDelete: 'cascade' }),
+  sourceKind: text('source_kind').notNull().default('PRACTICE'),
+  sessionId: text('session_id').references(() => practiceSessions.id, { onDelete: 'cascade' }),
+  itemId: text('item_id').references(() => practiceItems.id, { onDelete: 'cascade' }),
+  homeworkSubmissionId: text('homework_submission_id').references(() => homeworkSubmissions.id, { onDelete: 'cascade' }),
+  homeworkProblemId: text('homework_problem_id').references(() => homeworkProblems.id, { onDelete: 'cascade' }),
   studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
   objectiveId: text('objective_id').notNull(),
   answerText: text('answer_text').notNull(),
@@ -159,8 +205,24 @@ export const attempts = pgTable('attempts', {
   submittedAt: instant('submitted_at').notNull(),
   recordedAt: instant('recorded_at').notNull(),
 }, (table) => [
+  check('attempt_source_coordinates_ck', sql`
+    (
+      ${table.sourceKind} = 'PRACTICE'
+      AND ${table.sessionId} IS NOT NULL
+      AND ${table.itemId} IS NOT NULL
+      AND ${table.homeworkSubmissionId} IS NULL
+      AND ${table.homeworkProblemId} IS NULL
+    ) OR (
+      ${table.sourceKind} = 'HOMEWORK'
+      AND ${table.sessionId} IS NULL
+      AND ${table.itemId} IS NULL
+      AND ${table.homeworkSubmissionId} IS NOT NULL
+      AND ${table.homeworkProblemId} IS NOT NULL
+    )
+  `),
   uniqueIndex('attempt_retry_parent_uq').on(table.retryOfAttemptId),
   index('attempt_item_order_idx').on(table.itemId, table.submittedAt, table.id),
+  index('attempt_homework_problem_order_idx').on(table.homeworkProblemId, table.submittedAt, table.id),
   index('attempt_student_objective_order_idx').on(
     table.studentId,
     table.objectiveId,

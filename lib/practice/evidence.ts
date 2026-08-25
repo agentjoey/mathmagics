@@ -6,8 +6,9 @@ export function evidenceIdForAttempt(attemptId: string): string {
 }
 
 function coordinatesMatch(attempt: Attempt, item: PracticeItem): boolean {
-  return attempt.itemId === item.id
-    && attempt.sessionId === item.sessionId
+  return attempt.source.kind === 'PRACTICE'
+    && attempt.source.itemId === item.id
+    && attempt.source.sessionId === item.sessionId
     && attempt.studentId === item.studentId
     && attempt.objectiveId === item.objectiveId;
 }
@@ -26,6 +27,9 @@ export function projectAttemptToEvidence(
   attempt: Attempt,
   item: PracticeItem,
 ): EvidenceRecord {
+  if (attempt.source.kind !== 'PRACTICE') {
+    throw new Error('practice evidence requires a PRACTICE attempt source');
+  }
   if (!coordinatesMatch(attempt, item)) {
     throw new Error('attempt and practice item coordinates must match');
   }

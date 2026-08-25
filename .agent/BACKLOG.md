@@ -4,21 +4,13 @@
 
 ## 🔴 HIGH — Next Phase
 
-### Phase 5: Homework Vision
-- [ ] Define trusted homework-image intake contract and retention boundary before selecting object storage.
-- [ ] Implement worksheet/photo question extraction with per-field confidence and original-region provenance.
-- [ ] Implement answer/handwriting extraction with explicit low-confidence confirmation flow.
-- [ ] Map extracted problems to a LearningObjective before any deterministic grading or Evidence projection.
-- [ ] Reuse Phase 4 grading/Attempt/Evidence authority where the extracted problem is deterministically gradable; fail closed otherwise.
-- [ ] Add P2/P3 end-to-end homework scenarios including low-confidence and unsupported cases.
-
-## 🟡 MED — Approved Roadmap
-
 ### Phase 6: Correction + Mistake Book
 - [ ] Introduce `Mistake` lifecycle: `OBSERVED → CONFIRMED → CORRECTING → RESOLVED`.
 - [ ] Guided correction: diagnose → Socratic hint → retry → explanation → evidence.
 - [ ] Allow Mistakes to reference Attempts/Evidence without replacing the evidence ledger.
 - [ ] Automatic misconception aggregation; no manual screenshot-style mistake collection.
+
+## 🟡 MED — Approved Roadmap
 
 ### Phase 7: Progress + Adaptive Learning Loop
 - [ ] Separate Curriculum Coverage, Knowledge Mastery and Practice Performance.
@@ -32,7 +24,8 @@
 ## 🟢 LOW / Technical Debt / Activation Gates
 
 - [ ] Before first durable-data deployment, provision separated Neon development/Preview and production databases in Singapore.
-- [ ] Apply committed `0000` + `0001` Drizzle migrations against non-production first and pass both Neon contract suites with explicit `TEST_DATABASE_URL` before production promotion.
+- [ ] Apply committed `0000` + `0001` + `0002` Drizzle migrations against non-production first and pass learning/planning, practice and homework Neon contract suites with explicit `TEST_DATABASE_URL` before production promotion.
+- [ ] Decide whether to retain source homework images only when durable image review/history becomes a real product requirement; Phase 5 deliberately stores structured provenance only.
 - [ ] Decide whether to self-host/package Geist fonts so sandbox builds do not depend on Google Fonts network access.
 - [ ] Review npm audit findings separately; current toolchain install reports 13 findings (1 low, 4 moderate, 8 high). Do not use forced upgrades as incidental feature work.
 - [ ] Introduce multi-household User/Household/Membership identity only when the product leaves the single-household V1 boundary.
@@ -82,3 +75,13 @@
 - [x] [MM-P4-007] Added memory + Neon PracticeRepository persistence and Drizzle-generated `0001_fantastic_shocker.sql` for only the four approved practice fact tables.
 - [x] Optional renderer boundary carries presentation-only data and cannot alter math truth, grading, Evidence, Mastery or Readiness.
 - [x] Live Neon activation remains a separate explicit operational gate; no real database migration was executed during Phase 4 implementation.
+
+### Phase 5: Homework Vision
+- [x] Defined trusted JPEG/PNG/WebP homework-image intake, 10 MiB limit and non-durable raw-image retention boundary.
+- [x] Implemented worksheet/photo question and answer extraction contracts with per-field confidence and normalized source-region provenance.
+- [x] Implemented `homework-confidence-v1` with explicit low-confidence handwriting confirmation and append-only correction provenance.
+- [x] Implemented deterministic P2/P3 mathematical conversion and conservative LearningObjective mapping before grading/Evidence.
+- [x] Generalized the canonical immutable `Attempt` ledger to `PRACTICE | HOMEWORK`, reusing Phase 4 deterministic grading and source-aware Evidence projection; unsupported/ambiguous work fails closed.
+- [x] Added memory + Neon homework persistence and Drizzle-generated `0002_gorgeous_obadiah_stane.sql` with no raw-image storage.
+- [x] Added P2/P3 end-to-end homework scenarios for clear extraction, low confidence, incorrect answers, deduplication, unsupported structure and replay repair.
+- [x] Persistent `Mistake` remains intentionally deferred to Phase 6; no object storage, queue/worker or adaptive scoring was introduced.

@@ -15,6 +15,13 @@
       "when": 1787635933888,
       "tag": "0001_fantastic_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787646418808,
+      "tag": "0002_gorgeous_obadiah_stane",
+      "breakpoints": true
     }
   ]
 }

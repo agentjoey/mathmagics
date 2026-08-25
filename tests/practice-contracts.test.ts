@@ -45,8 +45,7 @@ const item: PracticeItem = {
 
 const attempt: Attempt = {
   id: 'a1',
-  sessionId: 'ps-1',
-  itemId: 'pi-1',
+  source: { kind: 'PRACTICE', sessionId: 'ps-1', itemId: 'pi-1' },
   studentId: 's1',
   objectiveId: 'P2-MD-001',
   answerText: '6',

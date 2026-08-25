@@ -18,9 +18,10 @@ function compareAttempts(left: Attempt, right: Attempt): number {
 }
 
 function coordinatesMatch(attempt: Attempt, coordinates: RetryCoordinates): boolean {
-  return attempt.studentId === coordinates.studentId
-    && attempt.sessionId === coordinates.sessionId
-    && attempt.itemId === coordinates.itemId
+  return attempt.source.kind === 'PRACTICE'
+    && attempt.studentId === coordinates.studentId
+    && attempt.source.sessionId === coordinates.sessionId
+    && attempt.source.itemId === coordinates.itemId
     && attempt.objectiveId === coordinates.objectiveId;
 }
 
