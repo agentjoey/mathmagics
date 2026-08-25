@@ -1,3 +1,5 @@
+export { buildPracticePreparationContext } from './preparation';
+export type { PracticePreparationContext } from './preparation';
 export type {
   AnswerSpec,
   ArithmeticProblemSpec,
