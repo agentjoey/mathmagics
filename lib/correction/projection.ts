@@ -47,11 +47,30 @@ function hasCorrectionEvidence(
   input: MistakeProjectionInput,
   type: EvidenceRecord['type'],
 ): boolean {
-  return input.evidence.some((record) =>
-    record.studentId === input.mistake.studentId
-    && record.objectiveId === input.mistake.objectiveId
-    && record.origin.kind === 'CORRECTION'
-    && record.type === type);
+  return input.evidence.some((record) => {
+    if (
+      record.studentId !== input.mistake.studentId
+      || record.objectiveId !== input.mistake.objectiveId
+      || record.origin.kind !== 'CORRECTION'
+      || record.type !== type
+      || !record.origin.refId
+    ) {
+      return false;
+    }
+
+    if (type === 'explained_independently') {
+      return record.origin.refId === input.mistake.id;
+    }
+
+    if (type === 'corrected') {
+      return input.links.some((link) =>
+        link.mistakeId === input.mistake.id
+        && link.attemptId === record.origin.refId
+        && link.role === 'CORRECTION_RETRY');
+    }
+
+    return true;
+  });
 }
 
 function hasQualifyingTransferSuccess(input: MistakeProjectionInput): boolean {

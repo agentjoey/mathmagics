@@ -129,6 +129,13 @@ export class NeonMistakeRepository implements MistakeRepository {
     return row ? toMistake(row) : undefined;
   }
 
+  async listMistakesForStudent(studentId: string): Promise<Mistake[]> {
+    const rows = await this.db.select().from(mistakes)
+      .where(eq(mistakes.studentId, studentId))
+      .orderBy(asc(mistakes.firstObservedAt), asc(mistakes.id));
+    return rows.map(toMistake);
+  }
+
   async listMistakesForStudentObjective(studentId: string, objectiveId: string): Promise<Mistake[]> {
     const rows = await this.db.select().from(mistakes)
       .where(and(eq(mistakes.studentId, studentId), eq(mistakes.objectiveId, objectiveId)))

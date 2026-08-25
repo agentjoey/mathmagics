@@ -94,9 +94,19 @@ describe('Mistake lifecycle projection', () => {
   });
 
   test('requires corrected, independent reasoning, and qualifying transfer facts to resolve', () => {
+    const retryAttempt: Attempt = {
+      ...originalAttempt,
+      id: 'attempt-retry-1',
+      source: { kind: 'CORRECTION', mistakeId: mistake.id, correctionItemId: 'retry-item-1' },
+      answerText: '<',
+      outcome: 'CORRECT',
+      submittedAt: later,
+      recordedAt: later,
+    };
     const transferAttempt: Attempt = {
       ...originalAttempt,
       id: 'attempt-transfer-1',
+      source: { kind: 'CORRECTION', mistakeId: mistake.id, correctionItemId: 'correction-transfer-1' },
       answerText: '<',
       outcome: 'CORRECT',
       hintUsed: false,
@@ -127,14 +137,15 @@ describe('Mistake lifecycle projection', () => {
     };
     const base = input({
       events: [confirmed, started],
-      attempts: [originalAttempt, transferAttempt],
+      attempts: [originalAttempt, retryAttempt, transferAttempt],
       links: [
         { mistakeId: mistake.id, attemptId: originalAttempt.id, role: 'OBSERVATION', linkedAt: now },
+        { mistakeId: mistake.id, attemptId: retryAttempt.id, role: 'CORRECTION_RETRY', linkedAt: later },
         { mistakeId: mistake.id, attemptId: transferAttempt.id, role: 'TRANSFER', linkedAt: later },
       ],
       correctionItems: [transferItem],
     });
-    const corrected = evidence('ev-corrected', 'corrected', 'attempt-retry-1');
+    const corrected = evidence('ev-corrected', 'corrected', retryAttempt.id);
     const explained = evidence('ev-explained', 'explained_independently', mistake.id);
     const applied = evidence('ev-application', 'application_correct', transferAttempt.id);
 
@@ -207,10 +218,24 @@ describe('Mistake lifecycle projection', () => {
       }],
     });
 
-    // Mark the old episode as resolved through trusted correction Evidence facts.
-    const transferAttempt = { ...originalAttempt, id: 'attempt-old-transfer', outcome: 'CORRECT' as const, hintUsed: false };
-    resolvedInput.attempts.push(transferAttempt);
-    resolvedInput.links.push({ mistakeId: 'mistake-old', attemptId: transferAttempt.id, role: 'TRANSFER', linkedAt: later });
+    const oldRetryAttempt: Attempt = {
+      ...originalAttempt,
+      id: 'old-retry',
+      source: { kind: 'CORRECTION', mistakeId: 'mistake-old', correctionItemId: 'old-retry-item' },
+      outcome: 'CORRECT',
+    };
+    const transferAttempt: Attempt = {
+      ...originalAttempt,
+      id: 'attempt-old-transfer',
+      source: { kind: 'CORRECTION', mistakeId: 'mistake-old', correctionItemId: 'old-transfer-item' },
+      outcome: 'CORRECT' as const,
+      hintUsed: false,
+    };
+    resolvedInput.attempts.push(oldRetryAttempt, transferAttempt);
+    resolvedInput.links.push(
+      { mistakeId: 'mistake-old', attemptId: oldRetryAttempt.id, role: 'CORRECTION_RETRY', linkedAt: later },
+      { mistakeId: 'mistake-old', attemptId: transferAttempt.id, role: 'TRANSFER', linkedAt: later },
+    );
     resolvedInput.correctionItems.push({
       id: 'old-transfer-item', mistakeId: 'mistake-old', studentId: mistake.studentId, objectiveId: mistake.objectiveId,
       kind: 'TRANSFER', sourceAttemptId: 'attempt-old', transferRound: 1,
@@ -219,7 +244,7 @@ describe('Mistake lifecycle projection', () => {
       solutionOutline: [], generator: 'correction-transfer', generatorVersion: 'correction-transfer-v1', createdAt: later,
     });
     resolvedInput.evidence.push(
-      { ...evidence('old-corrected', 'corrected', 'old-retry'), studentId: mistake.studentId },
+      { ...evidence('old-corrected', 'corrected', oldRetryAttempt.id), studentId: mistake.studentId },
       { ...evidence('old-explained', 'explained_independently', 'mistake-old'), studentId: mistake.studentId },
       { ...evidence('old-application', 'application_correct', transferAttempt.id), studentId: mistake.studentId },
     );

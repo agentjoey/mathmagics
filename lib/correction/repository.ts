@@ -9,6 +9,7 @@ import type {
 export interface MistakeRepository {
   appendMistake(mistake: Mistake): Promise<void>;
   findMistake(id: string): Promise<Mistake | undefined>;
+  listMistakesForStudent(studentId: string): Promise<Mistake[]>;
   listMistakesForStudentObjective(studentId: string, objectiveId: string): Promise<Mistake[]>;
 
   appendAttemptLink(link: MistakeAttemptLink): Promise<void>;

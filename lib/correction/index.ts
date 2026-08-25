@@ -8,3 +8,4 @@ export * from './transfer';
 export * from './evidence';
 export * from './repository';
 export * from './memory-repository';
+export * from './service';

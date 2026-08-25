@@ -59,6 +59,13 @@ export class MemoryMistakeRepository implements MistakeRepository {
     return value ? clone(value) : undefined;
   }
 
+  async listMistakesForStudent(studentId: string): Promise<Mistake[]> {
+    return [...this.mistakes.values()]
+      .filter((mistake) => mistake.studentId === studentId)
+      .sort((left, right) => compareAt(left.firstObservedAt, left.id, right.firstObservedAt, right.id))
+      .map(clone);
+  }
+
   async listMistakesForStudentObjective(studentId: string, objectiveId: string): Promise<Mistake[]> {
     return [...this.mistakes.values()]
       .filter((mistake) => mistake.studentId === studentId && mistake.objectiveId === objectiveId)
