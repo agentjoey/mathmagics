@@ -29,11 +29,11 @@ describe('Phase 4 practice persistence schema', () => {
     ]);
   });
 
-  it('has a generated incremental migration for all four Phase 4 tables and no derived-state storage', () => {
+  it('has a generated Phase 4 migration for all four tables and no Phase 4 derived-state storage', () => {
     const migrationsDir = join(process.cwd(), 'migrations');
-    const sqlFiles = readdirSync(migrationsDir).filter((name) => name.endsWith('.sql')).sort();
-    expect(sqlFiles.length).toBeGreaterThanOrEqual(2);
-    const incremental = sqlFiles.slice(1).map((name) => readFileSync(join(migrationsDir, name), 'utf8')).join('\n');
+    const migrationName = readdirSync(migrationsDir).find((name) => name.startsWith('0001_') && name.endsWith('.sql'));
+    if (!migrationName) throw new Error('Phase 4 migration 0001_* is missing');
+    const incremental = readFileSync(join(migrationsDir, migrationName), 'utf8');
 
     expect(incremental).toContain('CREATE TABLE "practice_sessions"');
     expect(incremental).toContain('CREATE TABLE "practice_items"');

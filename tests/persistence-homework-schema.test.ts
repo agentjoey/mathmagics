@@ -23,8 +23,9 @@ describe('Phase 5 homework persistence schema', () => {
 
   it('has a Phase 5 migration for homework tables, source backfill, and exclusivity check', () => {
     const dir = join(process.cwd(), 'migrations');
-    const sql = readdirSync(dir).filter((name) => name.endsWith('.sql')).sort()
-      .map((name) => readFileSync(join(dir, name), 'utf8')).join('\n');
+    const migrationName = readdirSync(dir).find((name) => name.startsWith('0002_') && name.endsWith('.sql'));
+    if (!migrationName) throw new Error('Phase 5 migration 0002_* is missing');
+    const sql = readFileSync(join(dir, migrationName), 'utf8');
     expect(sql).toContain('CREATE TABLE "homework_submissions"');
     expect(sql).toContain('CREATE TABLE "homework_problems"');
     expect(sql).toContain('CREATE TABLE "homework_confirmations"');

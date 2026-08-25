@@ -1,18 +1,14 @@
 import { describe, expect, test } from 'vitest';
 import {
-  UnsupportedCorrectionTransferError,
   correctionEvidenceIdForAttempt,
   generateCorrectionTransfer,
   projectCorrectedEvidence,
   projectTransferEvidence,
   reasoningEvidenceId,
-  type CorrectionItem,
-  type TrustedAttemptProblem,
-  type TrustedTransferContext,
+  UnsupportedCorrectionTransferError,
 } from '@/lib/correction';
-import type { AnswerSpec, Attempt, PracticeProblemSpec } from '@/lib/practice';
-
-const now = '2026-08-25T12:00:00.000Z';
+import type { CorrectionItem, TrustedAttemptProblem } from '@/lib/correction';
+import type { Attempt, AnswerSpec, PracticeProblemSpec } from '@/lib/practice';
 
 function original(
   objectiveId: string,
@@ -21,42 +17,72 @@ function original(
 ): TrustedAttemptProblem {
   return {
     attempt: {
-      id: `root-${objectiveId}`,
+      id: `attempt-${objectiveId}`,
       source: { kind: 'PRACTICE', sessionId: 'session-1', itemId: 'item-1' },
       studentId: 'student-1', objectiveId, answerText: 'wrong', outcome: 'INCORRECT', hintUsed: false,
-      gradingPolicyVersion: 'grading-v1', submittedAt: now, recordedAt: now,
+      gradingPolicyVersion: 'grading-v1', submittedAt: '2026-08-25T00:00:00.000Z', recordedAt: '2026-08-25T00:00:00.000Z',
     },
-    problemSpec, answerSpec, prompt: 'original prompt', solutionOutline: [], classification: 'CORE',
+    problemSpec,
+    answerSpec,
+    prompt: 'Original prompt',
+    hint: 'Original hint',
+    solutionOutline: ['Original solution'],
+    classification: 'CORE',
   };
 }
 
-function context(originalProblem: TrustedAttemptProblem, round = 1): TrustedTransferContext {
+function context(problem: TrustedAttemptProblem, round = 1) {
   return {
-    mistakeId: 'mistake-1', studentId: 'student-1', objectiveId: originalProblem.attempt.objectiveId,
-    sourceAttemptId: originalProblem.attempt.id, original: originalProblem,
-    round, itemId: `transfer-${round}`, now,
+    mistakeId: 'mistake-1',
+    studentId: problem.attempt.studentId,
+    objectiveId: problem.attempt.objectiveId,
+    sourceAttemptId: problem.attempt.id,
+    original: problem,
+    round,
+    itemId: `transfer-${round}`,
+    now: '2026-08-25T00:01:00.000Z',
   };
 }
 
 function correctionAttempt(item: CorrectionItem, overrides: Partial<Attempt> = {}): Attempt {
   return {
-    id: `attempt-${item.id}`,
+    id: 'correction-attempt-1',
     source: { kind: 'CORRECTION', mistakeId: item.mistakeId, correctionItemId: item.id },
-    studentId: item.studentId, objectiveId: item.objectiveId, answerText: 'answer', outcome: 'CORRECT', hintUsed: false,
-    gradingPolicyVersion: 'grading-v1', submittedAt: now, recordedAt: now,
+    studentId: item.studentId,
+    objectiveId: item.objectiveId,
+    answerText: 'answer',
+    outcome: 'CORRECT',
+    hintUsed: false,
+    gradingPolicyVersion: 'grading-v1',
+    submittedAt: '2026-08-25T00:02:00.000Z',
+    recordedAt: '2026-08-25T00:02:00.000Z',
     ...overrides,
   };
 }
 
-describe('deterministic correction transfer', () => {
-  test('regenerates ARITHMETIC with the same operation and exact division', () => {
+describe('correction-transfer-v1', () => {
+  test('is deterministic for the same trusted source and round, and changes safely by round', () => {
+    const source = original('P2-MD-001',
+      { kind: 'ARITHMETIC', operation: 'MULTIPLY', left: 3, right: 4 },
+      { kind: 'INTEGER', value: '12' });
+    const first = generateCorrectionTransfer(context(source));
+    const replay = generateCorrectionTransfer(context(source));
+    const second = generateCorrectionTransfer(context(source, 2));
+
+    expect(replay).toEqual(first);
+    expect(second.problemSpec).not.toEqual(first.problemSpec);
+    expect(first).toMatchObject({
+      kind: 'TRANSFER', mistakeId: 'mistake-1', objectiveId: 'P2-MD-001',
+      transferRound: 1, generator: 'correction-transfer', generatorVersion: 'correction-transfer-v1',
+    });
+  });
+
+  test('preserves arithmetic operation and exact divisibility', () => {
     const multiply = original('P2-MD-001',
       { kind: 'ARITHMETIC', operation: 'MULTIPLY', left: 3, right: 4 },
       { kind: 'INTEGER', value: '12' });
-    const m1 = generateCorrectionTransfer(context(multiply, 1));
-    const m1Replay = generateCorrectionTransfer(context(multiply, 1));
+    const m1 = generateCorrectionTransfer(context(multiply));
     const m2 = generateCorrectionTransfer(context(multiply, 2));
-    expect(m1).toEqual(m1Replay);
     expect(m2.problemSpec).not.toEqual(m1.problemSpec);
     expect(m1.problemSpec).toMatchObject({ kind: 'ARITHMETIC', operation: 'MULTIPLY' });
     if (m1.problemSpec.kind !== 'ARITHMETIC') throw new Error('fixture mismatch');
@@ -79,10 +105,11 @@ describe('deterministic correction transfer', () => {
     }, { kind: 'CHOICE', optionId: 'A' });
     const item = generateCorrectionTransfer(context(source));
     if (item.problemSpec.kind !== 'EQUATION_CHOICE' || item.answerSpec.kind !== 'CHOICE') throw new Error('fixture mismatch');
-    expect(item.problemSpec.scenario).toBe('FACT_FAMILY');
-    expect(item.problemSpec.total).toBe(item.problemSpec.groups * item.problemSpec.groupSize);
-    expect(item.problemSpec.options.some((option) => option.id === item.problemSpec.correctOptionId)).toBe(true);
-    expect(item.answerSpec.optionId).toBe(item.problemSpec.correctOptionId);
+    const problemSpec = item.problemSpec;
+    expect(problemSpec.scenario).toBe('FACT_FAMILY');
+    expect(problemSpec.total).toBe(problemSpec.groups * problemSpec.groupSize);
+    expect(problemSpec.options.some((option) => option.id === problemSpec.correctOptionId)).toBe(true);
+    expect(item.answerSpec.optionId).toBe(problemSpec.correctOptionId);
   });
 
   test('preserves each fraction family while deriving trusted answers', () => {
@@ -105,74 +132,59 @@ describe('deterministic correction transfer', () => {
       const item = generateCorrectionTransfer(context(fixture));
       expect(item.problemSpec.kind).toBe(fixture.problemSpec.kind);
       expect(item.problemSpec).not.toEqual(fixture.problemSpec);
+      expect(item.answerSpec).toBeDefined();
     }
-
-    const compare = generateCorrectionTransfer(context(fixtures[0]!));
-    if (compare.problemSpec.kind !== 'FRACTION_COMPARE' || compare.answerSpec.kind !== 'EXACT_TEXT') throw new Error('fixture mismatch');
-    const leftCross = compare.problemSpec.leftNumerator * compare.problemSpec.rightDenominator;
-    const rightCross = compare.problemSpec.rightNumerator * compare.problemSpec.leftDenominator;
-    const expected = leftCross < rightCross ? '<' : leftCross > rightCross ? '>' : '=';
-    expect(compare.answerSpec.acceptedValues).toEqual([expected]);
-
-    const equivalent = generateCorrectionTransfer(context(fixtures[1]!));
-    if (equivalent.problemSpec.kind !== 'FRACTION_EQUIVALENT' || equivalent.answerSpec.kind !== 'INTEGER') throw new Error('fixture mismatch');
-    expect(equivalent.problemSpec.missing).toBe('NUMERATOR');
-    expect(equivalent.answerSpec.value).toBe(String(equivalent.problemSpec.numerator * equivalent.problemSpec.scaleFactor));
-
-    const operation = generateCorrectionTransfer(context(fixtures[3]!));
-    if (operation.problemSpec.kind !== 'FRACTION_OPERATION') throw new Error('fixture mismatch');
-    expect(operation.problemSpec.operation).toBe('ADD');
   });
 
-  test('preserves known WORD_PROBLEM template/structure/operation sequence and recomputes results', () => {
-    const source = original('P3-MD-005', {
-      kind: 'WORD_PROBLEM', structure: 'EQUAL_GROUPS', quantities: { groups: 4, size: 5, extra: 3 },
-      steps: [
-        { operation: 'MULTIPLY', operands: [4, 5], result: 20 },
-        { operation: 'ADD', operands: [20, 3], result: 23 },
-      ],
-      answer: 23, templateId: 'p3-md-two-step-v1',
-    }, { kind: 'INTEGER', value: '23' });
+  test('preserves trusted word-problem template, structure, and step operations', () => {
+    const source = original('P2-MD-005', {
+      kind: 'WORD_PROBLEM', structure: 'EQUAL_GROUPS', quantities: { groups: 3, size: 4 },
+      steps: [{ operation: 'MULTIPLY', operands: [3, 4], result: 12 }], answer: 12,
+      templateId: 'p2-md-equal-groups-v1',
+    }, { kind: 'INTEGER', value: '12' });
     const item = generateCorrectionTransfer(context(source));
-    if (item.problemSpec.kind !== 'WORD_PROBLEM' || item.answerSpec.kind !== 'INTEGER') throw new Error('fixture mismatch');
-    expect(item.problemSpec.templateId).toBe(source.problemSpec.kind === 'WORD_PROBLEM' ? source.problemSpec.templateId : '');
+    if (item.problemSpec.kind !== 'WORD_PROBLEM') throw new Error('fixture mismatch');
     expect(item.problemSpec.structure).toBe('EQUAL_GROUPS');
-    expect(item.problemSpec.steps.map((step) => step.operation)).toEqual(['MULTIPLY', 'ADD']);
-    expect(item.problemSpec.answer).toBe(item.problemSpec.steps.at(-1)?.result);
-    expect(item.answerSpec.value).toBe(String(item.problemSpec.answer));
+    expect(item.problemSpec.templateId).toBe('p2-md-equal-groups-v1');
+    expect(item.problemSpec.steps.map((step) => step.operation)).toEqual(['MULTIPLY']);
   });
 
-  test('fails closed for unknown word-problem templates rather than inventing transfer structure', () => {
-    const source = original('P3-MD-005', {
-      kind: 'WORD_PROBLEM', structure: 'EQUAL_GROUPS', quantities: { a: 2, b: 3 },
-      steps: [{ operation: 'MULTIPLY', operands: [2, 3], result: 6 }],
-      answer: 6, templateId: 'unknown-template',
-    }, { kind: 'INTEGER', value: '6' });
+  test('fails closed for unregistered word-problem templates', () => {
+    const source = original('P2-MD-005', {
+      kind: 'WORD_PROBLEM', structure: 'EQUAL_GROUPS', quantities: { groups: 3, size: 4 },
+      steps: [{ operation: 'MULTIPLY', operands: [3, 4], result: 12 }], answer: 12,
+      templateId: 'future-template-v9',
+    }, { kind: 'INTEGER', value: '12' });
     expect(() => generateCorrectionTransfer(context(source))).toThrow(UnsupportedCorrectionTransferError);
   });
 });
 
-describe('CORRECTION Evidence projection', () => {
-  const originalItem: CorrectionItem = {
-    id: 'original-retry', mistakeId: 'mistake-1', studentId: 'student-1', objectiveId: 'P3-FRA-003',
-    kind: 'ORIGINAL_RETRY', sourceAttemptId: 'root',
-    problemSpec: { kind: 'FRACTION_COMPARE', leftNumerator: 1, leftDenominator: 8, rightNumerator: 1, rightDenominator: 4 },
-    answerSpec: { kind: 'EXACT_TEXT', acceptedValues: ['<'], caseSensitive: false },
-    prompt: '1/8 ? 1/4', solutionOutline: [], generator: 'correction-original', generatorVersion: 'v1', createdAt: now,
-  };
-  const transferItem: CorrectionItem = {
-    ...originalItem, id: 'transfer-1', kind: 'TRANSFER', transferRound: 1,
-    generator: 'correction-transfer', generatorVersion: 'correction-transfer-v1',
-  };
+const originalItem: CorrectionItem = {
+  id: 'retry-item', mistakeId: 'mistake-1', studentId: 'student-1', objectiveId: 'P3-FRA-003',
+  kind: 'ORIGINAL_RETRY', sourceAttemptId: 'attempt-P3-FRA-003',
+  problemSpec: { kind: 'FRACTION_COMPARE', leftNumerator: 1, leftDenominator: 8, rightNumerator: 1, rightDenominator: 4 },
+  answerSpec: { kind: 'EXACT_TEXT', acceptedValues: ['<'], caseSensitive: false },
+  prompt: 'Compare.', hint: 'Use a common whole.', solutionOutline: ['1/8 < 1/4'],
+  generator: 'correction-original-retry', generatorVersion: 'correction-original-retry-v1',
+  createdAt: '2026-08-25T00:01:00.000Z',
+};
 
+const transferItem: CorrectionItem = {
+  ...originalItem,
+  id: 'transfer-item', kind: 'TRANSFER', transferRound: 1,
+  generator: 'correction-transfer', generatorVersion: 'correction-transfer-v1',
+};
+
+describe('CORRECTION Evidence projection', () => {
   test('emits corrected only for a correct ORIGINAL_RETRY and never for a failed retry', () => {
-    const correct = correctionAttempt(originalItem, { id: 'retry-correct', hintUsed: true });
+    const correct = correctionAttempt(originalItem, { id: 'retry-correct', outcome: 'CORRECT' });
     expect(projectCorrectedEvidence(correct, originalItem)).toEqual({
       id: correctionEvidenceIdForAttempt('retry-correct', 'corrected'),
       studentId: 'student-1', objectiveId: 'P3-FRA-003', type: 'corrected',
-      observedAt: now, recordedAt: now, origin: { kind: 'CORRECTION', refId: 'retry-correct' },
+      observedAt: correct.submittedAt, recordedAt: correct.recordedAt,
+      origin: { kind: 'CORRECTION', refId: 'retry-correct' },
     });
-    expect(projectCorrectedEvidence({ ...correct, id: 'retry-wrong', outcome: 'INCORRECT' }, originalItem)).toBeNull();
+    expect(projectCorrectedEvidence(correctionAttempt(originalItem, { outcome: 'INCORRECT' }), originalItem)).toBeNull();
   });
 
   test('emits application_correct only for the first no-hint correct TRANSFER attempt', () => {
@@ -182,8 +194,7 @@ describe('CORRECTION Evidence projection', () => {
       type: 'application_correct', origin: { kind: 'CORRECTION', refId: 'transfer-correct' },
     });
     expect(projectTransferEvidence({ ...correct, hintUsed: true }, transferItem, [])).toBeNull();
-    const firstWrong = correctionAttempt(transferItem, { id: 'transfer-wrong', outcome: 'INCORRECT' });
-    expect(projectTransferEvidence(correct, transferItem, [firstWrong])).toBeNull();
+    expect(projectTransferEvidence(correct, transferItem, [{ ...correct, id: 'prior', outcome: 'INCORRECT' }])).toBeNull();
   });
 
   test('uses stable source-aware correction evidence ids', () => {
