@@ -4,22 +4,15 @@
 
 ## 🔴 HIGH — Next Phase
 
-### Phase 4: Practice / Attempt Core
-- [ ] [MM-P4-001] Define `PracticeSession` and immutable `Attempt` domain contracts without introducing persistent Mistake state.
-- [ ] [MM-P4-002] Define objective-aligned practice specification for Foundation / Core / Application / Challenge items.
-- [ ] [MM-P4-003] Build deterministic practice context from Student Profile, DailyLesson/objective IDs, curriculum teaching knowledge and Evidence-derived learning state.
-- [ ] [MM-P4-004] Record Attempt outcomes independently from Mastery and define explicit Attempt → `EvidenceRecord` conversion rules.
-- [ ] [MM-P4-005] Preserve retry/correction provenance so later Phase 6 Mistake logic can reference Attempts/Evidence without rewriting history.
-- [ ] [MM-P4-006] Add P2/P3 end-to-end practice scenarios covering correct, hinted, incorrect, retry and application outcomes.
-- [ ] [MM-P4-007] Extend repository persistence only for approved Phase 4 facts; derived mastery/readiness remain unpersisted.
+### Phase 5: Homework Vision
+- [ ] Define trusted homework-image intake contract and retention boundary before selecting object storage.
+- [ ] Implement worksheet/photo question extraction with per-field confidence and original-region provenance.
+- [ ] Implement answer/handwriting extraction with explicit low-confidence confirmation flow.
+- [ ] Map extracted problems to a LearningObjective before any deterministic grading or Evidence projection.
+- [ ] Reuse Phase 4 grading/Attempt/Evidence authority where the extracted problem is deterministically gradable; fail closed otherwise.
+- [ ] Add P2/P3 end-to-end homework scenarios including low-confidence and unsupported cases.
 
 ## 🟡 MED — Approved Roadmap
-
-### Phase 5: Homework Vision
-- [ ] Worksheet/photo ingestion, question extraction and answer extraction with confidence.
-- [ ] Low-confidence handwriting confirmation flow.
-- [ ] Map extracted problems to LearningObjective before grading/evidence updates.
-- [ ] Decide object storage only when real homework-image retention requirements are known.
 
 ### Phase 6: Correction + Mistake Book
 - [ ] Introduce `Mistake` lifecycle: `OBSERVED → CONFIRMED → CORRECTING → RESOLVED`.
@@ -39,9 +32,9 @@
 ## 🟢 LOW / Technical Debt / Activation Gates
 
 - [ ] Before first durable-data deployment, provision separated Neon development/Preview and production databases in Singapore.
-- [ ] Run committed Drizzle migration against non-production and pass `tests/persistence-neon-contract.test.ts` with explicit `TEST_DATABASE_URL` before production promotion.
+- [ ] Apply committed `0000` + `0001` Drizzle migrations against non-production first and pass both Neon contract suites with explicit `TEST_DATABASE_URL` before production promotion.
 - [ ] Decide whether to self-host/package Geist fonts so sandbox builds do not depend on Google Fonts network access.
-- [ ] Review npm audit findings separately; current Drizzle toolchain install reports 13 findings (1 low, 4 moderate, 8 high). Do not use forced upgrades as incidental feature work.
+- [ ] Review npm audit findings separately; current toolchain install reports 13 findings (1 low, 4 moderate, 8 high). Do not use forced upgrades as incidental feature work.
 - [ ] Introduce multi-household User/Household/Membership identity only when the product leaves the single-household V1 boundary.
 
 ## ❄️ Frozen Legacy MVP Work
@@ -67,16 +60,25 @@
 - [x] [MM-P2-003] Append-only Evidence records and deterministic mastery/review policy implemented.
 - [x] [MM-P2-005] Mastery/readiness queries backed by real Phase 1 curriculum prerequisite links implemented.
 - [x] [MM-P2-006] Mastery transition, repository, readiness, query and end-to-end acceptance tests implemented.
-- [x] Prior `[MM-P2-004] Attempt vs Mistake` work intentionally decomposed: `Attempt` moves to Phase 4 and `Mistake` to Phase 6; Phase 2 provides the evidence-origin boundary they will use.
+- [x] Prior `[MM-P2-004] Attempt vs Mistake` work intentionally decomposed: `Attempt` moved to Phase 4 and `Mistake` to Phase 6.
 
 ### Phase 3: Teaching Planner / Lesson Prep
-- [x] [MM-P3-001] Defined `LearningPosition`, `WeeklyPlan`, `DailyLesson` and append-only plan-execution contracts.
-- [x] [MM-P3-002] Planner inputs use Student Profile, Current Position, Evidence-derived Mastery/Readiness and curriculum sequence.
-- [x] [MM-P3-003] Implemented deterministic planner context and candidate next-objective selection without AI-owned curriculum/mastery state.
-- [x] [MM-P3-004] Implemented weekly planning intents and deterministic Learn / Practice / Review scheduling; Correction / Assessment remain reserved plan intents until their owning phases.
-- [x] [MM-P3-005] Implemented trusted parent/tutor lesson-preparation context and provider-agnostic AI generation boundary.
-- [x] [MM-P3-006] Added real P3 fraction end-to-end scenarios for forward learning, remediation, review + forward learning and execution/Evidence separation.
-- [x] [MM-P3-007] Implemented minimum durable persistence architecture with Neon PostgreSQL + Drizzle, generated migrations and memory/Neon repository adapters.
-- [x] Hardened household auth to signed stateless `mm_session` and migrated Next.js access guard to `proxy.ts`.
-- [x] Locked deployment architecture to Vercel `sin1` + Neon Singapore with explicit migration and Preview/Production isolation rules.
-- [x] Live Neon activation remains a separate explicit operational gate; no real database migration was executed as part of Phase 3 implementation.
+- [x] [MM-P3-001] `LearningPosition`, `WeeklyPlan`, `DailyLesson` and append-only plan-execution contracts.
+- [x] [MM-P3-002] Planner uses Student Profile, Current Position, Evidence-derived Mastery/Readiness and curriculum sequence.
+- [x] [MM-P3-003] Deterministic planner context and candidate next-objective selection.
+- [x] [MM-P3-004] Deterministic Learn / Practice / Review scheduling.
+- [x] [MM-P3-005] Trusted lesson-preparation context and provider-agnostic AI boundary.
+- [x] [MM-P3-006] P3 fraction E2E for forward learning, remediation, review and execution/Evidence separation.
+- [x] [MM-P3-007] Neon + Drizzle persistence foundation and generated migration.
+- [x] Signed household session auth and Vercel `sin1` + Neon Singapore deployment architecture.
+
+### Phase 4: Practice / Attempt Core
+- [x] [MM-P4-001] Defined `PracticeSession`, structured `PracticeItem`, server-observed `PracticeHintReveal` and immutable `Attempt` contracts without persistent Mistake state.
+- [x] [MM-P4-002] Implemented deterministic Foundation / Core / Application / Challenge `practice-v1` blueprint and code-owned structured problem/answer specs.
+- [x] [MM-P4-003] Built trusted objective-aligned PracticePreparationContext from DailyLesson, curriculum facts and Evidence-derived learning state.
+- [x] [MM-P4-004] Implemented deterministic grading and explicit replay-safe Attempt → `EvidenceRecord` projection with no mutable Mastery write path.
+- [x] [MM-P4-005] Preserved append-only hint and retry/correction provenance with latest-only linear retries and stable Evidence IDs.
+- [x] [MM-P4-006] Added P2/P3 E2E for independent, hinted, incorrect/retry, application, replay-repair and unsupported fail-closed outcomes.
+- [x] [MM-P4-007] Added memory + Neon PracticeRepository persistence and Drizzle-generated `0001_fantastic_shocker.sql` for only the four approved practice fact tables.
+- [x] Optional renderer boundary carries presentation-only data and cannot alter math truth, grading, Evidence, Mastery or Readiness.
+- [x] Live Neon activation remains a separate explicit operational gate; no real database migration was executed during Phase 4 implementation.
