@@ -79,8 +79,8 @@ function assertValidProblemSpec(spec: PracticeProblemSpec): void {
       requireFinite([...Object.values(spec.quantities), spec.answer]);
       if (spec.steps.length === 0) throw new Error('word problem steps must be non-empty');
       for (const step of spec.steps) {
-        const result = evaluateStep(step);
-        if (!Number.isFinite(result) || result !== step.result) {
+        const stepResult = evaluateStep(step);
+        if (!Number.isFinite(stepResult) || stepResult !== step.result) {
           throw new Error('word problem step result must match its operation and operands');
         }
       }
@@ -95,11 +95,18 @@ function assertValidProblemSpec(spec: PracticeProblemSpec): void {
 function assertValidAnswerSpec(spec: AnswerSpec): void {
   switch (spec.kind) {
     case 'INTEGER':
+      if (!/^[+-]?\d+$/u.test(spec.value.trim())) {
+        throw new Error('integer answer spec value must be valid integer syntax');
+      }
+      return;
     case 'DECIMAL':
-      requireNonEmpty(spec.value, 'answer spec value');
+      if (!/^[+-]?\d+(?:\.\d+)?$/u.test(spec.value.trim())) {
+        throw new Error('decimal answer spec value must be valid decimal syntax');
+      }
       return;
     case 'FRACTION':
       requireFinite([spec.numerator, spec.denominator]);
+      if (!Number.isInteger(spec.numerator)) throw new Error('fraction answer numerator must be an integer');
       requirePositiveDenominators([spec.denominator]);
       return;
     case 'CHOICE':

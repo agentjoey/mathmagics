@@ -1,4 +1,6 @@
 export { derivePracticeBlueprint } from './blueprint';
+export { gradeAnswer } from './grading';
+export type { AttemptGrade } from './grading';
 export { getPracticeItemGenerator } from './generators/registry';
 export type {
   PracticeItemGenerationInput,
@@ -6,6 +8,8 @@ export type {
 } from './generators/registry';
 export { buildPracticePreparationContext } from './preparation';
 export type { PracticePreparationContext } from './preparation';
+export { toStudentPracticeItem } from './student-view';
+export type { StudentPracticeItem } from './student-view';
 export type {
   AnswerSpec,
   ArithmeticProblemSpec,
