@@ -118,7 +118,8 @@ export type AttemptOutcome = 'CORRECT' | 'INCORRECT';
 
 export type AttemptSource =
   | { kind: 'PRACTICE'; sessionId: string; itemId: string }
-  | { kind: 'HOMEWORK'; submissionId: string; problemId: string };
+  | { kind: 'HOMEWORK'; submissionId: string; problemId: string }
+  | { kind: 'CORRECTION'; mistakeId: string; correctionItemId: string };
 
 export interface Attempt {
   id: string;

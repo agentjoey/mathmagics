@@ -17,6 +17,14 @@ const homeworkAttempt = {
   gradingPolicyVersion: 'grading-v1', submittedAt: '2026-08-25T00:01:00.000Z', recordedAt: '2026-08-25T00:01:00.000Z',
 } as Attempt;
 
+const correctionAttempt = {
+  id: 'a-correction',
+  source: { kind: 'CORRECTION', mistakeId: 'mistake-1', correctionItemId: 'correction-1' },
+  studentId: 's1', objectiveId: 'P2-MD-001', answerText: '6', outcome: 'CORRECT', hintUsed: true,
+  retryOfAttemptId: 'a-practice',
+  gradingPolicyVersion: 'grading-v1', submittedAt: '2026-08-25T00:02:00.000Z', recordedAt: '2026-08-25T00:02:00.000Z',
+} as Attempt;
+
 const item: PracticeItem = {
   id: 'pi-1', sessionId: 'ps-1', studentId: 's1', objectiveId: 'P2-MD-001', sequence: 1,
   difficultyBand: 'CORE', problemSpec: { kind: 'ARITHMETIC', operation: 'MULTIPLY', left: 2, right: 3 },
@@ -25,14 +33,28 @@ const item: PracticeItem = {
 };
 
 describe('canonical Attempt source', () => {
-  it('validates both exclusive source variants', () => {
+  it('validates all three exclusive source variants', () => {
     expect(() => assertValidAttempt(practiceAttempt)).not.toThrow();
     expect(() => assertValidAttempt(homeworkAttempt)).not.toThrow();
+    expect(() => assertValidAttempt(correctionAttempt)).not.toThrow();
+  });
+
+  it('rejects mixed CORRECTION coordinates', () => {
+    const mixed = {
+      ...correctionAttempt,
+      source: {
+        ...correctionAttempt.source,
+        sessionId: 'ps-1',
+        itemId: 'pi-1',
+      },
+    } as Attempt;
+    expect(() => assertValidAttempt(mixed)).toThrow('attempt source coordinates must match CORRECTION');
   });
 
   it('keeps practice Evidence projection practice-only', () => {
     expect(projectAttemptToEvidence(practiceAttempt, item).origin.kind).toBe('PRACTICE');
     expect(() => projectAttemptToEvidence(homeworkAttempt, item)).toThrow('practice evidence requires a PRACTICE attempt source');
+    expect(() => projectAttemptToEvidence(correctionAttempt, item)).toThrow('practice evidence requires a PRACTICE attempt source');
   });
 
   it.each([
@@ -49,10 +71,12 @@ describe('canonical Attempt source', () => {
     });
   });
 
-  it('rejects hints and practice-origin attempts at the homework Evidence boundary', () => {
+  it('rejects hints and non-homework attempts at the homework Evidence boundary', () => {
     expect(() => projectHomeworkAttemptToEvidence({ ...homeworkAttempt, hintUsed: true } as Attempt, { classification: 'CORE' }))
       .toThrow('homework attempt must not record practice hint use');
     expect(() => projectHomeworkAttemptToEvidence(practiceAttempt, { classification: 'CORE' }))
+      .toThrow('homework evidence requires a HOMEWORK attempt source');
+    expect(() => projectHomeworkAttemptToEvidence(correctionAttempt, { classification: 'CORE' }))
       .toThrow('homework evidence requires a HOMEWORK attempt source');
   });
 });

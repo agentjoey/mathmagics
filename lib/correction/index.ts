@@ -3,3 +3,6 @@ export * from './validation';
 export * from './diagnosis';
 export * from './projection';
 export * from './problem-resolver';
+export * from './reasoning';
+export * from './evidence';
+export * from './transfer';

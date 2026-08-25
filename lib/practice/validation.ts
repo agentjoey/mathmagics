@@ -153,16 +153,33 @@ export function assertValidPracticeHintReveal(reveal: PracticeHintReveal): void 
   requireTimestamp(reveal.revealedAt, 'practice hint reveal revealedAt');
 }
 
+function sourceHasOnlyKeys(source: Attempt['source'], keys: string[]): boolean {
+  const allowed = new Set(keys);
+  return Object.keys(source as object).every((key) => allowed.has(key));
+}
+
 export function assertValidAttempt(attempt: Attempt): void {
   requireNonEmpty(attempt.id, 'attempt id');
   if (attempt.source.kind === 'PRACTICE') {
+    if (!sourceHasOnlyKeys(attempt.source, ['kind', 'sessionId', 'itemId'])) {
+      throw new Error('attempt source coordinates must match PRACTICE');
+    }
     requireNonEmpty(attempt.source.sessionId, 'attempt practice sessionId');
     requireNonEmpty(attempt.source.itemId, 'attempt practice itemId');
   } else if (attempt.source.kind === 'HOMEWORK') {
+    if (!sourceHasOnlyKeys(attempt.source, ['kind', 'submissionId', 'problemId'])) {
+      throw new Error('attempt source coordinates must match HOMEWORK');
+    }
     requireNonEmpty(attempt.source.submissionId, 'attempt homework submissionId');
     requireNonEmpty(attempt.source.problemId, 'attempt homework problemId');
+  } else if (attempt.source.kind === 'CORRECTION') {
+    if (!sourceHasOnlyKeys(attempt.source, ['kind', 'mistakeId', 'correctionItemId'])) {
+      throw new Error('attempt source coordinates must match CORRECTION');
+    }
+    requireNonEmpty(attempt.source.mistakeId, 'attempt correction mistakeId');
+    requireNonEmpty(attempt.source.correctionItemId, 'attempt correction correctionItemId');
   } else {
-    throw new Error('attempt source kind must be PRACTICE or HOMEWORK');
+    throw new Error('attempt source kind must be PRACTICE, HOMEWORK, or CORRECTION');
   }
   requireNonEmpty(attempt.studentId, 'attempt studentId');
   requireNonEmpty(attempt.objectiveId, 'attempt objectiveId');
