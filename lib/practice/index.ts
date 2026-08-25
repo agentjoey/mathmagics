@@ -13,6 +13,8 @@ export { MemoryPracticeRepository } from './memory-repository';
 export { buildPracticePreparationContext } from './preparation';
 export type { PracticePreparationContext } from './preparation';
 export type { PracticeRepository } from './repository';
+export { PracticeServiceImpl } from './service';
+export type { PracticeIdFactory, PracticeService } from './service';
 export { toStudentPracticeItem } from './student-view';
 export type { StudentPracticeItem } from './student-view';
 export type {
