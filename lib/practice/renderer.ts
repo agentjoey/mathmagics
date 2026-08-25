@@ -19,7 +19,8 @@ export interface PracticeContentRenderer {
 }
 
 export class PassthroughPracticeContentRenderer implements PracticeContentRenderer {
-  async render(): Promise<RenderedPracticeContent> {
+  async render(input: LockedPracticeRenderInput): Promise<RenderedPracticeContent> {
+    void input;
     return {};
   }
 }

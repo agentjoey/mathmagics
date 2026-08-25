@@ -107,13 +107,14 @@ describe('structured practice generators', () => {
   it('uses code-owned equation choices for P2 division-symbol practice', () => {
     const items = getPracticeItemGenerator('P2-MD-002').generate(inputFor('P2-MD-002'));
     for (const item of items) {
-      expect(item.problemSpec.kind).toBe('EQUATION_CHOICE');
-      if (item.problemSpec.kind !== 'EQUATION_CHOICE') throw new Error('unexpected spec');
-      const ids = item.problemSpec.options.map((option) => option.id);
+      const spec = item.problemSpec;
+      expect(spec.kind).toBe('EQUATION_CHOICE');
+      if (spec.kind !== 'EQUATION_CHOICE') throw new Error('unexpected spec');
+      const ids = spec.options.map((option) => option.id);
       expect(new Set(ids).size).toBe(ids.length);
-      expect(ids).toContain(item.problemSpec.correctOptionId);
-      expect(item.answerSpec).toEqual({ kind: 'CHOICE', optionId: item.problemSpec.correctOptionId });
-      const correct = item.problemSpec.options.find((option) => option.id === item.problemSpec.correctOptionId);
+      expect(ids).toContain(spec.correctOptionId);
+      expect(item.answerSpec).toEqual({ kind: 'CHOICE', optionId: spec.correctOptionId });
+      const correct = spec.options.find((option) => option.id === spec.correctOptionId);
       expect(correct?.expression).toContain('÷');
     }
   });

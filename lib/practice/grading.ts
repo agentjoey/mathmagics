@@ -30,14 +30,17 @@ function normalizeDecimal(value: string): string | undefined {
   return `${zero ? '' : sign}${integerPart}${fractionPart ? `.${fractionPart}` : ''}`;
 }
 
+const BIGINT_ZERO = BigInt(0);
+const BIGINT_ONE = BigInt(1);
+
 function absBigInt(value: bigint): bigint {
-  return value < 0n ? -value : value;
+  return value < BIGINT_ZERO ? -value : value;
 }
 
 function gcd(left: bigint, right: bigint): bigint {
   let a = absBigInt(left);
   let b = absBigInt(right);
-  while (b !== 0n) [a, b] = [b, a % b];
+  while (b !== BIGINT_ZERO) [a, b] = [b, a % b];
   return a;
 }
 
@@ -59,12 +62,12 @@ function parseFraction(value: string): ParsedFraction | undefined {
   } catch {
     return undefined;
   }
-  if (denominator === 0n) return undefined;
+  if (denominator === BIGINT_ZERO) return undefined;
   const inputGcd = gcd(numerator, denominator);
-  const simplestInput = inputGcd === 1n && denominator > 0n;
+  const simplestInput = inputGcd === BIGINT_ONE && denominator > BIGINT_ZERO;
   numerator /= inputGcd;
   denominator /= inputGcd;
-  if (denominator < 0n) {
+  if (denominator < BIGINT_ZERO) {
     numerator = -numerator;
     denominator = -denominator;
   }
