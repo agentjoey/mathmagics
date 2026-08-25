@@ -1,4 +1,9 @@
 export { derivePracticeBlueprint } from './blueprint';
+export { getPracticeItemGenerator } from './generators/registry';
+export type {
+  PracticeItemGenerationInput,
+  PracticeItemGenerator,
+} from './generators/registry';
 export { buildPracticePreparationContext } from './preparation';
 export type { PracticePreparationContext } from './preparation';
 export type {
