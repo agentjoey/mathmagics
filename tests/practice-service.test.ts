@@ -91,7 +91,10 @@ describe('PracticeService orchestration', () => {
     const session = await service.createPracticeSession('lesson-1', 'P2-MD-001', NOW);
     const { itemId, answer } = await firstItemAnswer(practice, session.id);
     const attempt = await service.submitAttempt({ attemptId: 'a1', sessionId: session.id, itemId, answerText: answer }, '2026-08-25T00:12:00.000Z');
-    expect(attempt).toMatchObject({ outcome: 'CORRECT', hintUsed: false });
+    expect(attempt).toMatchObject({
+      outcome: 'CORRECT', hintUsed: false,
+      source: { kind: 'PRACTICE', sessionId: session.id, itemId },
+    });
     expect(await learning.getEvidence(evidenceIdForAttempt('a1'))).toMatchObject({
       type: 'independent_correct', origin: { kind: 'PRACTICE', refId: 'a1' },
     });
@@ -120,11 +123,11 @@ describe('PracticeService orchestration', () => {
     const { learning, practice, service } = await setup();
     const session = await service.createPracticeSession('lesson-1', 'P2-MD-001', NOW);
     const { itemId, answer } = await firstItemAnswer(practice, session.id);
-    const seeded: Attempt = {
-      id: 'repair', sessionId: session.id, itemId, studentId: 's1', objectiveId: 'P2-MD-001',
+    const seeded = {
+      id: 'repair', source: { kind: 'PRACTICE', sessionId: session.id, itemId }, studentId: 's1', objectiveId: 'P2-MD-001',
       answerText: answer, outcome: 'CORRECT', hintUsed: false, gradingPolicyVersion: 'grading-v1',
       submittedAt: '2026-08-25T00:12:00.000Z', recordedAt: '2026-08-25T00:12:00.000Z',
-    };
+    } as Attempt;
     await practice.appendAttempt(seeded);
     expect(await learning.getEvidence(evidenceIdForAttempt('repair'))).toBeUndefined();
     const replay = await service.submitAttempt({ attemptId: 'repair', sessionId: session.id, itemId, answerText: answer }, '2026-08-25T00:20:00.000Z');

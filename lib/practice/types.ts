@@ -116,10 +116,13 @@ export interface PracticeHintReveal {
 
 export type AttemptOutcome = 'CORRECT' | 'INCORRECT';
 
+export type AttemptSource =
+  | { kind: 'PRACTICE'; sessionId: string; itemId: string }
+  | { kind: 'HOMEWORK'; submissionId: string; problemId: string };
+
 export interface Attempt {
   id: string;
-  sessionId: string;
-  itemId: string;
+  source: AttemptSource;
   studentId: string;
   objectiveId: string;
   answerText: string;

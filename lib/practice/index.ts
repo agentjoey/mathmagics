@@ -30,6 +30,7 @@ export type {
   ArithmeticProblemSpec,
   Attempt,
   AttemptOutcome,
+  AttemptSource,
   EquationChoiceProblemSpec,
   FractionProblemSpec,
   PracticeBlueprint,

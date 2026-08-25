@@ -155,8 +155,15 @@ export function assertValidPracticeHintReveal(reveal: PracticeHintReveal): void 
 
 export function assertValidAttempt(attempt: Attempt): void {
   requireNonEmpty(attempt.id, 'attempt id');
-  requireNonEmpty(attempt.sessionId, 'attempt sessionId');
-  requireNonEmpty(attempt.itemId, 'attempt itemId');
+  if (attempt.source.kind === 'PRACTICE') {
+    requireNonEmpty(attempt.source.sessionId, 'attempt practice sessionId');
+    requireNonEmpty(attempt.source.itemId, 'attempt practice itemId');
+  } else if (attempt.source.kind === 'HOMEWORK') {
+    requireNonEmpty(attempt.source.submissionId, 'attempt homework submissionId');
+    requireNonEmpty(attempt.source.problemId, 'attempt homework problemId');
+  } else {
+    throw new Error('attempt source kind must be PRACTICE or HOMEWORK');
+  }
   requireNonEmpty(attempt.studentId, 'attempt studentId');
   requireNonEmpty(attempt.objectiveId, 'attempt objectiveId');
   requireNonEmpty(attempt.answerText, 'attempt answerText');

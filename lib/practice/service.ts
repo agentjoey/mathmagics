@@ -38,8 +38,9 @@ function sameEvidence(left: EvidenceRecord, right: EvidenceRecord): boolean {
 }
 
 function matchesCommand(attempt: Attempt, input: SubmitAttemptInput): boolean {
-  return attempt.sessionId === input.sessionId
-    && attempt.itemId === input.itemId
+  return attempt.source.kind === 'PRACTICE'
+    && attempt.source.sessionId === input.sessionId
+    && attempt.source.itemId === input.itemId
     && attempt.answerText === input.answerText
     && attempt.retryOfAttemptId === input.retryOfAttemptId;
 }
@@ -151,8 +152,7 @@ export class PracticeServiceImpl implements PracticeService {
     const grade = gradeAnswer(input.answerText, item.answerSpec);
     const attempt: Attempt = {
       id: input.attemptId,
-      sessionId: session.id,
-      itemId: item.id,
+      source: { kind: 'PRACTICE', sessionId: session.id, itemId: item.id },
       studentId: session.studentId,
       objectiveId: session.objectiveId,
       answerText: input.answerText,

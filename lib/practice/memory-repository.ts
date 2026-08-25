@@ -40,6 +40,25 @@ function coordinatesMatchItem(
     && (record.objectiveId === undefined || record.objectiveId === item.objectiveId);
 }
 
+function attemptCoordinatesMatchItem(attempt: Attempt, item: PracticeItem): boolean {
+  return attempt.source.kind === 'PRACTICE'
+    && attempt.source.sessionId === item.sessionId
+    && attempt.source.itemId === item.id
+    && attempt.studentId === item.studentId
+    && attempt.objectiveId === item.objectiveId;
+}
+
+function sameAttemptSource(left: Attempt, right: Attempt): boolean {
+  if (left.source.kind !== right.source.kind) return false;
+  if (left.source.kind === 'PRACTICE' && right.source.kind === 'PRACTICE') {
+    return left.source.sessionId === right.source.sessionId && left.source.itemId === right.source.itemId;
+  }
+  if (left.source.kind === 'HOMEWORK' && right.source.kind === 'HOMEWORK') {
+    return left.source.submissionId === right.source.submissionId && left.source.problemId === right.source.problemId;
+  }
+  return false;
+}
+
 export class MemoryPracticeRepository implements PracticeRepository {
   private readonly sessions = new Map<string, PracticeSession>();
   private readonly sessionByCoordinates = new Map<string, string>();
@@ -146,17 +165,24 @@ export class MemoryPracticeRepository implements PracticeRepository {
   async appendAttempt(attempt: Attempt): Promise<void> {
     assertValidAttempt(attempt);
     if (this.attempts.has(attempt.id)) throw new Error('attempt id already exists');
-    const item = this.items.get(attempt.itemId);
-    if (!item) throw new Error(`Unknown practice item id: ${attempt.itemId}`);
-    if (!coordinatesMatchItem(attempt, item)) {
-      throw new Error('attempt coordinates must match practice item');
+
+    if (attempt.source.kind === 'PRACTICE') {
+      const item = this.items.get(attempt.source.itemId);
+      if (!item) throw new Error(`Unknown practice item id: ${attempt.source.itemId}`);
+      if (!attemptCoordinatesMatchItem(attempt, item)) {
+        throw new Error('attempt coordinates must match practice item');
+      }
+      if (Date.parse(attempt.submittedAt) < Date.parse(item.createdAt)) {
+        throw new Error('attempt submittedAt must not precede practice item createdAt');
+      }
     }
-    if (Date.parse(attempt.submittedAt) < Date.parse(item.createdAt)) {
-      throw new Error('attempt submittedAt must not precede practice item createdAt');
-    }
+
     if (attempt.retryOfAttemptId) {
       const parent = this.attempts.get(attempt.retryOfAttemptId);
       if (!parent) throw new Error('retry parent does not exist');
+      if (!sameAttemptSource(parent, attempt) || parent.studentId !== attempt.studentId || parent.objectiveId !== attempt.objectiveId) {
+        throw new Error('retry parent coordinates must match attempt');
+      }
       if (this.retryChildByParent.has(attempt.retryOfAttemptId)) {
         throw new Error('retry parent already has a retry child');
       }
@@ -167,14 +193,14 @@ export class MemoryPracticeRepository implements PracticeRepository {
 
   async listAttemptsForItem(itemId: string): Promise<Attempt[]> {
     return [...this.attempts.values()]
-      .filter((attempt) => attempt.itemId === itemId)
+      .filter((attempt) => attempt.source.kind === 'PRACTICE' && attempt.source.itemId === itemId)
       .sort(compareAttempts)
       .map(clone);
   }
 
   async listAttemptsForSession(sessionId: string): Promise<Attempt[]> {
     return [...this.attempts.values()]
-      .filter((attempt) => attempt.sessionId === sessionId)
+      .filter((attempt) => attempt.source.kind === 'PRACTICE' && attempt.source.sessionId === sessionId)
       .sort(compareAttempts)
       .map(clone);
   }

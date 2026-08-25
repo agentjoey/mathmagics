@@ -74,8 +74,7 @@ function toReveal(row: typeof practiceHintReveals.$inferSelect): PracticeHintRev
 function toAttempt(row: typeof attempts.$inferSelect): Attempt {
   const attempt: Attempt = {
     id: row.id,
-    sessionId: row.sessionId,
-    itemId: row.itemId,
+    source: { kind: 'PRACTICE', sessionId: row.sessionId, itemId: row.itemId },
     studentId: row.studentId,
     objectiveId: row.objectiveId,
     answerText: row.answerText,
@@ -98,6 +97,14 @@ function coordinatesMatchItem(
     && record.itemId === item.id
     && record.studentId === item.studentId
     && (record.objectiveId === undefined || record.objectiveId === item.objectiveId);
+}
+
+function attemptCoordinatesMatchItem(attempt: Attempt, item: PracticeItem): boolean {
+  return attempt.source.kind === 'PRACTICE'
+    && attempt.source.sessionId === item.sessionId
+    && attempt.source.itemId === item.id
+    && attempt.studentId === item.studentId
+    && attempt.objectiveId === item.objectiveId;
 }
 
 export class NeonPracticeRepository implements PracticeRepository {
@@ -218,12 +225,15 @@ export class NeonPracticeRepository implements PracticeRepository {
 
   async appendAttempt(attempt: Attempt): Promise<void> {
     assertValidAttempt(attempt);
+    if (attempt.source.kind !== 'PRACTICE') {
+      throw new Error('legacy Neon attempt schema supports PRACTICE source only until Phase 5 migration');
+    }
     const [sameId] = await this.db.select({ id: attempts.id }).from(attempts)
       .where(eq(attempts.id, attempt.id)).limit(1);
     if (sameId) throw new Error('attempt id already exists');
-    const item = await this.getPracticeItem(attempt.itemId);
-    if (!item) throw new Error(`Unknown practice item id: ${attempt.itemId}`);
-    if (!coordinatesMatchItem(attempt, item)) throw new Error('attempt coordinates must match practice item');
+    const item = await this.getPracticeItem(attempt.source.itemId);
+    if (!item) throw new Error(`Unknown practice item id: ${attempt.source.itemId}`);
+    if (!attemptCoordinatesMatchItem(attempt, item)) throw new Error('attempt coordinates must match practice item');
     if (Date.parse(attempt.submittedAt) < Date.parse(item.createdAt)) {
       throw new Error('attempt submittedAt must not precede practice item createdAt');
     }
@@ -236,8 +246,8 @@ export class NeonPracticeRepository implements PracticeRepository {
     }
     await this.db.insert(attempts).values({
       id: attempt.id,
-      sessionId: attempt.sessionId,
-      itemId: attempt.itemId,
+      sessionId: attempt.source.sessionId,
+      itemId: attempt.source.itemId,
       studentId: attempt.studentId,
       objectiveId: attempt.objectiveId,
       answerText: attempt.answerText,

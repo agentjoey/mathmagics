@@ -50,11 +50,13 @@ function reveal(id = 'reveal-1', overrides: Partial<PracticeHintReveal> = {}): P
   };
 }
 
-function attempt(id: string, submittedAt: string, overrides: Partial<Attempt> = {}): Attempt {
+type AttemptOverrides = Partial<Attempt> & { sessionId?: string; itemId?: string };
+
+function attempt(id: string, submittedAt: string, overrides: AttemptOverrides = {}): Attempt {
+  const { sessionId = session.id, itemId = 'item-1', ...rest } = overrides;
   return {
     id,
-    sessionId: session.id,
-    itemId: 'item-1',
+    source: { kind: 'PRACTICE', sessionId, itemId },
     studentId: session.studentId,
     objectiveId: session.objectiveId,
     answerText: '4',
@@ -63,7 +65,7 @@ function attempt(id: string, submittedAt: string, overrides: Partial<Attempt> = 
     gradingPolicyVersion: 'grading-v1',
     submittedAt,
     recordedAt: submittedAt,
-    ...overrides,
+    ...rest,
   };
 }
 
@@ -151,6 +153,19 @@ describe('MemoryPracticeRepository', () => {
     await repository.appendAttempt(attempt('retry-1', '2026-08-25T00:02:00.000Z', { retryOfAttemptId: 'root' }));
     await expect(repository.appendAttempt(attempt('retry-2', '2026-08-25T00:03:00.000Z', { retryOfAttemptId: 'root' })))
       .rejects.toThrow('retry parent already has a retry child');
+  });
+
+  it('does not expose HOMEWORK attempts through practice item/session queries', async () => {
+    const repository = new MemoryPracticeRepository();
+    await seeded(repository);
+    await repository.appendAttempt({
+      id: 'homework-1', source: { kind: 'HOMEWORK', submissionId: 'hs-1', problemId: 'hp-1' },
+      studentId: session.studentId, objectiveId: session.objectiveId, answerText: '4', outcome: 'CORRECT', hintUsed: false,
+      gradingPolicyVersion: 'grading-v1', submittedAt: '2026-08-25T00:03:00.000Z', recordedAt: '2026-08-25T00:03:00.000Z',
+    });
+    expect(await repository.getAttempt('homework-1')).toBeDefined();
+    expect(await repository.listAttemptsForItem('item-1')).toEqual([]);
+    expect(await repository.listAttemptsForSession(session.id)).toEqual([]);
   });
 
   it('returns defensive clones including nested practice item data', async () => {
