@@ -1,3 +1,4 @@
+export { derivePracticeBlueprint } from './blueprint';
 export { buildPracticePreparationContext } from './preparation';
 export type { PracticePreparationContext } from './preparation';
 export type {
@@ -7,6 +8,7 @@ export type {
   AttemptOutcome,
   EquationChoiceProblemSpec,
   FractionProblemSpec,
+  PracticeBlueprint,
   PracticeHintReveal,
   PracticeItem,
   PracticeProblemSpec,

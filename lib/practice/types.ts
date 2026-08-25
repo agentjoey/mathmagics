@@ -9,6 +9,12 @@ export interface PracticeSession {
   createdAt: string;
 }
 
+export interface PracticeBlueprint {
+  objectiveId: string;
+  policyVersion: 'practice-v1';
+  slots: DifficultyBand[];
+}
+
 export type ArithmeticProblemSpec = {
   kind: 'ARITHMETIC';
   operation: 'MULTIPLY' | 'DIVIDE';
