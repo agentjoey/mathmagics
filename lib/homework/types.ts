@@ -70,7 +70,7 @@ export interface HomeworkConfirmation {
   confirmedAt: string;
 }
 
-export interface EffectiveHomeworkObservation extends HomeworkProblemExtraction {}
+export type EffectiveHomeworkObservation = HomeworkProblemExtraction;
 
 export interface HomeworkTrustEvaluation {
   conversionSupported: boolean;

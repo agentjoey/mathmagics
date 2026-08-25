@@ -69,15 +69,14 @@ describe('HomeworkService', () => {
   });
 
   it('repairs missing Evidence on exact Attempt replay without duplicating Attempt', async () => {
-    const { service, practice, learning } = await fixture();
+    const { service, homework, practice, learning } = await fixture();
     await service.submitHomework({ submissionId: 'hs-repair', studentId: 's1', bytes, mimeType: 'image/png', sha256 }, now);
     const first = await service.gradeHomeworkProblem({ problemId: 'hs-repair:problem:1', attemptId: 'repair' }, '2026-08-25T00:02:00.000Z');
     const evidence = await learning.getEvidence(evidenceIdForHomeworkAttempt('repair'));
     expect(evidence).toBeDefined();
-    // Simulate interrupted Evidence write with a repository wrapper on replay by starting from the stored Attempt in a fresh learning repo.
     const freshLearning = new MemoryLearningStateRepository();
     await freshLearning.saveStudent({ id: 's1', displayName: 'Alex', levelId: 'P2', learningMode: 'STRUCTURED_HOME_LEARNING', sessionsPerWeek: 4, minutesPerSession: 30, createdAt: now, updatedAt: now });
-    const replayService = new HomeworkServiceImpl((service as any).homeworkRepository, practice, freshLearning, provider().implementation);
+    const replayService = new HomeworkServiceImpl(homework, practice, freshLearning, provider().implementation);
     const replay = await replayService.gradeHomeworkProblem({ problemId: 'hs-repair:problem:1', attemptId: 'repair' }, '2026-08-25T00:03:00.000Z');
     expect(replay.attempt).toEqual(first.attempt);
     expect(await freshLearning.getEvidence(evidenceIdForHomeworkAttempt('repair'))).toBeDefined();
