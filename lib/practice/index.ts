@@ -9,8 +9,10 @@ export type {
 } from './generators/registry';
 export { hintRevealId, validateRetryAttempt } from './hints';
 export type { RetryCoordinates } from './hints';
+export { MemoryPracticeRepository } from './memory-repository';
 export { buildPracticePreparationContext } from './preparation';
 export type { PracticePreparationContext } from './preparation';
+export type { PracticeRepository } from './repository';
 export { toStudentPracticeItem } from './student-view';
 export type { StudentPracticeItem } from './student-view';
 export type {
