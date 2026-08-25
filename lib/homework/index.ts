@@ -6,3 +6,4 @@ export * from './objective-mapping';
 export * from './evidence';
 export * from './repository';
 export * from './memory-repository';
+export * from './service';
