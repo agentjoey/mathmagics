@@ -2,7 +2,7 @@
 
 Version:        v0.7.0-dev
 Phase:          Phase 6 — Correction + Mistake Book
-Phase Status:   ✅ Design Approved / Written Spec Review Pending
+Phase Status:   ✅ Design + Written Spec Approved / Implementation Plan Ready
 Last Updated:   2026-08-25 by agent
 
 ## Product Positioning
@@ -127,7 +127,7 @@ No Phase 3, 4 or 5 migration was applied to a real Neon database during implemen
 
 ## Phase 6 — Correction + Mistake Book
 
-**✅ Architecture approved; formal written spec created and pending Human Owner written-spec review.**
+**✅ Architecture and written spec approved; implementation plan ready.**
 
 Approved authority chain:
 
@@ -162,11 +162,19 @@ Locked design decisions:
 - Transfer generation is deterministic and fail-closed. Unsupported structures remain `CORRECTING` with no AI fallback.
 - A failed transfer item cannot be guessed repeatedly until it passes; only a new server-controlled transfer round can later qualify.
 - `application_correct` is reused for successful independent transfer; no new `transfer_correct` Evidence type.
+- Failed CORRECTION retries remain canonical Attempts but do not add repeated `incorrect` Evidence.
+- Reasoning assistance must be server-observed through an append-only correction fact; the client cannot self-declare `assisted=false`.
 - Phase 6 exposes correction backlog and misconception history but does not change automatic weekly planning. Adaptation remains Phase 7.
 
 Formal design spec:
 
 `docs/superpowers/specs/2026-08-25-mathmagics-phase6-correction-mistake-book-design.md`
+
+Implementation plan:
+
+`docs/superpowers/plans/2026-08-25-mathmagics-phase6-correction-mistake-book.md`
+
+Implementation is split into seven TDD slices: contracts/diagnosis/projection; trusted problem resolver + AI boundary; CORRECTION Attempt/reasoning/transfer mechanics; persistence/migration; service/idempotency; automatic observation + E2E/projections; closeout/exact-HEAD verification.
 
 ## Persistence & Deployment
 
@@ -194,7 +202,7 @@ Generated migrations currently committed:
 - ✅ `migrations/0001_fantastic_shocker.sql` — Phase 4 practice facts.
 - ✅ `migrations/0002_gorgeous_obadiah_stane.sql` — Phase 5 structured homework provenance + unified Attempt source.
 
-Phase 6 design plans five additional durable fact tables plus a three-source Attempt migration; implementation will generate `0003_*` but must not apply it to production.
+Phase 6 plans five additional durable fact tables plus a three-source Attempt migration; implementation will generate `0003_*` but must not apply it to production.
 
 **Activation gate before first real durable-data deployment:**
 - provision separated Neon development/Preview and production databases in Singapore;
@@ -217,6 +225,7 @@ Family pilot remains Phase 8.
 
 ## Known Non-blocking Technical Debt / Gates
 
+- Fresh GrandeGPT worktree dependency bootstrap remains a known execution gap: the Phase 6 design worktree currently has no `node_modules`, so Grande `lint` reports `eslint: command not found`. Implementation may require Host dependency bootstrap until GrandeGPT provides reusable worktree dependencies.
 - Self-host/package Geist fonts if sandbox production builds need to be network-independent.
 - `npm ci` reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental feature work.
 - Neon live repository contracts remain intentionally gated on explicit `TEST_DATABASE_URL` and must pass before first real durable-data activation.
