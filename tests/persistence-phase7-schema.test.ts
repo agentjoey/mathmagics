@@ -9,7 +9,8 @@ import {
 } from '@/lib/persistence/schema';
 
 function uniqueIndexNames(table: Parameters<typeof getTableConfig>[0]): string[] {
-  return getTableConfig(table).indexes.filter((index) => index.config.unique).map((index) => index.config.name);
+  return getTableConfig(table).indexes.flatMap((index) =>
+    index.config.unique && index.config.name ? [index.config.name] : []);
 }
 
 describe('Phase 7 persistence schema', () => {
