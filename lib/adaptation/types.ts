@@ -35,3 +35,29 @@ export interface AdaptiveCandidate {
   targetMistakeId?: string;
   rationaleCodes: AdaptiveRationaleCode[];
 }
+
+export type AdaptiveDecisionAction = 'KEEP' | 'SUPERSEDE';
+
+export interface AdaptiveDecision {
+  id: string;
+  studentId: string;
+  sourceLessonId: string;
+  action: AdaptiveDecisionAction;
+  selectedIntent: LessonIntent;
+  selectedObjectiveIds: string[];
+  targetMistakeId?: string;
+  rationaleCodes: AdaptiveRationaleCode[];
+  policyVersion: 'adaptive-policy-v1';
+  evaluatedAt: string;
+  inputFactCutoff: string;
+  createdAt: string;
+}
+
+export interface LessonSupersession {
+  id: string;
+  studentId: string;
+  sourceLessonId: string;
+  replacementLessonId: string;
+  adaptiveDecisionId: string;
+  createdAt: string;
+}
