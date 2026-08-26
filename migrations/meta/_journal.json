@@ -29,6 +29,13 @@
       "when": 1787673626184,
       "tag": "0003_stale_mercury",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787743850770,
+      "tag": "0004_strange_meteorite",
+      "breakpoints": true
     }
   ]
 }
