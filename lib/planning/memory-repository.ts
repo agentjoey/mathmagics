@@ -16,6 +16,10 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
+function same(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 function weekKey(studentId: string, weekStart: string): string {
   return `${studentId}:${weekStart}`;
 }
@@ -64,7 +68,11 @@ export class MemoryPlanningRepository implements PlanningRepository {
     assertValidDailyLesson(replacement);
     const source = this.lessons.get(sourceLessonId);
     if (!source) throw new Error(`Unknown source daily lesson id: ${sourceLessonId}`);
-    if (this.lessons.has(replacement.id)) throw new Error('daily lesson id must be unique');
+    const existing = this.lessons.get(replacement.id);
+    if (existing) {
+      if (same(existing, replacement)) return;
+      throw new Error('daily lesson id already exists with different content');
+    }
     if (replacement.weeklyPlanId !== source.weeklyPlanId) throw new Error('replacement weeklyPlanId must match source lesson');
     if (replacement.studentId !== source.studentId) throw new Error('replacement studentId must match source lesson');
     if (replacement.sequence !== source.sequence) throw new Error('replacement sequence must match source lesson');
@@ -102,7 +110,7 @@ export class MemoryPlanningRepository implements PlanningRepository {
     return [...this.lessons.values()]
       .filter((lesson) => lesson.weeklyPlanId === planId)
       .sort((left, right) => left.sequence - right.sequence
-        || Date.parse(left.createdAt) - Date.parse(right.createdAt)
+        || left.createdAt.localeCompare(right.createdAt)
         || left.id.localeCompare(right.id))
       .map(clone);
   }
