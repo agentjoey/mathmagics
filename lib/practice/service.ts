@@ -15,6 +15,14 @@ export interface PracticeIdFactory {
   itemId(sessionId: string, sequence: number): string;
 }
 
+export interface AttemptRecordedObserver {
+  onAttemptRecorded(attempt: Attempt, now: string): Promise<void>;
+}
+
+const NOOP_ATTEMPT_OBSERVER: AttemptRecordedObserver = {
+  async onAttemptRecorded() {},
+};
+
 export interface PracticeService {
   preparePractice(lessonId: string, objectiveId: string, now: string): Promise<PracticePreparationContext>;
   createPracticeSession(lessonId: string, objectiveId: string, now: string): Promise<PracticeSession>;
@@ -51,6 +59,7 @@ export class PracticeServiceImpl implements PracticeService {
     private readonly planningRepository: PlanningRepository,
     private readonly practiceRepository: PracticeRepository,
     private readonly idFactory: PracticeIdFactory,
+    private readonly attemptObserver: AttemptRecordedObserver = NOOP_ATTEMPT_OBSERVER,
   ) {}
 
   preparePractice(lessonId: string, objectiveId: string, now: string): Promise<PracticePreparationContext> {
@@ -137,6 +146,7 @@ export class PracticeServiceImpl implements PracticeService {
     if (existing) {
       if (!matchesCommand(existing, input)) throw new Error('attempt idempotency conflict');
       await this.ensureEvidence(existing, item);
+      await this.notifyIncorrect(existing, now);
       return existing;
     }
 
@@ -170,11 +180,17 @@ export class PracticeServiceImpl implements PracticeService {
       const winner = await this.practiceRepository.getAttempt(input.attemptId);
       if (!winner || !matchesCommand(winner, input)) throw error;
       await this.ensureEvidence(winner, item);
+      await this.notifyIncorrect(winner, now);
       return winner;
     }
 
     await this.ensureEvidence(attempt, item);
+    await this.notifyIncorrect(attempt, now);
     return attempt;
+  }
+
+  private async notifyIncorrect(attempt: Attempt, now: string): Promise<void> {
+    if (attempt.outcome === 'INCORRECT') await this.attemptObserver.onAttemptRecorded(attempt, now);
   }
 
   private async ensureEvidence(attempt: Attempt, item: Parameters<typeof projectAttemptToEvidence>[1]): Promise<void> {

@@ -20,8 +20,10 @@ import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
 import {
   attempts,
+  correctionItems,
   homeworkProblems,
   homeworkSubmissions,
+  mistakes,
   practiceHintReveals,
   practiceItems,
   practiceSessions,
@@ -76,18 +78,39 @@ function toReveal(row: typeof practiceHintReveals.$inferSelect): PracticeHintRev
 function toAttempt(row: typeof attempts.$inferSelect): Attempt {
   let source: Attempt['source'];
   if (row.sourceKind === 'PRACTICE') {
-    if (!row.sessionId || !row.itemId || row.homeworkSubmissionId || row.homeworkProblemId) {
+    if (
+      !row.sessionId || !row.itemId
+      || row.homeworkSubmissionId || row.homeworkProblemId
+      || row.correctionMistakeId || row.correctionItemId
+    ) {
       throw new Error('persisted PRACTICE attempt has invalid source coordinates');
     }
     source = { kind: 'PRACTICE', sessionId: row.sessionId, itemId: row.itemId };
   } else if (row.sourceKind === 'HOMEWORK') {
-    if (row.sessionId || row.itemId || !row.homeworkSubmissionId || !row.homeworkProblemId) {
+    if (
+      row.sessionId || row.itemId
+      || !row.homeworkSubmissionId || !row.homeworkProblemId
+      || row.correctionMistakeId || row.correctionItemId
+    ) {
       throw new Error('persisted HOMEWORK attempt has invalid source coordinates');
     }
     source = {
       kind: 'HOMEWORK',
       submissionId: row.homeworkSubmissionId,
       problemId: row.homeworkProblemId,
+    };
+  } else if (row.sourceKind === 'CORRECTION') {
+    if (
+      row.sessionId || row.itemId
+      || row.homeworkSubmissionId || row.homeworkProblemId
+      || !row.correctionMistakeId || !row.correctionItemId
+    ) {
+      throw new Error('persisted CORRECTION attempt has invalid source coordinates');
+    }
+    source = {
+      kind: 'CORRECTION',
+      mistakeId: row.correctionMistakeId,
+      correctionItemId: row.correctionItemId,
     };
   } else {
     throw new Error(`persisted attempt source kind is unsupported: ${row.sourceKind}`);
@@ -135,7 +158,18 @@ function sameAttemptSource(left: Attempt, right: Attempt): boolean {
   if (left.source.kind === 'HOMEWORK' && right.source.kind === 'HOMEWORK') {
     return left.source.submissionId === right.source.submissionId && left.source.problemId === right.source.problemId;
   }
+  if (left.source.kind === 'CORRECTION' && right.source.kind === 'CORRECTION') {
+    return left.source.mistakeId === right.source.mistakeId
+      && left.source.correctionItemId === right.source.correctionItemId;
+  }
   return false;
+}
+
+function retryCoordinatesMatch(parent: Attempt, child: Attempt): boolean {
+  if (parent.studentId !== child.studentId || parent.objectiveId !== child.objectiveId) return false;
+  if (child.source.kind !== 'CORRECTION') return sameAttemptSource(parent, child);
+  if (parent.source.kind === 'CORRECTION') return sameAttemptSource(parent, child);
+  return parent.source.kind === 'PRACTICE' || parent.source.kind === 'HOMEWORK';
 }
 
 export class NeonPracticeRepository implements PracticeRepository {
@@ -267,7 +301,7 @@ export class NeonPracticeRepository implements PracticeRepository {
       if (Date.parse(attempt.submittedAt) < Date.parse(item.createdAt)) {
         throw new Error('attempt submittedAt must not precede practice item createdAt');
       }
-    } else {
+    } else if (attempt.source.kind === 'HOMEWORK') {
       const [problem] = await this.db.select({
         id: homeworkProblems.id,
         submissionId: homeworkProblems.submissionId,
@@ -282,12 +316,32 @@ export class NeonPracticeRepository implements PracticeRepository {
       if (!submission || submission.studentId !== attempt.studentId) {
         throw new Error('attempt coordinates must match homework submission');
       }
+    } else {
+      const [correctionItem] = await this.db.select({
+        id: correctionItems.id,
+        mistakeId: correctionItems.mistakeId,
+        studentId: correctionItems.studentId,
+        objectiveId: correctionItems.objectiveId,
+      }).from(correctionItems).where(eq(correctionItems.id, attempt.source.correctionItemId)).limit(1);
+      if (!correctionItem) throw new Error(`Unknown correction item id: ${attempt.source.correctionItemId}`);
+      if (
+        correctionItem.mistakeId !== attempt.source.mistakeId
+        || correctionItem.studentId !== attempt.studentId
+        || correctionItem.objectiveId !== attempt.objectiveId
+      ) {
+        throw new Error('attempt coordinates must match correction item');
+      }
+      const [mistake] = await this.db.select({ studentId: mistakes.studentId, objectiveId: mistakes.objectiveId })
+        .from(mistakes).where(eq(mistakes.id, attempt.source.mistakeId)).limit(1);
+      if (!mistake || mistake.studentId !== attempt.studentId || mistake.objectiveId !== attempt.objectiveId) {
+        throw new Error('attempt coordinates must match mistake');
+      }
     }
 
     if (attempt.retryOfAttemptId) {
       const parent = await this.getAttempt(attempt.retryOfAttemptId);
       if (!parent) throw new Error('retry parent does not exist');
-      if (!sameAttemptSource(parent, attempt) || parent.studentId !== attempt.studentId || parent.objectiveId !== attempt.objectiveId) {
+      if (!retryCoordinatesMatch(parent, attempt)) {
         throw new Error('retry parent coordinates must match attempt');
       }
       const [existingChild] = await this.db.select({ id: attempts.id }).from(attempts)
@@ -302,6 +356,8 @@ export class NeonPracticeRepository implements PracticeRepository {
       itemId: attempt.source.kind === 'PRACTICE' ? attempt.source.itemId : null,
       homeworkSubmissionId: attempt.source.kind === 'HOMEWORK' ? attempt.source.submissionId : null,
       homeworkProblemId: attempt.source.kind === 'HOMEWORK' ? attempt.source.problemId : null,
+      correctionMistakeId: attempt.source.kind === 'CORRECTION' ? attempt.source.mistakeId : null,
+      correctionItemId: attempt.source.kind === 'CORRECTION' ? attempt.source.correctionItemId : null,
       studentId: attempt.studentId,
       objectiveId: attempt.objectiveId,
       answerText: attempt.answerText,
@@ -324,6 +380,13 @@ export class NeonPracticeRepository implements PracticeRepository {
   async listAttemptsForSession(sessionId: string): Promise<Attempt[]> {
     const rows = await this.db.select().from(attempts)
       .where(and(eq(attempts.sourceKind, 'PRACTICE'), eq(attempts.sessionId, sessionId)))
+      .orderBy(asc(attempts.submittedAt), asc(attempts.recordedAt), asc(attempts.id));
+    return rows.map(toAttempt);
+  }
+
+  async listAttemptsForCorrectionItem(correctionItemId: string): Promise<Attempt[]> {
+    const rows = await this.db.select().from(attempts)
+      .where(and(eq(attempts.sourceKind, 'CORRECTION'), eq(attempts.correctionItemId, correctionItemId)))
       .orderBy(asc(attempts.submittedAt), asc(attempts.recordedAt), asc(attempts.id));
     return rows.map(toAttempt);
   }

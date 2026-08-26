@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { LearningStateRepository } from '@/lib/learning';
-import { gradeAnswer, type Attempt, type PracticeRepository } from '@/lib/practice';
+import { gradeAnswer, type Attempt, type AttemptRecordedObserver, type PracticeRepository } from '@/lib/practice';
 import type { HomeworkVisionProvider } from '@/lib/providers/homework-vision';
 import { deriveEffectiveHomeworkObservation, deriveHomeworkTrustState } from './confidence';
 import { convertHomeworkProblem } from './conversion';
@@ -36,12 +36,17 @@ export interface ConfirmHomeworkProblemInput {
 export interface GradeHomeworkProblemInput { problemId: string; attemptId: string }
 export interface HomeworkGradeProjection { attempt: Attempt; evidenceId: string }
 
+const NOOP_ATTEMPT_OBSERVER: AttemptRecordedObserver = {
+  async onAttemptRecorded() {},
+};
+
 export class HomeworkServiceImpl {
   constructor(
     readonly homeworkRepository: HomeworkRepository,
     private readonly practiceRepository: PracticeRepository,
     private readonly learningRepository: LearningStateRepository,
     private readonly visionProvider: HomeworkVisionProvider,
+    private readonly attemptObserver: AttemptRecordedObserver = NOOP_ATTEMPT_OBSERVER,
   ) {}
 
   private async projectProblem(problem: HomeworkProblemExtraction): Promise<HomeworkProblemProjection> {
@@ -135,6 +140,7 @@ export class HomeworkServiceImpl {
     const storedEvidence = await this.learningRepository.getEvidence(evidence.id);
     if (!storedEvidence) await this.learningRepository.appendEvidence(evidence);
     else if (JSON.stringify(storedEvidence) !== JSON.stringify(evidence)) throw new Error('homework evidence idempotency conflict');
+    if (attempt.outcome === 'INCORRECT') await this.attemptObserver.onAttemptRecorded(attempt, now);
     return { attempt: structuredClone(attempt), evidenceId: evidence.id };
   }
 }

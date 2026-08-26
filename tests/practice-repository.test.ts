@@ -155,6 +155,35 @@ describe('MemoryPracticeRepository', () => {
       .rejects.toThrow('retry parent already has a retry child');
   });
 
+  it('lists only CORRECTION attempts for one correction item in submittedAt/id order', async () => {
+    const repository = new MemoryPracticeRepository();
+    const first: Attempt = {
+      id: 'correction-b',
+      source: { kind: 'CORRECTION', mistakeId: 'mistake-1', correctionItemId: 'correction-item-1' },
+      studentId: session.studentId, objectiveId: session.objectiveId, answerText: '5', outcome: 'INCORRECT', hintUsed: true,
+      gradingPolicyVersion: 'grading-v1', submittedAt: '2026-08-25T00:01:00.000Z', recordedAt: '2026-08-25T00:01:01.000Z',
+    } as Attempt;
+    const second: Attempt = {
+      ...first,
+      id: 'correction-a',
+      recordedAt: '2026-08-25T00:01:02.000Z',
+    };
+    const other: Attempt = {
+      ...first,
+      id: 'correction-other',
+      source: { kind: 'CORRECTION', mistakeId: 'mistake-1', correctionItemId: 'correction-item-2' },
+      submittedAt: '2026-08-25T00:00:00.000Z',
+      recordedAt: '2026-08-25T00:00:00.000Z',
+    } as Attempt;
+
+    await repository.appendAttempt(first);
+    await repository.appendAttempt(second);
+    await repository.appendAttempt(other);
+
+    expect((await repository.listAttemptsForCorrectionItem('correction-item-1')).map((entry) => entry.id))
+      .toEqual(['correction-a', 'correction-b']);
+  });
+
   it('does not expose HOMEWORK attempts through practice item/session queries', async () => {
     const repository = new MemoryPracticeRepository();
     await seeded(repository);

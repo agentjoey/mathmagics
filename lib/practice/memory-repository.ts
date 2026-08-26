@@ -30,6 +30,11 @@ function compareAttempts(left: Attempt, right: Attempt): number {
     || left.id.localeCompare(right.id);
 }
 
+function compareCorrectionAttempts(left: Attempt, right: Attempt): number {
+  return Date.parse(left.submittedAt) - Date.parse(right.submittedAt)
+    || left.id.localeCompare(right.id);
+}
+
 function coordinatesMatchItem(
   record: { sessionId: string; itemId: string; studentId: string; objectiveId?: string },
   item: PracticeItem,
@@ -56,7 +61,18 @@ function sameAttemptSource(left: Attempt, right: Attempt): boolean {
   if (left.source.kind === 'HOMEWORK' && right.source.kind === 'HOMEWORK') {
     return left.source.submissionId === right.source.submissionId && left.source.problemId === right.source.problemId;
   }
+  if (left.source.kind === 'CORRECTION' && right.source.kind === 'CORRECTION') {
+    return left.source.mistakeId === right.source.mistakeId
+      && left.source.correctionItemId === right.source.correctionItemId;
+  }
   return false;
+}
+
+function retryCoordinatesMatch(parent: Attempt, child: Attempt): boolean {
+  if (parent.studentId !== child.studentId || parent.objectiveId !== child.objectiveId) return false;
+  if (child.source.kind !== 'CORRECTION') return sameAttemptSource(parent, child);
+  if (parent.source.kind === 'CORRECTION') return sameAttemptSource(parent, child);
+  return parent.source.kind === 'PRACTICE' || parent.source.kind === 'HOMEWORK';
 }
 
 export class MemoryPracticeRepository implements PracticeRepository {
@@ -139,12 +155,12 @@ export class MemoryPracticeRepository implements PracticeRepository {
     if (!coordinatesMatchItem(reveal, item)) {
       throw new Error('practice hint reveal coordinates must match practice item');
     }
-    if (Date.parse(reveal.revealedAt) < Date.parse(item.createdAt)) {
-      throw new Error('practice hint reveal revealedAt must not precede practice item createdAt');
-    }
     const coordinateKey = hintCoordinateKey(reveal.studentId, reveal.itemId);
     if (this.revealByCoordinates.has(coordinateKey)) {
       throw new Error('practice hint already revealed for student and item');
+    }
+    if (Date.parse(reveal.revealedAt) < Date.parse(item.createdAt)) {
+      throw new Error('practice hint reveal must not precede practice item creation');
     }
     this.reveals.set(reveal.id, clone(reveal));
     this.revealByCoordinates.set(coordinateKey, reveal.id);
@@ -180,7 +196,7 @@ export class MemoryPracticeRepository implements PracticeRepository {
     if (attempt.retryOfAttemptId) {
       const parent = this.attempts.get(attempt.retryOfAttemptId);
       if (!parent) throw new Error('retry parent does not exist');
-      if (!sameAttemptSource(parent, attempt) || parent.studentId !== attempt.studentId || parent.objectiveId !== attempt.objectiveId) {
+      if (!retryCoordinatesMatch(parent, attempt)) {
         throw new Error('retry parent coordinates must match attempt');
       }
       if (this.retryChildByParent.has(attempt.retryOfAttemptId)) {
@@ -202,6 +218,13 @@ export class MemoryPracticeRepository implements PracticeRepository {
     return [...this.attempts.values()]
       .filter((attempt) => attempt.source.kind === 'PRACTICE' && attempt.source.sessionId === sessionId)
       .sort(compareAttempts)
+      .map(clone);
+  }
+
+  async listAttemptsForCorrectionItem(correctionItemId: string): Promise<Attempt[]> {
+    return [...this.attempts.values()]
+      .filter((attempt) => attempt.source.kind === 'CORRECTION' && attempt.source.correctionItemId === correctionItemId)
+      .sort(compareCorrectionAttempts)
       .map(clone);
   }
 }

@@ -12,6 +12,7 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
+import type { DiagnosisTarget, ReasoningCheckSpec } from '@/lib/correction';
 import type { HomeworkProblemExtraction } from '@/lib/homework';
 import type { GeneratedLessonBriefContent, PlanningRationale } from '@/lib/planning';
 import type { AnswerSpec, PracticeProblemSpec } from '@/lib/practice';
@@ -188,6 +189,77 @@ export const homeworkConfirmations = pgTable('homework_confirmations', {
   index('homework_confirmation_problem_order_idx').on(table.problemId, table.confirmedAt, table.id),
 ]);
 
+export const mistakes = pgTable('mistakes', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  objectiveId: text('objective_id').notNull(),
+  initialAttemptId: text('initial_attempt_id').notNull().references((): AnyPgColumn => attempts.id),
+  initialDiagnosisTarget: jsonb('initial_diagnosis_target').$type<DiagnosisTarget>().notNull(),
+  diagnosisPolicyVersion: text('diagnosis_policy_version').notNull(),
+  firstObservedAt: instant('first_observed_at').notNull(),
+  createdAt: instant('created_at').notNull(),
+}, (table) => [
+  index('mistake_student_objective_order_idx').on(table.studentId, table.objectiveId, table.firstObservedAt, table.id),
+]);
+
+export const mistakeAttemptLinks = pgTable('mistake_attempt_links', {
+  mistakeId: text('mistake_id').notNull().references(() => mistakes.id, { onDelete: 'cascade' }),
+  attemptId: text('attempt_id').notNull().references((): AnyPgColumn => attempts.id),
+  role: text('role').notNull(),
+  linkedAt: instant('linked_at').notNull(),
+}, (table) => [
+  uniqueIndex('mistake_attempt_link_uq').on(table.mistakeId, table.attemptId),
+  index('mistake_attempt_link_order_idx').on(table.mistakeId, table.linkedAt, table.attemptId),
+]);
+
+export const mistakeEvents = pgTable('mistake_events', {
+  id: text('id').primaryKey(),
+  mistakeId: text('mistake_id').notNull().references(() => mistakes.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),
+  payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+  actorKind: text('actor_kind').notNull(),
+  policyVersion: text('policy_version').notNull(),
+  occurredAt: instant('occurred_at').notNull(),
+}, (table) => [
+  index('mistake_event_order_idx').on(table.mistakeId, table.occurredAt, table.id),
+]);
+
+export const correctionItems = pgTable('correction_items', {
+  id: text('id').primaryKey(),
+  mistakeId: text('mistake_id').notNull().references(() => mistakes.id, { onDelete: 'cascade' }),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  objectiveId: text('objective_id').notNull(),
+  kind: text('kind').notNull(),
+  sourceAttemptId: text('source_attempt_id').notNull().references((): AnyPgColumn => attempts.id),
+  transferRound: integer('transfer_round'),
+  problemSpec: jsonb('problem_spec').$type<PracticeProblemSpec>().notNull(),
+  answerSpec: jsonb('answer_spec').$type<AnswerSpec>().notNull(),
+  prompt: text('prompt').notNull(),
+  hint: text('hint'),
+  solutionOutline: jsonb('solution_outline').$type<string[]>().notNull(),
+  generator: text('generator').notNull(),
+  generatorVersion: text('generator_version').notNull(),
+  createdAt: instant('created_at').notNull(),
+}, (table) => [
+  index('correction_item_mistake_order_idx').on(table.mistakeId, table.createdAt, table.id),
+]);
+
+export const correctionReasoningChecks = pgTable('correction_reasoning_checks', {
+  id: text('id').primaryKey(),
+  mistakeId: text('mistake_id').notNull().references(() => mistakes.id, { onDelete: 'cascade' }),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  objectiveId: text('objective_id').notNull(),
+  checkSpec: jsonb('check_spec').$type<ReasoningCheckSpec>().notNull(),
+  response: jsonb('response').$type<Record<string, string>>().notNull(),
+  outcome: text('outcome').notNull(),
+  assisted: boolean('assisted').notNull(),
+  policyVersion: text('policy_version').notNull(),
+  submittedAt: instant('submitted_at').notNull(),
+  recordedAt: instant('recorded_at').notNull(),
+}, (table) => [
+  index('correction_reasoning_mistake_order_idx').on(table.mistakeId, table.submittedAt, table.id),
+]);
+
 export const attempts = pgTable('attempts', {
   id: text('id').primaryKey(),
   sourceKind: text('source_kind').notNull().default('PRACTICE'),
@@ -195,6 +267,8 @@ export const attempts = pgTable('attempts', {
   itemId: text('item_id').references(() => practiceItems.id, { onDelete: 'cascade' }),
   homeworkSubmissionId: text('homework_submission_id').references(() => homeworkSubmissions.id, { onDelete: 'cascade' }),
   homeworkProblemId: text('homework_problem_id').references(() => homeworkProblems.id, { onDelete: 'cascade' }),
+  correctionMistakeId: text('correction_mistake_id').references(() => mistakes.id, { onDelete: 'cascade' }),
+  correctionItemId: text('correction_item_id').references(() => correctionItems.id, { onDelete: 'cascade' }),
   studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
   objectiveId: text('objective_id').notNull(),
   answerText: text('answer_text').notNull(),
@@ -212,17 +286,30 @@ export const attempts = pgTable('attempts', {
       AND ${table.itemId} IS NOT NULL
       AND ${table.homeworkSubmissionId} IS NULL
       AND ${table.homeworkProblemId} IS NULL
+      AND ${table.correctionMistakeId} IS NULL
+      AND ${table.correctionItemId} IS NULL
     ) OR (
       ${table.sourceKind} = 'HOMEWORK'
       AND ${table.sessionId} IS NULL
       AND ${table.itemId} IS NULL
       AND ${table.homeworkSubmissionId} IS NOT NULL
       AND ${table.homeworkProblemId} IS NOT NULL
+      AND ${table.correctionMistakeId} IS NULL
+      AND ${table.correctionItemId} IS NULL
+    ) OR (
+      ${table.sourceKind} = 'CORRECTION'
+      AND ${table.sessionId} IS NULL
+      AND ${table.itemId} IS NULL
+      AND ${table.homeworkSubmissionId} IS NULL
+      AND ${table.homeworkProblemId} IS NULL
+      AND ${table.correctionMistakeId} IS NOT NULL
+      AND ${table.correctionItemId} IS NOT NULL
     )
   `),
   uniqueIndex('attempt_retry_parent_uq').on(table.retryOfAttemptId),
   index('attempt_item_order_idx').on(table.itemId, table.submittedAt, table.id),
   index('attempt_homework_problem_order_idx').on(table.homeworkProblemId, table.submittedAt, table.id),
+  index('attempt_correction_item_order_idx').on(table.correctionItemId, table.submittedAt, table.id),
   index('attempt_student_objective_order_idx').on(
     table.studentId,
     table.objectiveId,
