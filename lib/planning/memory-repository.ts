@@ -16,6 +16,10 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
+function same(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 function weekKey(studentId: string, weekStart: string): string {
   return `${studentId}:${weekStart}`;
 }
@@ -60,6 +64,24 @@ export class MemoryPlanningRepository implements PlanningRepository {
     for (const lesson of lessons) this.lessons.set(lesson.id, clone(lesson));
   }
 
+  async appendAdaptiveReplacementLesson(sourceLessonId: string, replacement: DailyLesson): Promise<void> {
+    assertValidDailyLesson(replacement);
+    const source = this.lessons.get(sourceLessonId);
+    if (!source) throw new Error(`Unknown source daily lesson id: ${sourceLessonId}`);
+    const existing = this.lessons.get(replacement.id);
+    if (existing) {
+      if (same(existing, replacement)) return;
+      throw new Error('daily lesson id already exists with different content');
+    }
+    if (replacement.weeklyPlanId !== source.weeklyPlanId) throw new Error('replacement weeklyPlanId must match source lesson');
+    if (replacement.studentId !== source.studentId) throw new Error('replacement studentId must match source lesson');
+    if (replacement.sequence !== source.sequence) throw new Error('replacement sequence must match source lesson');
+    if (Date.parse(replacement.createdAt) < Date.parse(source.createdAt)) {
+      throw new Error('replacement createdAt must not precede source lesson');
+    }
+    this.lessons.set(replacement.id, clone(replacement));
+  }
+
   async getWeeklyPlan(planId: string): Promise<WeeklyPlan | undefined> {
     const plan = this.plans.get(planId);
     return plan ? clone(plan) : undefined;
@@ -87,7 +109,9 @@ export class MemoryPlanningRepository implements PlanningRepository {
   async listDailyLessonsForPlan(planId: string): Promise<DailyLesson[]> {
     return [...this.lessons.values()]
       .filter((lesson) => lesson.weeklyPlanId === planId)
-      .sort((left, right) => left.sequence - right.sequence || left.id.localeCompare(right.id))
+      .sort((left, right) => left.sequence - right.sequence
+        || left.createdAt.localeCompare(right.createdAt)
+        || left.id.localeCompare(right.id))
       .map(clone);
   }
 

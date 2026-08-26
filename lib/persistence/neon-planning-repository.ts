@@ -162,7 +162,7 @@ export class NeonPlanningRepository implements PlanningRepository {
   async listDailyLessonsForPlan(planId: string): Promise<DailyLesson[]> {
     const rows = await this.db.select().from(dailyLessons)
       .where(eq(dailyLessons.weeklyPlanId, planId))
-      .orderBy(asc(dailyLessons.sequence), asc(dailyLessons.id));
+      .orderBy(asc(dailyLessons.sequence), asc(dailyLessons.createdAt), asc(dailyLessons.id));
     return rows.map(toLesson);
   }
 

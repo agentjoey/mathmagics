@@ -1,7 +1,7 @@
 # Current Status — MathMagics
 
-Version:        v0.7.0-dev
-Phase:          Phase 6 — Correction + Mistake Book
+Version:        v0.8.0-dev
+Phase:          Phase 7 — Progress + Adaptive Learning Loop
 Phase Status:   ✅ Implementation Complete / Exact-HEAD Host Verification Pending
 Last Updated:   2026-08-26 by agent
 
@@ -19,242 +19,228 @@ Initial curriculum scope:
 
 Core learning loop:
 
-`Plan → Learn → Practice → Correct → Track → Adapt`
+`Plan → Learn → Practice → Correct → Track → Adapt → next Learn`
 
-Curriculum truth and learning history remain application-owned. AI explains, generates and recommends within trusted context; AI does not own curriculum truth, evidence, mastery, readiness, planner objective selection, mathematical answer keys or grades.
+Curriculum truth and learning history remain application-owned. AI explains and generates teaching language inside trusted context; AI does not own curriculum truth, Evidence, Mastery, Readiness, StrategyEvidence, MistakePriority, adaptive candidate ranking, lesson intent/objective selection, mathematical answer keys or grades.
 
 ## Phase 1 — Curriculum Foundation
 
-- ✅ MOE-backed P2/P3 curriculum graph with 25 nodes and 68 LearningObjectives (P2=32, P3=36).
-- ✅ Three teaching-knowledge deep slices: P2 Multiplication & Division, P3 Fractions, P2/P3 Word Problems + Bar Model.
-- ✅ Prerequisite edges, CPA representations, strategies, misconceptions, readiness evidence and mastery evidence.
-- ✅ 18 Primary Mathematics 2022 textbook mappings.
-- ✅ Deterministic curriculum loader, validator and query API.
-- ✅ Legacy Q05/Q18 retained only as teaching-engine fixtures.
+**✅ Completed.**
+
+- MOE-backed P2/P3 curriculum graph with 25 nodes and 68 LearningObjectives (P2=32, P3=36).
+- Three teaching-knowledge deep slices: P2 Multiplication & Division, P3 Fractions, P2/P3 Word Problems + Bar Model.
+- Prerequisite edges, CPA representations, strategies, misconceptions, readiness evidence and mastery evidence.
+- 18 Primary Mathematics 2022 textbook mappings.
+- Deterministic curriculum loader, validator and query API.
 
 ## Phase 2 — Student & Mastery Core
 
-- ✅ `StudentProfile` and manual `CurrentPositionAssumption`.
-- ✅ Append-only `EvidenceRecord` ledger.
-- ✅ Deterministic `NOT_STARTED / INTRODUCED / DEVELOPING / MASTERED` projection and sticky mastery/review policy.
-- ✅ Deterministic prerequisite readiness: `READY / NEEDS_SUPPORT / BLOCKED`.
-- ✅ Storage-agnostic `LearningStateRepository`; later phases only add replay-safe reads, never mutable mastery writes.
-- ✅ No mutable `setMastery`, Evidence update/delete, or persisted mastery/readiness state.
+**✅ Completed.**
+
+- `StudentProfile` and manual `CurrentPositionAssumption`.
+- Append-only `EvidenceRecord` ledger.
+- Deterministic `NOT_STARTED / INTRODUCED / DEVELOPING / MASTERED` projection and review policy.
+- Deterministic prerequisite readiness: `READY / NEEDS_SUPPORT / BLOCKED`.
+- No mutable Mastery/Readiness persistence or Evidence update/delete path.
 
 ## Phase 3 — Teaching Planner / Lesson Prep
 
 **✅ Completed / Merged — PR #3.**
 
-- ✅ Signed stateless `mm_session` household auth and Next.js `proxy.ts` guard.
-- ✅ Deterministic `LearningPosition` and prerequisite-aware candidate selection.
-- ✅ Immutable `WeeklyPlan` / `DailyLesson` snapshots and append-only `LessonExecutionEvent` history.
-- ✅ Trusted `LessonPreparationContext` and narrow MiniMax lesson-brief boundary.
-- ✅ Phase 3 Neon/Drizzle persistence for learning/planning facts.
-- ✅ Vercel `sin1` + Neon Singapore deployment foundation with explicit migrations only.
+- Signed stateless `mm_session` household auth and Next.js proxy guard.
+- Deterministic `LearningPosition` and prerequisite-aware candidate selection.
+- Immutable `WeeklyPlan` / `DailyLesson` snapshots plus append-only execution history.
+- Trusted lesson-preparation context and narrow MiniMax lesson-brief boundary.
+- Neon/Drizzle persistence foundation.
 
 ## Phase 4 — Practice / Attempt Core
 
 **✅ Completed / Merged — PR #4.**
 
-Authority chain:
-
-```text
-DailyLesson
-→ trusted PracticePreparationContext
-→ deterministic practice-v1 blueprint
-→ code-owned PracticeProblemSpec + AnswerSpec
-→ immutable PracticeItem
-→ server-observed HintReveal
-→ deterministic grade
-→ immutable Attempt
-→ deterministic replay-safe EvidenceRecord
-→ Phase 2 derived Mastery / Readiness
-```
-
-- ✅ Deterministic P2/P3 PracticeSession/PracticeItem generation and code-owned math truth.
-- ✅ Exact deterministic grading; malformed student syntax becomes incorrect rather than an AI judgment.
-- ✅ Server-observed hint use, append-only retry provenance and stable replay-safe Evidence IDs.
-- ✅ Memory + Neon PracticeRepository and `0001_fantastic_shocker.sql`.
-- ✅ P2/P3 practice E2E for independent, hinted, incorrect/retry, application, replay repair and unsupported fail-closed outcomes.
+- Deterministic P2/P3 practice generation and code-owned `PracticeProblemSpec + AnswerSpec`.
+- Exact deterministic grading.
+- Server-observed hint use, append-only retry provenance and immutable canonical `Attempt`.
+- Replay-safe Attempt → Evidence projection.
+- Memory + Neon PracticeRepository and migration `0001_fantastic_shocker.sql`.
 
 ## Phase 5 — Homework Vision
 
 **✅ Completed / Merged — PR #5.**
 
+- JPEG/PNG/WebP homework intake with non-durable raw-image boundary.
+- Observation-only vision provider with confidence/provenance.
+- Deterministic mathematical reconstruction and conservative objective mapping.
+- Canonical `Attempt` ledger generalized to `PRACTICE | HOMEWORK`.
+- Memory + Neon homework persistence and migration `0002_gorgeous_obadiah_stane.sql`.
+- No object storage, queue, worker, Redis or adaptive scoring introduced.
+
+## Phase 6 — Correction + Mistake Book
+
+**✅ Completed / Merged — PR #6.**
+
 Authority chain:
 
 ```text
-JPEG / PNG / WebP image bytes (request-scoped only)
-→ narrow HomeworkVisionProvider observation
-→ per-field confidence + normalized source-region provenance
-→ homework-confidence-v1 gate / append-only human confirmation
-→ deterministic mathematical conversion
-→ conservative P2/P3 LearningObjective mapping
-→ existing deterministic gradeAnswer()
-→ canonical immutable Attempt { PRACTICE | HOMEWORK }
-→ source-aware EvidenceRecord
-→ Phase 2 derived Mastery / Readiness
+INCORRECT canonical Attempt { PRACTICE | HOMEWORK }
+→ Mistake episode
+→ deterministic/constrained diagnosis
+→ confirmed target
+→ Socratic correction
+→ canonical CORRECTION Attempt
+→ corrected Evidence
+→ structured reasoning
+→ explained_independently Evidence
+→ deterministic transfer
+→ application_correct Evidence
+→ projectMistakeState()
+→ RESOLVED
 ```
 
-Completed:
-- ✅ Trusted intake accepts JPEG/PNG/WebP up to 10 MiB and recomputes SHA-256 from request bytes.
-- ✅ Raw homework image bytes are never written to Postgres, migration columns, repo fixtures, object storage or durable provider URLs.
-- ✅ `HomeworkVisionProvider` is observation-only and has no grade, answer-key, objective, Evidence, Mastery or Readiness authority.
-- ✅ `homework-confidence-v1` requires every grading-critical structural field and student answer confidence `>= 0.98`; lower confidence requires append-only Student/Parent correction.
-- ✅ Deterministic conversion derives trusted `PracticeProblemSpec + AnswerSpec` from observed mathematical structure.
-- ✅ `homework-objective-map-v1` maps only locked observable P2/P3 structures; ambiguous/unsupported structures fail closed.
-- ✅ Canonical `Attempt` uses one ledger with `PRACTICE` or `HOMEWORK` source coordinates.
-- ✅ Homework grading calls existing `gradeAnswer()` and projects HOMEWORK Evidence deterministically.
-- ✅ Stable Homework Evidence IDs support exact replay and recovery when Attempt persisted but Evidence append was interrupted.
-- ✅ Duplicate `(studentId, sourceSha256)` image submission is idempotent.
-- ✅ Structured persistence uses `homework_submissions`, `homework_problems`, `homework_confirmations` plus generalized `attempts`; no raw image column exists.
-- ✅ Drizzle migration `0002_gorgeous_obadiah_stane.sql` adds source exclusivity CHECK constraints.
-- ✅ No object storage, queue, worker, Redis, vector DB or adaptive scoring was introduced.
+Implemented:
+- Immutable Mistake episodes with append-only events/links.
+- `AttemptSource = PRACTICE | HOMEWORK | CORRECTION` in one canonical Attempt ledger.
+- Recurrence creates a new episode; resolved episodes never reopen.
+- AI can phrase correction guidance but cannot decide diagnosis confirmation, grading, Evidence type or lifecycle state.
+- Resolution requires `corrected + explained_independently + qualifying transfer` hard facts.
+- Student/Parent mistake projections are deterministic.
+- Memory + Neon correction repositories and migration `0003_stale_mercury.sql`.
 
-### Phase 5 exact-HEAD verification
+Post-merge canonical Host verification for Phase 6 passed on merge SHA `a0b0c0aa37c882b2c8fd9850a76327f3068b487f` after dependency bootstrap:
+- 311 passed / 6 skipped tests.
+- typecheck PASS.
+- curriculum validation PASS: 25 nodes, 68 objectives, 18 mappings.
+- lint PASS.
+- production build PASS.
 
-Final Host verification on implementation HEAD `82f78171f4872750a78d6c7c8ae6807c3fd3cba3` passed:
+No Phase 6 migration was applied to production during implementation or verification.
 
-- ✅ `npm test`: 245 passed, 5 intentionally skipped across 47 files (43 passed, 4 skipped).
-- ✅ `npm run typecheck`.
-- ✅ `npm run validate:curriculum`: 25 nodes, 68 objectives (P2=32, P3=36), 18 textbook mappings.
-- ✅ `npm run lint`.
-- ✅ `npm run build`: Next.js production build completed successfully.
-- ✅ PR #5 merged to canonical `main` as `e25c59e093b3b892684d357150a5504109f9de45`.
-
-No Phase 3, 4 or 5 migration was applied to a real Neon database during implementation or Phase 5 merge verification.
-
-## Phase 6 — Correction + Mistake Book
+## Phase 7 — Progress + Adaptive Learning Loop
 
 **✅ Implementation complete; exact-HEAD Host verification is the remaining release gate.**
 
 Authority chain:
 
 ```text
-INCORRECT canonical Attempt { PRACTICE | HOMEWORK }
-→ automatic post-Attempt observation after Attempt + Evidence are durable
-→ immutable Mistake learning-problem episode
-→ deterministic diagnosis OR constrained AI candidate + Student/Parent confirmation
-→ confirmed diagnosis target
-→ AI teaching language inside trusted Correction context only
-→ ORIGINAL_RETRY canonical CORRECTION Attempt
-→ existing deterministic gradeAnswer()
-→ corrected Evidence
-→ code-owned structured reasoning checks + server-observed assistance
-→ deterministic reasoning grade
-→ explained_independently Evidence
-→ deterministic isomorphic TRANSFER CorrectionItem
-→ first-attempt, no-hint canonical CORRECTION Attempt
-→ existing deterministic gradeAnswer()
-→ application_correct Evidence
-→ projectMistakeState() hard-fact projection
-→ RESOLVED
-→ optional MISTAKE_RESOLVED receipt (never authority)
+Canonical Facts
+├ EvidenceRecord
+├ Attempt
+├ LessonExecutionEvent
+├ Mistake / MistakeEvent
+└ StrategyInteraction / StrategyEvidence
+        ↓
+Progress Projection
+├ Coverage
+├ Mastery
+├ Performance
+└ Strategy
+        ↓
+Adaptive Context
+        ↓
+Deterministic Adaptive Policy
+     ├ KEEP
+     └ SUPERSEDE
+          ↓
+AdaptiveDecision + immutable replacement DailyLesson + LessonSupersession
 ```
 
 Implemented:
+- ✅ Coverage projection: `NOT_SEEN / INTRODUCED / ENGAGED / PRACTISED`.
+- ✅ Existing Phase 2 Mastery authority remains unchanged.
+- ✅ Performance projection: `INSUFFICIENT_DATA / STRUGGLING / UNSTABLE / STABLE` over `7 days ∩ latest 12 root PRACTICE/HOMEWORK Attempts`; CORRECTION Attempts are excluded.
+- ✅ Cross-topic Strategy progress: `NOT_OBSERVED / DEVELOPING / RELIABLE` from server-observed structured interactions only.
+- ✅ Strategy facts support `PROMPTED_USE / INDEPENDENT_USE / INDEPENDENT_TRANSFER / MISAPPLICATION`; a correct answer alone never proves strategy use.
+- ✅ Deterministic MistakePriority: `LOW / NORMAL / BLOCKING`.
+- ✅ Next Best Lesson priority: `BLOCKING_CORRECTION > PREREQUISITE_SUPPORT > NORMAL_CORRECTION > REVIEW > CURRENT_POSITION > NEXT_IN_SEQUENCE`.
+- ✅ Starvation guard restores forward learning after two completed CORRECTION/REVIEW lessons unless a BLOCKING mistake or blocked prerequisite overrides.
+- ✅ Weekly plans remain immutable initial plans; adaptation occurs only at lesson boundaries.
+- ✅ STARTED lessons are never superseded.
+- ✅ One source lesson has at most one immutable replacement; replacement-of-replacement chains are forbidden.
+- ✅ `AdaptiveDecision` records policy version, input fact cutoff, selected lesson and rationale codes for replay/audit.
+- ✅ Same evaluation key is idempotent; multiple KEEP decisions at later cutoffs are allowed, but only one SUPERSEDE can be adopted.
+- ✅ Parent/Tutor Progress View keeps Coverage, Mastery, Performance and Strategy separate and explains adapted next lessons with code-owned rationale text.
+- ✅ Student next-lesson view exposes only lesson identity, intent, objective summary and adapted flag.
+- ✅ APIs are thin authenticated surfaces; clients cannot submit authoritative intent/objective/Mastery/MistakePriority/cutoff fields.
+- ✅ Full-loop E2E covers Practice → Mistake → Correction → recurrence → adaptive CORRECTION → resolution → forward learning.
+- ✅ Service-level starvation E2E proves normal remediation yields to forward learning after two completed remediation lessons.
+- ✅ Static authority audit found no mutable Progress/Adaptive setters, combined learning score, persisted current recommendation, or AI provider dependency in `lib/progress`, `lib/adaptation` or `lib/strategy` authority paths.
 
-- ✅ `Mistake` is an immutable learning-problem episode. No mutable `state` field or `setMistakeState` API exists.
-- ✅ `mistake_events` and Mistake/Attempt links are append-only facts; lifecycle is derived by `projectMistakeState()`.
-- ✅ Same unresolved `student × objective × confirmed diagnosisTarget` aggregates related incorrect Attempts; a resolved episode is never reopened.
-- ✅ A future recurrence after resolution creates a new episode. Old correction Evidence is episode-isolated and cannot resolve the new recurrence.
-- ✅ `AttemptSource` now supports `PRACTICE | HOMEWORK | CORRECTION(mistakeId, correctionItemId)` while preserving exactly one canonical Attempt ledger.
-- ✅ CORRECTION retry provenance remains linear through `retryOfAttemptId`; failed retries never create child Mistakes or duplicate `incorrect` Evidence.
-- ✅ Deterministic diagnosis auto-confirms only an exactly-one supported target.
-- ✅ AI diagnosis is constrained to curriculum misconception IDs plus `FACT_ERROR / PROCEDURE_ERROR / REPRESENTATION_ERROR / UNKNOWN`; AI cannot mint taxonomy keys or confirm learning facts.
-- ✅ Uncertain AI diagnosis stays `OBSERVED` until Student/Parent confirmation. Provisional episodes may consolidate append-only into an already-open confirmed episode.
-- ✅ AI correction provider can phrase explanation/Socratic prompts only; math truth, answer keys, grades, reasoning outcomes, Evidence types and lifecycle remain code-owned.
-- ✅ Structured reasoning checkpoints are code-owned and deterministically graded. Assistance is server-observed through `REASONING_ASSISTANCE_REVEALED`; a later fresh unassisted PASS can qualify.
-- ✅ `corrected` Evidence is tied to a current-episode `CORRECTION_RETRY` Attempt; `explained_independently` is tied directly to the Mistake episode.
-- ✅ Transfer generation is deterministic/isomorphic and fail-closed. Unsupported structures remain `CORRECTING`; AI cannot invent an assessment item.
-- ✅ Transfer round 1 is consumed by its first Attempt. A later correct answer on the same item cannot qualify; fresh independent reasoning is required before deterministic round 2.
-- ✅ Successful transfer reuses `application_correct`; resolution requires `corrected + explained_independently + qualifying transfer` hard facts.
-- ✅ `MISTAKE_RESOLVED` is only a replay-repairable receipt. An early/fake receipt cannot force `RESOLVED`, and an interrupted receipt can be repaired only by replaying the exact already-stored qualifying transfer Attempt.
-- ✅ Practice/Homework services expose a narrow optional `AttemptRecordedObserver`; incorrect root Attempts are observed only after canonical Attempt + Evidence persistence. CORRECTION Attempts are never recursively observed as root Mistakes.
-- ✅ Student projection exposes learning-language status/next step without AnswerSpec, solution outline, AI rationale or raw event payloads.
-- ✅ Parent projection derives Active / Resolved / Recurring summaries from deterministic episode history and curriculum labels.
-- ✅ Memory + Neon correction repositories and Drizzle migration `0003_stale_mercury.sql` are implemented.
-- ✅ Phase 6 does not change weekly planner automatic scheduling. Adaptive next-best learning remains Phase 7.
+### Phase 7 persistence
 
-### Phase 6 verification evidence so far
+Durable fact tables now total 23.
 
-Sandbox/final-working-tree evidence before the remaining Host-only gates:
+Phase 7 adds exactly:
 
-- ✅ Full test suite: 311 passed, 6 intentionally skipped across 63 files (59 passed, 4 skipped).
-- ✅ Exact `npm run typecheck` executed through a temporary controlled test probe and passed with exit code 0; the probe was deleted afterward.
-- ✅ `npm run lint`: exit code 0 with 0 warnings after cleanup.
-- ✅ Static authority audit: no production `setMistakeState`, `mistake_state`, mutable Mastery/Readiness setter, AI correction grading/understanding authority, or parallel CorrectionAttempt ledger. Both CORRECTION grading paths call `gradeAnswer()` and resolution is derived through `projectMistakeState()` hard facts.
-- ✅ `migrations/0003_stale_mercury.sql` was reviewed and not applied to production.
-- ⚠️ Exact `npm run validate:curriculum` is sandbox-blocked by the known `tsx` Unix-pipe `EINVAL` limitation; requires exact-HEAD Host execution rather than a weaker substitute.
-- ⚠️ Sandbox `npm run build` reaches Next.js/Turbopack but fails only because `next/font` cannot fetch Geist / Geist Mono from Google Fonts; requires exact-HEAD Host build as in Phase 5.
+```text
+strategy_interactions
+strategy_evidence
+adaptive_decisions
+lesson_supersessions
+```
 
-No Phase 6 migration has been applied to any production database.
+Generated migration:
+- ✅ `migrations/0004_strange_meteorite.sql`
+- SHA-256: `40248aff69a6bd7052ad356b374418b3b3ded0bbe37779be867d0b11dd590cb7`
+- Adds only the four approved Phase 7 fact tables plus required FKs/indexes.
+- Drops `daily_lesson_plan_sequence_uq` so immutable replacement lessons can share the source lesson logical sequence.
+- Adds non-unique `daily_lesson_plan_sequence_idx` for deterministic ordering.
+- Does not add mutable Progress/Strategy/Performance/current-recommendation state.
+- **Not applied to production.**
+
+### Phase 7 verification evidence so far
+
+Fresh sandbox evidence after migration generation:
+- ✅ Full test suite reached 384 passed / 8 intentionally skipped before final exact-HEAD closeout verification.
+- ✅ `npm run lint` passed with 0 warnings before final exact-HEAD closeout verification.
+- ✅ Full-loop and starvation service E2E tests are included in that suite.
+- ✅ Migration static review passed against the approved schema boundary.
+- ✅ Authority audit passed.
+- ⚠️ Live Neon contracts remain intentionally skipped without explicit `TEST_DATABASE_URL`.
+- ⚠️ Exact-HEAD Host `typecheck`, curriculum validation and production build are still required before PR/merge closeout.
 
 Formal design spec:
 
-`docs/superpowers/specs/2026-08-25-mathmagics-phase6-correction-mistake-book-design.md`
+`docs/superpowers/specs/2026-08-26-mathmagics-phase7-progress-adaptive-learning-design.md`
 
 Implementation plan:
 
-`docs/superpowers/plans/2026-08-25-mathmagics-phase6-correction-mistake-book.md`
+`docs/superpowers/plans/2026-08-26-mathmagics-phase7-progress-adaptive-learning.md`
 
 ## Persistence & Deployment
 
-Durable fact tables now total 19:
+Committed migration chain:
 
 ```text
-students
-current_positions
-evidence_records
-weekly_plans
-daily_lessons
-lesson_execution_events
-lesson_briefs
-practice_sessions
-practice_items
-practice_hint_reveals
-homework_submissions
-homework_problems
-homework_confirmations
-mistakes
-mistake_attempt_links
-mistake_events
-correction_items
-correction_reasoning_checks
-attempts
+0000_old_bushwacker.sql
+0001_fantastic_shocker.sql
+0002_gorgeous_obadiah_stane.sql
+0003_stale_mercury.sql
+0004_strange_meteorite.sql
 ```
-
-Generated migrations committed in the Phase 6 branch:
-- ✅ `migrations/0000_old_bushwacker.sql` — Phase 3 foundation.
-- ✅ `migrations/0001_fantastic_shocker.sql` — Phase 4 practice facts.
-- ✅ `migrations/0002_gorgeous_obadiah_stane.sql` — Phase 5 structured homework provenance + unified Attempt source.
-- ✅ `migrations/0003_stale_mercury.sql` — Phase 6 Mistake/correction facts + three-source Attempt coordinates.
 
 **Activation gate before first real durable-data deployment:**
 - provision separated Neon development/Preview and production databases in Singapore;
-- apply committed `0000`–`0003` migrations explicitly against non-production first;
-- run learning/planning, practice, homework and correction Neon contracts with explicit `TEST_DATABASE_URL`;
-- only then promote the same reviewed migrations to production;
+- apply committed `0000`–`0004` migrations explicitly against non-production first;
+- run learning/planning, practice, homework, correction, strategy and adaptive Neon contract suites with explicit `TEST_DATABASE_URL`;
+- only then promote the exact reviewed migrations to production;
 - never point tests or Vercel Preview at production `DATABASE_URL`.
 
-## Next After Phase 6
+No Phase 7 migration has been applied to any production database.
 
-**Phase 7 — Progress + Adaptive Learning Loop**
+## Next After Phase 7
 
-Primary scope remains:
-- separate Curriculum Coverage, Knowledge Mastery and Practice Performance;
-- consume durable Mistake/recurrence facts without weakening Phase 6 correction authority;
-- prerequisite-aware Next Best Lesson recommendations;
-- adaptive use of the already-reserved `CORRECTION` lesson intent.
+**Phase 8 — Family Pilot**
 
-Family pilot remains Phase 8.
+Primary scope:
+- multi-week household pilot on the existing P2/P3 curriculum;
+- validate that families can understand what was learned, mastered, recently unstable, still needs correction, and should be taught next;
+- validate adaptive lesson changes and rationale in real household use;
+- collect product evidence before expanding curriculum, identity/tenancy or analytics scope.
 
 ## Known Non-blocking Technical Debt / Gates
 
-- GrandeGPT currently has no registered `mathmagics:typecheck` profile; exact typecheck was still executed via the repository script inside a controlled test profile.
-- Grande sandbox `tsx` IPC blocks the exact curriculum-validation script; final Host verification is required.
-- Google Fonts network access blocks sandbox Next.js production build; final Host build is required. Self-host/package Geist only if this becomes an ongoing operational burden, not as incidental Phase 6 scope.
-- `npm ci` reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental feature work.
+- GrandeGPT currently has no registered `mathmagics:typecheck`, `validate:curriculum` or `db:generate` profile; these still require exact-HEAD Host execution when needed.
+- Google Fonts network access can block sandbox Next.js production builds; exact-HEAD Host build remains the release gate rather than weakening the build check.
+- `npm ci` currently reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental Phase 7 work.
 - Neon live repository contracts remain intentionally gated on explicit `TEST_DATABASE_URL` and must pass before first real durable-data activation.
 - Durable homework-image retention remains deliberately unselected until historical image review is a real requirement.
-- Multi-household identity/tenancy is deliberately deferred; V1 remains single-household signed-session access.
+- Multi-household identity/tenancy remains deferred; V1 is still single-household signed-session access.

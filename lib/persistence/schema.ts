@@ -82,7 +82,7 @@ export const dailyLessons = pgTable('daily_lessons', {
   rationale: jsonb('rationale').$type<PlanningRationale[]>().notNull(),
   createdAt: instant('created_at').notNull(),
 }, (table) => [
-  uniqueIndex('daily_lesson_plan_sequence_uq').on(table.weeklyPlanId, table.sequence),
+  index('daily_lesson_plan_sequence_idx').on(table.weeklyPlanId, table.sequence, table.createdAt, table.id),
 ]);
 
 export const lessonExecutionEvents = pgTable('lesson_execution_events', {
@@ -107,6 +107,37 @@ export const lessonBriefs = pgTable('lesson_briefs', {
   createdAt: instant('created_at').notNull(),
 }, (table) => [
   index('lesson_brief_order_idx').on(table.lessonId, table.createdAt, table.id),
+]);
+
+export const strategyInteractions = pgTable('strategy_interactions', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  objectiveId: text('objective_id').notNull(),
+  strategyId: text('strategy_id').notNull(),
+  sourceKind: text('source_kind').notNull(),
+  sourceRefId: text('source_ref_id').notNull(),
+  interactionType: text('interaction_type').notNull(),
+  outcome: text('outcome').notNull(),
+  observedAt: instant('observed_at').notNull(),
+  recordedAt: instant('recorded_at').notNull(),
+}, (table) => [
+  index('strategy_interaction_student_order_idx').on(table.studentId, table.observedAt, table.recordedAt, table.id),
+  index('strategy_interaction_student_strategy_idx').on(table.studentId, table.strategyId, table.observedAt, table.id),
+]);
+
+export const strategyEvidence = pgTable('strategy_evidence', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  strategyId: text('strategy_id').notNull(),
+  objectiveId: text('objective_id').notNull(),
+  type: text('type').notNull(),
+  interactionId: text('interaction_id').notNull().references(() => strategyInteractions.id, { onDelete: 'cascade' }),
+  observedAt: instant('observed_at').notNull(),
+  recordedAt: instant('recorded_at').notNull(),
+}, (table) => [
+  uniqueIndex('strategy_evidence_interaction_uq').on(table.interactionId),
+  index('strategy_evidence_student_order_idx').on(table.studentId, table.observedAt, table.recordedAt, table.id),
+  index('strategy_evidence_student_strategy_idx').on(table.studentId, table.strategyId, table.observedAt, table.id),
 ]);
 
 export const practiceSessions = pgTable('practice_sessions', {
@@ -258,6 +289,43 @@ export const correctionReasoningChecks = pgTable('correction_reasoning_checks', 
   recordedAt: instant('recorded_at').notNull(),
 }, (table) => [
   index('correction_reasoning_mistake_order_idx').on(table.mistakeId, table.submittedAt, table.id),
+]);
+
+export const adaptiveDecisions = pgTable('adaptive_decisions', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  sourceLessonId: text('source_lesson_id').notNull().references(() => dailyLessons.id, { onDelete: 'cascade' }),
+  action: text('action').notNull(),
+  selectedIntent: text('selected_intent').notNull(),
+  selectedObjectiveIds: jsonb('selected_objective_ids').$type<string[]>().notNull(),
+  targetMistakeId: text('target_mistake_id').references(() => mistakes.id, { onDelete: 'restrict' }),
+  rationaleCodes: jsonb('rationale_codes').$type<string[]>().notNull(),
+  policyVersion: text('policy_version').notNull(),
+  evaluatedAt: instant('evaluated_at').notNull(),
+  inputFactCutoff: instant('input_fact_cutoff').notNull(),
+  createdAt: instant('created_at').notNull(),
+}, (table) => [
+  uniqueIndex('adaptive_decision_evaluation_key_uq').on(
+    table.studentId,
+    table.sourceLessonId,
+    table.inputFactCutoff,
+    table.policyVersion,
+  ),
+  index('adaptive_decision_source_order_idx').on(table.sourceLessonId, table.createdAt, table.id),
+]);
+
+export const lessonSupersessions = pgTable('lesson_supersessions', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  sourceLessonId: text('source_lesson_id').notNull().references(() => dailyLessons.id, { onDelete: 'cascade' }),
+  replacementLessonId: text('replacement_lesson_id').notNull().references(() => dailyLessons.id, { onDelete: 'cascade' }),
+  adaptiveDecisionId: text('adaptive_decision_id').notNull().references(() => adaptiveDecisions.id, { onDelete: 'cascade' }),
+  createdAt: instant('created_at').notNull(),
+}, (table) => [
+  uniqueIndex('lesson_supersession_source_uq').on(table.sourceLessonId),
+  uniqueIndex('lesson_supersession_replacement_uq').on(table.replacementLessonId),
+  uniqueIndex('lesson_supersession_decision_uq').on(table.adaptiveDecisionId),
+  index('lesson_supersession_student_order_idx').on(table.studentId, table.createdAt, table.id),
 ]);
 
 export const attempts = pgTable('attempts', {

@@ -55,6 +55,12 @@ class TestPracticeRepository implements PracticeRepository {
       .filter((attempt) => attempt.source.kind === 'PRACTICE' && attempt.source.sessionId === sessionId)
       .map((attempt) => structuredClone(attempt));
   }
+  async listAttemptsForStudent(studentId: string): Promise<Attempt[]> {
+    return [...this.attempts.values()]
+      .filter((attempt) => attempt.studentId === studentId)
+      .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt) || a.id.localeCompare(b.id))
+      .map((attempt) => structuredClone(attempt));
+  }
   async listAttemptsForCorrectionItem(correctionItemId: string): Promise<Attempt[]> {
     return [...this.attempts.values()]
       .filter((attempt) => attempt.source.kind === 'CORRECTION' && attempt.source.correctionItemId === correctionItemId)
