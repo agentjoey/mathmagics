@@ -384,6 +384,13 @@ export class NeonPracticeRepository implements PracticeRepository {
     return rows.map(toAttempt);
   }
 
+  async listAttemptsForStudent(studentId: string): Promise<Attempt[]> {
+    const rows = await this.db.select().from(attempts)
+      .where(eq(attempts.studentId, studentId))
+      .orderBy(asc(attempts.submittedAt), asc(attempts.id));
+    return rows.map(toAttempt);
+  }
+
   async listAttemptsForCorrectionItem(correctionItemId: string): Promise<Attempt[]> {
     const rows = await this.db.select().from(attempts)
       .where(and(eq(attempts.sourceKind, 'CORRECTION'), eq(attempts.correctionItemId, correctionItemId)))

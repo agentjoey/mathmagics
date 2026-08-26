@@ -221,6 +221,13 @@ export class MemoryPracticeRepository implements PracticeRepository {
       .map(clone);
   }
 
+  async listAttemptsForStudent(studentId: string): Promise<Attempt[]> {
+    return [...this.attempts.values()]
+      .filter((attempt) => attempt.studentId === studentId)
+      .sort((left, right) => Date.parse(left.submittedAt) - Date.parse(right.submittedAt) || left.id.localeCompare(right.id))
+      .map(clone);
+  }
+
   async listAttemptsForCorrectionItem(correctionItemId: string): Promise<Attempt[]> {
     return [...this.attempts.values()]
       .filter((attempt) => attempt.source.kind === 'CORRECTION' && attempt.source.correctionItemId === correctionItemId)

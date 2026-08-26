@@ -17,5 +17,6 @@ export interface PracticeRepository {
   appendAttempt(attempt: Attempt): Promise<void>;
   listAttemptsForItem(itemId: string): Promise<Attempt[]>;
   listAttemptsForSession(sessionId: string): Promise<Attempt[]>;
+  listAttemptsForStudent(studentId: string): Promise<Attempt[]>;
   listAttemptsForCorrectionItem(correctionItemId: string): Promise<Attempt[]>;
 }
