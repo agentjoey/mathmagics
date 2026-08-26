@@ -9,3 +9,6 @@ export * from './evidence';
 export * from './repository';
 export * from './memory-repository';
 export * from './service';
+export * from './attempt-observer';
+export * from './student-view';
+export * from './parent-view';
