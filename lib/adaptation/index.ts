@@ -16,9 +16,19 @@ export { selectAdaptiveRecommendation } from './policy';
 export type { AdaptiveRecommendation } from './policy';
 export { CorrectionPerformanceRiskFacts } from './progress-risk';
 export type { CorrectionPerformanceRiskFactsDependencies } from './progress-risk';
+export {
+  ADAPTIVE_RATIONALE_TEXT,
+  toParentNextLessonView,
+} from './rationale';
+export type { NextLessonView, ParentAdaptiveRationale } from './rationale';
 export type { AdaptiveRepository } from './repository';
 export { AdaptiveLearningService } from './service';
 export type { AdaptiveEvaluationResult, AdaptiveServiceDependencies } from './service';
+export {
+  findNextEffectiveLesson,
+  toStudentNextLessonView,
+} from './student-view';
+export type { NextEffectiveLessonProjection, StudentNextLessonView } from './student-view';
 export { deriveStarvationGuard } from './starvation';
 export type { AdaptiveLessonHistoryFact } from './starvation';
 export type {
