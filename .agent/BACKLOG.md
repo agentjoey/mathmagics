@@ -2,13 +2,14 @@
 
 > Current product direction: Singapore Math home-education AI learning system / teaching copilot. Legacy Q05/Q18 MVP work is frozen unless needed as teaching-engine fixtures.
 
-## 🔴 HIGH — Next Phase
+## 🔴 HIGH — Verification / Merge Gate
 
 ### Phase 6: Correction + Mistake Book
-- [ ] Introduce `Mistake` lifecycle: `OBSERVED → CONFIRMED → CORRECTING → RESOLVED`.
-- [ ] Guided correction: diagnose → Socratic hint → retry → explanation → evidence.
-- [ ] Allow Mistakes to reference Attempts/Evidence without replacing the evidence ledger.
-- [ ] Automatic misconception aggregation; no manual screenshot-style mistake collection.
+- [x] Introduce projected `Mistake` lifecycle: `OBSERVED → CONFIRMED → CORRECTING → RESOLVED` over immutable episode facts/events.
+- [x] Guided correction: diagnose → Socratic hint → retry → structured explanation → deterministic transfer → evidence.
+- [x] Allow Mistakes to reference canonical Attempts/Evidence without replacing the Evidence or Attempt ledgers.
+- [x] Automatic misconception aggregation and recurrence tracking; no manual screenshot-style mistake collection.
+- [ ] Complete exact-HEAD Host verification for the two sandbox-blocked commands (`npm run validate:curriculum`, `npm run build`), then PR/merge closeout.
 
 ## 🟡 MED — Approved Roadmap
 
@@ -24,7 +25,7 @@
 ## 🟢 LOW / Technical Debt / Activation Gates
 
 - [ ] Before first durable-data deployment, provision separated Neon development/Preview and production databases in Singapore.
-- [ ] Apply committed `0000` + `0001` + `0002` Drizzle migrations against non-production first and pass learning/planning, practice and homework Neon contract suites with explicit `TEST_DATABASE_URL` before production promotion.
+- [ ] Apply committed `0000` + `0001` + `0002` + `0003` Drizzle migrations against non-production first and pass learning/planning, practice, homework and correction Neon contract suites with explicit `TEST_DATABASE_URL` before production promotion.
 - [ ] Decide whether to retain source homework images only when durable image review/history becomes a real product requirement; Phase 5 deliberately stores structured provenance only.
 - [ ] Decide whether to self-host/package Geist fonts so sandbox builds do not depend on Google Fonts network access.
 - [ ] Review npm audit findings separately; current toolchain install reports 13 findings (1 low, 4 moderate, 8 high). Do not use forced upgrades as incidental feature work.
@@ -84,4 +85,4 @@
 - [x] Generalized the canonical immutable `Attempt` ledger to `PRACTICE | HOMEWORK`, reusing Phase 4 deterministic grading and source-aware Evidence projection; unsupported/ambiguous work fails closed.
 - [x] Added memory + Neon homework persistence and Drizzle-generated `0002_gorgeous_obadiah_stane.sql` with no raw-image storage.
 - [x] Added P2/P3 end-to-end homework scenarios for clear extraction, low confidence, incorrect answers, deduplication, unsupported structure and replay repair.
-- [x] Persistent `Mistake` remains intentionally deferred to Phase 6; no object storage, queue/worker or adaptive scoring was introduced.
+- [x] Persistent `Mistake` remained intentionally deferred to Phase 6; no object storage, queue/worker or adaptive scoring was introduced.

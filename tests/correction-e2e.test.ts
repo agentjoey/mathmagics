@@ -6,7 +6,6 @@ import {
   MemoryMistakeRepository,
   RepositoryAttemptProblemResolver,
   type CorrectionItem,
-  type CorrectionReasoningCheck,
   type MistakeEvent,
   type MistakeRepository,
   type ReasoningCheckSpec,

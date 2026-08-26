@@ -6,7 +6,7 @@ import type {
   CorrectionGuidance,
   DiagnosisCandidate,
 } from '@/lib/providers/correction';
-import { allowedDiagnosisTargets, diagnoseDeterministically } from './diagnosis';
+import { diagnoseDeterministically } from './diagnosis';
 import {
   projectCorrectedEvidence,
   projectTransferEvidence,
