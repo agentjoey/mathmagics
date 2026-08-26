@@ -2,21 +2,16 @@
 
 > Current product direction: Singapore Math home-education AI learning system / teaching copilot. Legacy Q05/Q18 MVP work is frozen unless needed as teaching-engine fixtures.
 
-## 🔴 HIGH — Verification / Merge Gate
-
-### Phase 6: Correction + Mistake Book
-- [x] Introduce projected `Mistake` lifecycle: `OBSERVED → CONFIRMED → CORRECTING → RESOLVED` over immutable episode facts/events.
-- [x] Guided correction: diagnose → Socratic hint → retry → structured explanation → deterministic transfer → evidence.
-- [x] Allow Mistakes to reference canonical Attempts/Evidence without replacing the Evidence or Attempt ledgers.
-- [x] Automatic misconception aggregation and recurrence tracking; no manual screenshot-style mistake collection.
-- [ ] Complete exact-HEAD Host verification for the two sandbox-blocked commands (`npm run validate:curriculum`, `npm run build`), then PR/merge closeout.
-
-## 🟡 MED — Approved Roadmap
+## 🔴 HIGH — Next Phase
 
 ### Phase 7: Progress + Adaptive Learning Loop
 - [ ] Separate Curriculum Coverage, Knowledge Mastery and Practice Performance.
 - [ ] Track cross-topic problem-solving strategy mastery.
 - [ ] Implement prerequisite-aware Next Best Lesson recommendations.
+- [ ] Consume Phase 6 Mistake/recurrence facts without weakening correction authority.
+- [ ] Use the reserved `CORRECTION` lesson intent adaptively where deterministic policy supports it.
+
+## 🟡 MED — Approved Roadmap
 
 ### Phase 8: Family Pilot
 - [ ] Multi-week household pilot using P2/P3 curriculum.
@@ -28,7 +23,7 @@
 - [ ] Apply committed `0000` + `0001` + `0002` + `0003` Drizzle migrations against non-production first and pass learning/planning, practice, homework and correction Neon contract suites with explicit `TEST_DATABASE_URL` before production promotion.
 - [ ] Decide whether to retain source homework images only when durable image review/history becomes a real product requirement; Phase 5 deliberately stores structured provenance only.
 - [ ] Decide whether to self-host/package Geist fonts so sandbox builds do not depend on Google Fonts network access.
-- [ ] Review npm audit findings separately; current toolchain install reports 13 findings (1 low, 4 moderate, 8 high). Do not use forced upgrades as incidental feature work.
+- [ ] Review npm audit findings separately; do not use forced upgrades as incidental feature work.
 - [ ] Introduce multi-household User/Household/Membership identity only when the product leaves the single-household V1 boundary.
 
 ## ❄️ Frozen Legacy MVP Work
@@ -67,22 +62,29 @@
 - [x] Signed household session auth and Vercel `sin1` + Neon Singapore deployment architecture.
 
 ### Phase 4: Practice / Attempt Core
-- [x] [MM-P4-001] Defined `PracticeSession`, structured `PracticeItem`, server-observed `PracticeHintReveal` and immutable `Attempt` contracts without persistent Mistake state.
-- [x] [MM-P4-002] Implemented deterministic Foundation / Core / Application / Challenge `practice-v1` blueprint and code-owned structured problem/answer specs.
-- [x] [MM-P4-003] Built trusted objective-aligned PracticePreparationContext from DailyLesson, curriculum facts and Evidence-derived learning state.
-- [x] [MM-P4-004] Implemented deterministic grading and explicit replay-safe Attempt → `EvidenceRecord` projection with no mutable Mastery write path.
-- [x] [MM-P4-005] Preserved append-only hint and retry/correction provenance with latest-only linear retries and stable Evidence IDs.
-- [x] [MM-P4-006] Added P2/P3 E2E for independent, hinted, incorrect/retry, application, replay-repair and unsupported fail-closed outcomes.
-- [x] [MM-P4-007] Added memory + Neon PracticeRepository persistence and Drizzle-generated `0001_fantastic_shocker.sql` for only the four approved practice fact tables.
-- [x] Optional renderer boundary carries presentation-only data and cannot alter math truth, grading, Evidence, Mastery or Readiness.
-- [x] Live Neon activation remains a separate explicit operational gate; no real database migration was executed during Phase 4 implementation.
+- [x] Defined `PracticeSession`, structured `PracticeItem`, server-observed `PracticeHintReveal` and immutable `Attempt` contracts.
+- [x] Implemented deterministic Foundation / Core / Application / Challenge `practice-v1` blueprint and code-owned structured problem/answer specs.
+- [x] Built trusted objective-aligned PracticePreparationContext from DailyLesson, curriculum facts and Evidence-derived learning state.
+- [x] Implemented deterministic grading and replay-safe Attempt → `EvidenceRecord` projection with no mutable Mastery write path.
+- [x] Preserved append-only hint and linear retry provenance with stable Evidence IDs.
+- [x] Added P2/P3 E2E and memory + Neon PracticeRepository persistence.
+- [x] Generated `0001_fantastic_shocker.sql`; no real database migration was executed during implementation.
 
 ### Phase 5: Homework Vision
 - [x] Defined trusted JPEG/PNG/WebP homework-image intake, 10 MiB limit and non-durable raw-image retention boundary.
-- [x] Implemented worksheet/photo question and answer extraction contracts with per-field confidence and normalized source-region provenance.
-- [x] Implemented `homework-confidence-v1` with explicit low-confidence handwriting confirmation and append-only correction provenance.
-- [x] Implemented deterministic P2/P3 mathematical conversion and conservative LearningObjective mapping before grading/Evidence.
-- [x] Generalized the canonical immutable `Attempt` ledger to `PRACTICE | HOMEWORK`, reusing Phase 4 deterministic grading and source-aware Evidence projection; unsupported/ambiguous work fails closed.
-- [x] Added memory + Neon homework persistence and Drizzle-generated `0002_gorgeous_obadiah_stane.sql` with no raw-image storage.
-- [x] Added P2/P3 end-to-end homework scenarios for clear extraction, low confidence, incorrect answers, deduplication, unsupported structure and replay repair.
-- [x] Persistent `Mistake` remained intentionally deferred to Phase 6; no object storage, queue/worker or adaptive scoring was introduced.
+- [x] Implemented extraction contracts with confidence and normalized source-region provenance.
+- [x] Implemented `homework-confidence-v1` and append-only Student/Parent confirmation.
+- [x] Implemented deterministic P2/P3 mathematical conversion and conservative objective mapping before grading/Evidence.
+- [x] Generalized the canonical Attempt ledger to `PRACTICE | HOMEWORK`; unsupported/ambiguous work fails closed.
+- [x] Added memory + Neon homework persistence and `0002_gorgeous_obadiah_stane.sql` with no raw-image storage.
+- [x] Added P2/P3 homework E2E, deduplication and replay repair.
+
+### Phase 6: Correction + Mistake Book
+- [x] Implemented projected `Mistake` lifecycle `OBSERVED → CONFIRMED → CORRECTING → RESOLVED` over immutable episode facts/events.
+- [x] Implemented automatic post-Attempt observation, deterministic/constrained diagnosis and Student/Parent confirmation for uncertain AI candidates.
+- [x] Implemented guided correction through canonical CORRECTION Attempts, deterministic grading, structured independent reasoning and deterministic isomorphic transfer.
+- [x] Preserved one canonical Attempt ledger and append-only Evidence history; failed correction retries do not duplicate `incorrect` Evidence.
+- [x] Implemented recurrence-safe episode isolation, misconception aggregation, Student/Parent projections and replay repair.
+- [x] Added memory + Neon correction persistence and generated `0003_stale_mercury.sql`; no production migration was executed.
+- [x] Exact canonical Host verification passed on merge SHA `a0b0c0aa37c882b2c8fd9850a76327f3068b487f`: 311 tests passed / 6 skipped, typecheck passed, curriculum valid (25 nodes / 68 objectives / 18 mappings), lint passed and Next.js production build passed.
+- [x] PR #6 merged; Phase 7 is now the next roadmap phase.
