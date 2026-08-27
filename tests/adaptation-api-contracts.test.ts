@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { issueSessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session';
-import { createProgressGetHandler } from '@/app/api/progress/route';
-import { createNextGetHandler } from '@/app/api/learning/next/route';
-import { createNextEvaluatePostHandler } from '@/app/api/learning/next/evaluate/route';
+import { createProgressGetHandler } from '@/app/api/progress/handler';
+import { createNextGetHandler } from '@/app/api/learning/next/handler';
+import { createNextEvaluatePostHandler } from '@/app/api/learning/next/evaluate/handler';
 
 const SECRET = 'phase7-api-contract-secret-that-is-long-enough';
 const NOW = '2026-08-26T10:40:00.000Z';
