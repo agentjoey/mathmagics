@@ -13,7 +13,7 @@
 - [x] Add minimal Parent/Tutor Progress View and thin Student next-lesson view.
 - [x] Add authenticated progress/next/evaluate API contracts with server-owned authority.
 - [x] Generate and review `0004_strange_meteorite.sql` for exactly four Phase 7 durable fact tables.
-- [ ] Complete exact-HEAD Host verification (`npm test`, `npm run typecheck`, `npm run validate:curriculum`, `npm run lint`, `npm run build`) and then PR/merge closeout.
+- [x] Complete the P8-0 exact-HEAD release gate on repaired canonical release candidate `2bb70584ca189b43015a3cd2736b6262a8b2e78a`: `npm test` (including exact `npm run typecheck` and `npm run validate:curriculum` release-contract checks), `npm run lint`, and `npm run build` all passed in a fresh GrandeGPT worktree. The original Phase 7 merge SHA `61fb3e16485d645692c69a527db2d1f2ba36fa96` is not retroactively relabeled as verified; release-blocking defects were repaired by PR #9 and PR #10 before this closure.
 
 ## 🟡 MED — Approved Roadmap
 
@@ -30,7 +30,7 @@
 - [ ] Decide whether to retain source homework images only when durable image review/history becomes a real product requirement; Phase 5 deliberately stores structured provenance only.
 - [x] Remove the unused `next/font/google` Geist dependency and keep local/system font tokens so sandbox and production builds do not require Google Fonts network access.
 - [ ] Review npm audit findings separately; current toolchain install reports 13 findings (1 low, 4 moderate, 8 high). Do not use forced upgrades as incidental feature work.
-- [ ] Add first-class GrandeGPT MathMagics profiles/capabilities for exact typecheck, curriculum validation and Drizzle migration generation so these no longer require Host fallback.
+- [ ] Add first-class GrandeGPT MathMagics profiles/capabilities for standalone curriculum validation and Drizzle migration generation. Exact `typecheck` and `validate:curriculum` are already enforced by `tests/release-gate-scripts.test.ts` inside the controlled `test` profile; this item is operational convenience, not a Phase 7 release blocker.
 - [ ] Introduce multi-household User/Household/Membership identity only when the product leaves the single-household V1 boundary.
 
 ## ❄️ Frozen Legacy MVP Work
@@ -74,7 +74,7 @@
 - Recurrence tracking, Student/Parent projections, Memory + Neon persistence and `0003_stale_mercury.sql` completed.
 - Merged as PR #6 and post-merge canonical Host verification passed.
 
-### Phase 7 implementation
+### Phase 7: Progress + Adaptive Learning Loop
 - Coverage/Mastery/Performance/Strategy remain separate deterministic projections with no aggregate learning score.
 - Server-observed StrategyInteraction/StrategyEvidence and cross-topic Strategy progress implemented.
 - Deterministic MistakePriority, candidate ordering, starvation guard and lesson-boundary adaptation implemented.
@@ -82,3 +82,4 @@
 - Minimal Parent/Tutor Progress View, Student next-lesson view and authenticated API contracts implemented.
 - Full-loop E2E and service-level starvation E2E implemented.
 - Phase 7 adds exactly four durable fact tables through `0004_strange_meteorite.sql`; migration generated/reviewed but not applied to production.
+- P8-0 release closure completed on repaired canonical candidate `2bb70584ca189b43015a3cd2736b6262a8b2e78a` after PR #9/#10 fixed the build and release-gate execution blockers discovered after the original Phase 7 merge.
