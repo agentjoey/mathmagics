@@ -1,4 +1,4 @@
-import { loadCurriculumDataset } from '../lib/curriculum/loader';
+import { loadCurriculumDataset } from '../lib/curriculum/loader.ts';
 
 const dataset = loadCurriculumDataset();
 const p2Objectives = dataset.objectives.filter((objective) => objective.levelId === 'P2').length;
