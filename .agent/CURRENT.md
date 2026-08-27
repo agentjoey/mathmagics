@@ -1,9 +1,9 @@
 # Current Status — MathMagics
 
 Version:        v0.8.0-dev
-Phase:          Phase 7 — Progress + Adaptive Learning Loop
-Phase Status:   ✅ Implementation Complete / Exact-HEAD Host Verification Pending
-Last Updated:   2026-08-26 by agent
+Phase:          Phase 8 — Family Pilot
+Phase Status:   🟡 P8-0 Release Closure Complete / P8-1 Pilot Activation Next
+Last Updated:   2026-08-27 by agent
 
 ## Product Positioning
 
@@ -116,7 +116,7 @@ No Phase 6 migration was applied to production during implementation or verifica
 
 ## Phase 7 — Progress + Adaptive Learning Loop
 
-**✅ Implementation complete; exact-HEAD Host verification is the remaining release gate.**
+**✅ Completed and release-closed by P8-0.**
 
 Authority chain:
 
@@ -186,16 +186,28 @@ Generated migration:
 - Does not add mutable Progress/Strategy/Performance/current-recommendation state.
 - **Not applied to production.**
 
-### Phase 7 verification evidence so far
+### P8-0 release-closure correction and final evidence
 
-Fresh sandbox evidence after migration generation:
-- ✅ Full test suite reached 384 passed / 8 intentionally skipped before final exact-HEAD closeout verification.
-- ✅ `npm run lint` passed with 0 warnings before final exact-HEAD closeout verification.
-- ✅ Full-loop and starvation service E2E tests are included in that suite.
-- ✅ Migration static review passed against the approved schema boundary.
-- ✅ Authority audit passed.
-- ⚠️ Live Neon contracts remain intentionally skipped without explicit `TEST_DATABASE_URL`.
-- ⚠️ Exact-HEAD Host `typecheck`, curriculum validation and production build are still required before PR/merge closeout.
+The original Phase 7 implementation merge was PR #8 / `61fb3e16485d645692c69a527db2d1f2ba36fa96`. P8-0 did **not** retroactively mark that SHA as exact-HEAD verified. Release verification exposed real blockers after the merge:
+
+- the unused `next/font/google` Geist imports made sandbox builds depend on Google Fonts network access;
+- Next 16 Turbopack PostCSS evaluation attempted a sandbox-disallowed local bind;
+- three App Router route modules exported test handler factories that are invalid Next 16 route exports;
+- the curriculum CLI depended on `tsx`/esbuild IPC/process behavior that could not execute inside the controlled sandbox.
+
+Those release blockers were repaired through PR #9 and PR #10. The repaired canonical release candidate verified by P8-0 is:
+
+`2bb70584ca189b43015a3cd2736b6262a8b2e78a`
+
+Fresh disposable GrandeGPT worktree evidence on that exact SHA:
+- ✅ `npm test`: 82 test files passed / 4 skipped; 386 tests passed / 8 intentionally skipped.
+- ✅ The release-contract suite executed the exact `npm run typecheck` command successfully.
+- ✅ The release-contract suite executed the exact `npm run validate:curriculum` command successfully and observed `25 nodes / 68 objectives (P2=32, P3=36) / 18 textbook mappings`.
+- ✅ `npm run lint`: PASS, exit 0.
+- ✅ `npm run build`: PASS, Next.js 16.2.6 webpack production build completed TypeScript, page-data collection, static generation 12/12, optimization and build traces.
+- ✅ Worktree was clean before the documentation-only closeout edits.
+- ⚠️ Live Neon suites remained intentionally skipped because no explicit `TEST_DATABASE_URL` was supplied; P8-0 does not claim live integration coverage.
+- ✅ P8-0 performed no production database migration and no production deployment.
 
 Formal design spec:
 
@@ -204,6 +216,24 @@ Formal design spec:
 Implementation plan:
 
 `docs/superpowers/plans/2026-08-26-mathmagics-phase7-progress-adaptive-learning.md`
+
+## Phase 8 — Family Pilot
+
+**🟡 Active. P8-0 is complete; P8-1 Pilot Activation is next.**
+
+Approved primary scope:
+- multi-week household pilot on the existing P2/P3 curriculum;
+- validate that families can understand what was learned, mastered, recently unstable, still needs correction, and should be taught next;
+- validate adaptive lesson changes and rationale in real household use;
+- collect product evidence before expanding curriculum, identity/tenancy or analytics scope.
+
+Phase 8 formal design spec:
+
+`docs/superpowers/specs/2026-08-26-mathmagics-phase8-family-pilot-design.md`
+
+Phase 8 implementation plan:
+
+`docs/superpowers/plans/2026-08-26-mathmagics-phase8-family-pilot.md`
 
 ## Persistence & Deployment
 
@@ -217,30 +247,19 @@ Committed migration chain:
 0004_strange_meteorite.sql
 ```
 
-**Activation gate before first real durable-data deployment:**
+**P8-1 activation gate before first real durable-data deployment:**
 - provision separated Neon development/Preview and production databases in Singapore;
 - apply committed `0000`–`0004` migrations explicitly against non-production first;
 - run learning/planning, practice, homework, correction, strategy and adaptive Neon contract suites with explicit `TEST_DATABASE_URL`;
-- only then promote the exact reviewed migrations to production;
+- only after non-production evidence passes, stop at the explicit Human Gate before production migration/deployment;
 - never point tests or Vercel Preview at production `DATABASE_URL`.
 
 No Phase 7 migration has been applied to any production database.
 
-## Next After Phase 7
-
-**Phase 8 — Family Pilot**
-
-Primary scope:
-- multi-week household pilot on the existing P2/P3 curriculum;
-- validate that families can understand what was learned, mastered, recently unstable, still needs correction, and should be taught next;
-- validate adaptive lesson changes and rationale in real household use;
-- collect product evidence before expanding curriculum, identity/tenancy or analytics scope.
-
 ## Known Non-blocking Technical Debt / Gates
 
-- GrandeGPT currently has no registered `mathmagics:typecheck`, `validate:curriculum` or `db:generate` profile; these still require exact-HEAD Host execution when needed.
-- Google Fonts network access can block sandbox Next.js production builds; exact-HEAD Host build remains the release gate rather than weakening the build check.
-- `npm ci` currently reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental Phase 7 work.
+- Standalone GrandeGPT `validate:curriculum` and `db:generate` profiles are still absent. Exact typecheck and curriculum validation are now enforced through `tests/release-gate-scripts.test.ts` inside the controlled MathMagics `test` profile; adding standalone profiles is an operational convenience, not a release blocker.
+- `npm ci` currently reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental Phase 8 work.
 - Neon live repository contracts remain intentionally gated on explicit `TEST_DATABASE_URL` and must pass before first real durable-data activation.
 - Durable homework-image retention remains deliberately unselected until historical image review is a real requirement.
 - Multi-household identity/tenancy remains deferred; V1 is still single-household signed-session access.
