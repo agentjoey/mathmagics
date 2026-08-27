@@ -5,6 +5,7 @@ import { buildMigrationEnvironment } from '@/scripts/migrate-test-database';
 import {
   buildVerificationEnvironment,
   PILOT_NEON_TEST_FILES,
+  PILOT_NEON_VITEST_ARGS,
 } from '@/scripts/verify-pilot-neon';
 
 describe('pilot database runners', () => {
@@ -46,6 +47,16 @@ describe('pilot database runners', () => {
       'tests/persistence-neon-correction-contract.test.ts',
       'tests/persistence-neon-phase7-contract.test.ts',
       'tests/pilot-neon-full-loop.test.ts',
+    ]);
+  });
+
+  it('serializes live Neon files and gives remote integration work an explicit timeout', () => {
+    expect(PILOT_NEON_VITEST_ARGS).toEqual([
+      'vitest',
+      'run',
+      '--no-file-parallelism',
+      '--testTimeout=120000',
+      ...PILOT_NEON_TEST_FILES,
     ]);
   });
 

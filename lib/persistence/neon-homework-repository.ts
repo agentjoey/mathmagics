@@ -12,6 +12,7 @@ import {
 } from '@/lib/homework';
 import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
+import { canonicalInstant } from './instant';
 import {
   homeworkConfirmations,
   homeworkProblems,
@@ -28,18 +29,19 @@ function toSubmission(row: typeof homeworkSubmissions.$inferSelect): HomeworkSub
     provider: row.provider,
     model: row.model,
     schemaVersion: row.schemaVersion as HomeworkSubmission['schemaVersion'],
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
 }
 
 function toProblem(row: typeof homeworkProblems.$inferSelect): HomeworkProblemExtraction {
   const problem = structuredClone(row.extraction as HomeworkProblemExtraction);
+  problem.createdAt = canonicalInstant(problem.createdAt);
   if (
     problem.id !== row.id
     || problem.submissionId !== row.submissionId
     || problem.studentId !== row.studentId
     || problem.sequence !== row.sequence
-    || problem.createdAt !== row.createdAt
+    || problem.createdAt !== canonicalInstant(row.createdAt)
   ) {
     throw new Error('persisted homework problem coordinates disagree with extraction');
   }
@@ -65,7 +67,7 @@ function toConfirmation(row: typeof homeworkConfirmations.$inferSelect): Homewor
     corrections: structuredClone(row.corrections),
     confirmerRole: row.confirmerRole as HomeworkConfirmation['confirmerRole'],
     policyVersion: row.policyVersion as HomeworkConfirmation['policyVersion'],
-    confirmedAt: row.confirmedAt,
+    confirmedAt: canonicalInstant(row.confirmedAt),
   };
 }
 

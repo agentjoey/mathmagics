@@ -25,12 +25,14 @@
 
 ## 🟢 LOW / Technical Debt / Activation Gates
 
-- [ ] Before first durable-data deployment, provision separated Neon development/Preview and production databases in Singapore.
-- [ ] Apply committed `0000`–`0004` Drizzle migrations against non-production first and pass learning/planning, practice, homework, correction, strategy and adaptive Neon contract suites with explicit `TEST_DATABASE_URL` before production promotion.
+- [ ] Before first production durable-data deployment, confirm a separated Production Neon database in Singapore and verify its URL is distinct from the tested non-production branch.
+- [x] Apply committed `0000`–`0004` Drizzle migrations against an isolated Singapore non-production Neon branch and pass the fixed learning/planning, practice, homework, correction, strategy/adaptive and full-loop Neon contract gate with explicit `TEST_DATABASE_URL`: 6/6 files, 13/13 tests, zero skips on 2026-08-28.
+- [x] Remove live-pilot read-path N+1 blockers discovered by the Task 7 Neon gate: ParentProgress/PilotReview now share request-scoped facts and forward adaptive evaluation uses one batched progress projection plus one cutoff-scoped risk snapshot.
+- [ ] Production migration/deployment remains an explicit Human Gate. Apply `0000`–`0004`, deploy the exact approved SHA, and smoke-test only after explicit Human Owner approval.
 - [ ] Decide whether to retain source homework images only when durable image review/history becomes a real product requirement; Phase 5 deliberately stores structured provenance only.
 - [x] Remove the unused `next/font/google` Geist dependency and keep local/system font tokens so sandbox and production builds do not require Google Fonts network access.
 - [ ] Review npm audit findings separately; current toolchain install reports 13 findings (1 low, 4 moderate, 8 high). Do not use forced upgrades as incidental feature work.
-- [ ] Add first-class GrandeGPT MathMagics profiles/capabilities for standalone curriculum validation and Drizzle migration generation. Exact `typecheck` and `validate:curriculum` are already enforced by `tests/release-gate-scripts.test.ts` inside the controlled `test` profile; this item is operational convenience, not a Phase 7 release blocker.
+- [ ] Add first-class GrandeGPT MathMagics profiles/capabilities for standalone curriculum validation and Drizzle migration generation. Exact `typecheck` and `validate:curriculum` are already enforced by `tests/release-gate-scripts.test.ts` inside the controlled `test` profile; this item is operational convenience, not a release blocker.
 - [ ] Introduce multi-household User/Household/Membership identity only when the product leaves the single-household V1 boundary.
 
 ## ❄️ Frozen Legacy MVP Work

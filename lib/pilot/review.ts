@@ -22,36 +22,35 @@ export class PilotReviewService {
       throw new Error('evaluatedAt must be a valid ISO date-time string');
     }
 
-    const progress = await this.dependencies.parentProgress.getView(studentId, evaluatedAt);
-    const plans = (await this.dependencies.planning.listWeeklyPlansForStudent(studentId))
-      .filter((plan) => atOrBefore(plan.createdAt, evaluatedAt));
-
-    const lessons: PilotLessonReview[] = [];
-    const decisionsById = new Map<string, PilotAdaptiveReview>();
-
-    for (const plan of plans) {
+    const [progress, planRows] = await Promise.all([
+      this.dependencies.parentProgress.getView(studentId, evaluatedAt),
+      this.dependencies.planning.listWeeklyPlansForStudent(studentId),
+    ]);
+    const plans = planRows.filter((plan) => atOrBefore(plan.createdAt, evaluatedAt));
+    const planFacts = await Promise.all(plans.map(async (plan) => {
       const planLessons = (await this.dependencies.planning.listDailyLessonsForPlan(plan.id))
         .filter((lesson) => atOrBefore(lesson.createdAt, evaluatedAt));
-
-      for (const lesson of planLessons) {
-        const events = (await this.dependencies.planning.listExecutionEvents(lesson.id))
-          .filter((event) => atOrBefore(event.occurredAt, evaluatedAt));
-        const supersession = await this.dependencies.adaptive.getSupersessionByReplacementLesson(lesson.id);
-
-        lessons.push({
+      const lessonFacts = await Promise.all(planLessons.map(async (lesson) => {
+        const [events, supersession, decisions] = await Promise.all([
+          this.dependencies.planning.listExecutionEvents(lesson.id),
+          this.dependencies.adaptive.getSupersessionByReplacementLesson(lesson.id),
+          this.dependencies.adaptive.listDecisionsForSourceLesson(lesson.id),
+        ]);
+        const review: PilotLessonReview = {
           lessonId: lesson.id,
           weekStart: plan.weekStart,
           sequence: lesson.sequence,
           intent: lesson.intent,
           objectiveIds: [...lesson.objectiveIds],
-          execution: deriveLessonExecutionState(lesson.id, events),
+          execution: deriveLessonExecutionState(
+            lesson.id,
+            events.filter((event) => atOrBefore(event.occurredAt, evaluatedAt)),
+          ),
           adapted: supersession !== undefined && atOrBefore(supersession.createdAt, evaluatedAt),
-        });
-
-        const decisions = await this.dependencies.adaptive.listDecisionsForSourceLesson(lesson.id);
-        for (const decision of decisions) {
-          if (!atOrBefore(decision.createdAt, evaluatedAt)) continue;
-          decisionsById.set(decision.id, {
+        };
+        const adaptiveReviews = decisions
+          .filter((decision) => atOrBefore(decision.createdAt, evaluatedAt))
+          .map((decision): PilotAdaptiveReview => ({
             decisionId: decision.id,
             sourceLessonId: decision.sourceLessonId,
             action: decision.action,
@@ -59,9 +58,16 @@ export class PilotReviewService {
             inputFactCutoff: decision.inputFactCutoff,
             rationaleCodes: [...decision.rationaleCodes],
             createdAt: decision.createdAt,
-          });
-        }
-      }
+          }));
+        return { review, adaptiveReviews };
+      }));
+      return lessonFacts;
+    }));
+
+    const lessons = planFacts.flat().map((fact) => fact.review);
+    const decisionsById = new Map<string, PilotAdaptiveReview>();
+    for (const fact of planFacts.flat()) {
+      for (const decision of fact.adaptiveReviews) decisionsById.set(decision.decisionId, decision);
     }
 
     lessons.sort((left, right) => left.weekStart.localeCompare(right.weekStart)

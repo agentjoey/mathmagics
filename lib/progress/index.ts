@@ -21,6 +21,7 @@ export type {
   CoverageState,
   ObjectiveProgress,
   PerformanceRiskFacts,
+  PerformanceRiskSnapshot,
   PerformanceSnapshot,
   PerformanceState,
   TopicProgressSummary,

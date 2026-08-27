@@ -2,8 +2,8 @@
 
 Version:        v0.8.0-dev
 Phase:          Phase 8 — Family Pilot
-Phase Status:   🟡 P8-0 Release Closure Complete / P8-1 Pilot Activation Next
-Last Updated:   2026-08-27 by agent
+Phase Status:   🟡 P8-1 Non-Production Activation Verified / Production Human Gate Pending
+Last Updated:   2026-08-28 by agent
 
 ## Product Positioning
 
@@ -219,13 +219,26 @@ Implementation plan:
 
 ## Phase 8 — Family Pilot
 
-**🟡 Active. P8-0 is complete; P8-1 Pilot Activation is next.**
+**🟡 Active. P8-1 non-production activation is verified; Production activation is waiting at the explicit Human Gate.**
 
 Approved primary scope:
 - multi-week household pilot on the existing P2/P3 curriculum;
 - validate that families can understand what was learned, mastered, recently unstable, still needs correction, and should be taught next;
 - validate adaptive lesson changes and rationale in real household use;
 - collect product evidence before expanding curriculum, identity/tenancy or analytics scope.
+
+### P8-1 / Task 7 non-production activation evidence
+
+On 2026-08-28, an isolated Singapore Neon testing branch was verified through the approved RED → migration → GREEN sequence:
+
+- fresh unmigrated RED: PostgreSQL `42P01`, `relation "students" does not exist`;
+- committed migrations `0000`–`0004` applied only to the testing branch through `db:migrate:test`;
+- final `verify:pilot-neon`: **6/6 files passed, 13/13 tests passed, zero integration skips**;
+- live full-loop proved plan/execution → Practice/Evidence → Mistake → correction/transfer → recurrence → StrategyEvidence → adaptive SUPERSEDE → historical ParentProgress/PilotReview → recurrence resolution → forward KEEP;
+- generated test-student rows were cleaned in FK-safe order without truncating shared tables;
+- production database migration/deployment was not executed.
+
+The live gate also exposed two real pilot read-path blockers. ParentProgress/PilotReview and forward adaptive KEEP evaluation were performing N+1/repeated Neon reads. They now use request/cutoff-scoped shared snapshots and batched/concurrent independent reads. Query-budget regression tests preserve this constraint while keeping `adaptive-policy-v1`, Mastery, correction rules and curriculum unchanged.
 
 Phase 8 formal design spec:
 
@@ -247,19 +260,20 @@ Committed migration chain:
 0004_strange_meteorite.sql
 ```
 
-**P8-1 activation gate before first real durable-data deployment:**
-- provision separated Neon development/Preview and production databases in Singapore;
-- apply committed `0000`–`0004` migrations explicitly against non-production first;
-- run learning/planning, practice, homework, correction, strategy and adaptive Neon contract suites with explicit `TEST_DATABASE_URL`;
-- only after non-production evidence passes, stop at the explicit Human Gate before production migration/deployment;
+**P8-1 activation state:**
+- ✅ isolated Singapore non-production Neon branch verified;
+- ✅ fresh-unmigrated RED observed before migration;
+- ✅ committed `0000`–`0004` migrations applied to non-production only;
+- ✅ learning/planning, practice, homework, correction, strategy/adaptive and full-loop Neon contracts passed with explicit `TEST_DATABASE_URL`, zero integration skips;
+- ⏸ Production database URL separation, production migration, exact-SHA deployment and production smoke remain behind the explicit Human Gate;
 - never point tests or Vercel Preview at production `DATABASE_URL`.
 
-No Phase 7 migration has been applied to any production database.
+No Phase 7/Phase 8 migration has been applied to production by this task.
 
 ## Known Non-blocking Technical Debt / Gates
 
-- Standalone GrandeGPT `validate:curriculum` and `db:generate` profiles are still absent. Exact typecheck and curriculum validation are now enforced through `tests/release-gate-scripts.test.ts` inside the controlled MathMagics `test` profile; adding standalone profiles is an operational convenience, not a release blocker.
+- Standalone GrandeGPT `validate:curriculum` and `db:generate` profiles are still absent. Exact typecheck and curriculum validation are enforced through `tests/release-gate-scripts.test.ts` inside the controlled MathMagics `test` profile; adding standalone profiles is an operational convenience, not a release blocker.
 - `npm ci` currently reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental Phase 8 work.
-- Neon live repository contracts remain intentionally gated on explicit `TEST_DATABASE_URL` and must pass before first real durable-data activation.
+- Production Neon activation remains an explicit Human Gate even though the non-production live contracts are now GREEN.
 - Durable homework-image retention remains deliberately unselected until historical image review is a real requirement.
 - Multi-household identity/tenancy remains deferred; V1 is still single-household signed-session access.
