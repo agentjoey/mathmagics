@@ -7,17 +7,20 @@ import type {
   LessonExecutionEventType,
   PlanningRepository,
 } from '@/lib/planning';
+import { toStudentPracticeItem } from '@/lib/practice';
 import type {
   Attempt,
   PracticeItem,
   PracticeService,
   PracticeSession,
+  StudentPracticeItem,
   SubmitAttemptInput,
 } from '@/lib/practice';
 
 export interface PracticeOwnershipReader {
   getPracticeSession(sessionId: string): Promise<Pick<PracticeSession, 'id' | 'studentId'> | undefined>;
   getPracticeItem(itemId: string): Promise<Pick<PracticeItem, 'id' | 'sessionId' | 'studentId'> | undefined>;
+  listPracticeItems(sessionId: string): Promise<PracticeItem[]>;
 }
 
 export interface PilotSessionDependencies {
@@ -39,8 +42,36 @@ export interface PilotLessonSessionView {
   execution: DailyLessonExecutionState;
 }
 
+export interface PilotPracticeSessionView {
+  session: {
+    id: string;
+    lessonId: string;
+    objectiveId: string;
+    createdAt: string;
+  };
+  items: StudentPracticeItem[];
+}
+
+export interface PilotPracticeAttemptView {
+  id: string;
+  outcome: Attempt['outcome'];
+  hintUsed: boolean;
+  retryOfAttemptId?: string;
+  submittedAt: string;
+}
+
 function requireTimestamp(value: string): void {
   if (!value || Number.isNaN(Date.parse(value))) throw new Error('at must be a valid ISO date-time string');
+}
+
+function toPilotPracticeAttemptView(attempt: Attempt): PilotPracticeAttemptView {
+  return {
+    id: attempt.id,
+    outcome: attempt.outcome,
+    hintUsed: attempt.hintUsed,
+    ...(attempt.retryOfAttemptId ? { retryOfAttemptId: attempt.retryOfAttemptId } : {}),
+    submittedAt: attempt.submittedAt,
+  };
 }
 
 export class PilotSessionService {
@@ -84,11 +115,34 @@ export class PilotSessionService {
     return this.appendTerminalEvent(studentId, lessonId, 'SKIPPED', at, actualMinutes);
   }
 
-  async createPracticeSession(studentId: string, lessonId: string, objectiveId: string, at = this.dependencies.clock.now()): Promise<PracticeSession> {
+  async createPracticeSession(
+    studentId: string,
+    lessonId: string,
+    objectiveId: string,
+    at = this.dependencies.clock.now(),
+  ): Promise<PilotPracticeSessionView> {
     requireTimestamp(at);
     const lesson = await this.requireOwnedLesson(studentId, lessonId);
     if (!lesson.objectiveIds.includes(objectiveId)) throw new Error('objective does not belong to lesson');
-    return this.dependencies.practice.createPracticeSession(lessonId, objectiveId, at);
+    const session = await this.dependencies.practice.createPracticeSession(lessonId, objectiveId, at);
+    if (session.studentId !== studentId || session.lessonId !== lessonId || session.objectiveId !== objectiveId) {
+      throw new Error('practice session coordinates must match trusted lesson');
+    }
+    const items = await this.dependencies.practiceOwnership.listPracticeItems(session.id);
+    for (const item of items) {
+      if (item.studentId !== studentId || item.sessionId !== session.id || item.objectiveId !== objectiveId) {
+        throw new Error('practice item coordinates must match trusted session');
+      }
+    }
+    return {
+      session: {
+        id: session.id,
+        lessonId: session.lessonId,
+        objectiveId: session.objectiveId,
+        createdAt: session.createdAt,
+      },
+      items: items.map(toStudentPracticeItem),
+    };
   }
 
   async revealHint(studentId: string, sessionId: string, itemId: string, at = this.dependencies.clock.now()): Promise<string> {
@@ -97,10 +151,14 @@ export class PilotSessionService {
     return this.dependencies.practice.revealHint(sessionId, itemId, at);
   }
 
-  async submitPracticeAttempt(studentId: string, input: SubmitAttemptInput, at = this.dependencies.clock.now()): Promise<Attempt> {
+  async submitPracticeAttempt(
+    studentId: string,
+    input: SubmitAttemptInput,
+    at = this.dependencies.clock.now(),
+  ): Promise<PilotPracticeAttemptView> {
     requireTimestamp(at);
     await this.requireOwnedPracticeCoordinates(studentId, input.sessionId, input.itemId);
-    return this.dependencies.practice.submitAttempt(input, at);
+    return toPilotPracticeAttemptView(await this.dependencies.practice.submitAttempt(input, at));
   }
 
   private async appendTerminalEvent(
