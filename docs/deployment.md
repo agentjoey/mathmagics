@@ -50,6 +50,37 @@ Rules:
 - do not hold a database transaction open while calling an AI provider;
 - destructive production migrations require a separate Human Gate.
 
+## Phase 8 Non-Production Pilot Activation
+
+Before any production migration or pilot deployment, use a disposable/non-production Neon database or branch in Singapore. `TEST_DATABASE_URL` is mandatory and must be distinct from any configured production `DATABASE_URL`.
+
+Apply the committed migration chain to non-production through the guarded runner:
+
+```bash
+TEST_DATABASE_URL='<non-production-neon-url>' npm run db:migrate:test
+```
+
+The migration runner validates `TEST_DATABASE_URL` first, then supplies that exact URL as the child `DATABASE_URL` required by Drizzle. It refuses to run when the test URL is missing or equals the production URL.
+
+After the Phase 8 full-loop Neon contract exists, run the fixed pilot contract whitelist:
+
+```bash
+TEST_DATABASE_URL='<non-production-neon-url>' npm run verify:pilot-neon
+```
+
+The verification child receives the validated `TEST_DATABASE_URL` and does not inherit `DATABASE_URL`. The fixed whitelist is:
+
+- `tests/persistence-neon-contract.test.ts`
+- `tests/persistence-neon-practice-contract.test.ts`
+- `tests/persistence-neon-homework-contract.test.ts`
+- `tests/persistence-neon-correction-contract.test.ts`
+- `tests/persistence-neon-phase7-contract.test.ts`
+- `tests/pilot-neon-full-loop.test.ts`
+
+`tests/pilot-neon-full-loop.test.ts` is introduced later in the approved Phase 8 implementation sequence. Until it exists, the harness is prepared but the final six-suite pilot verification gate is intentionally incomplete rather than silently weakened.
+
+Only after the complete non-production migration and six-suite verification evidence passes may the separate Production migration/deployment Human Gate be requested.
+
 ## Vercel Deployment
 
 1. `vercel link` on first setup.
