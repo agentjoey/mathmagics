@@ -18,6 +18,7 @@ import {
 } from '@/lib/practice';
 import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
+import { canonicalInstant } from './instant';
 import {
   attempts,
   correctionItems,
@@ -36,7 +37,7 @@ function toSession(row: typeof practiceSessions.$inferSelect): PracticeSession {
     lessonId: row.lessonId,
     objectiveId: row.objectiveId,
     policyVersion: row.policyVersion,
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
   assertValidPracticeSession(session);
   return session;
@@ -57,7 +58,7 @@ function toItem(row: typeof practiceItems.$inferSelect): PracticeItem {
     solutionOutline: structuredClone(row.solutionOutline),
     generator: row.generator,
     generatorVersion: row.generatorVersion,
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
   assertValidPracticeItem(item);
   return item;
@@ -69,7 +70,7 @@ function toReveal(row: typeof practiceHintReveals.$inferSelect): PracticeHintRev
     sessionId: row.sessionId,
     itemId: row.itemId,
     studentId: row.studentId,
-    revealedAt: row.revealedAt,
+    revealedAt: canonicalInstant(row.revealedAt),
   };
   assertValidPracticeHintReveal(reveal);
   return reveal;
@@ -125,8 +126,8 @@ function toAttempt(row: typeof attempts.$inferSelect): Attempt {
     hintUsed: row.hintUsed,
     retryOfAttemptId: row.retryOfAttemptId ?? undefined,
     gradingPolicyVersion: row.gradingPolicyVersion,
-    submittedAt: row.submittedAt,
-    recordedAt: row.recordedAt,
+    submittedAt: canonicalInstant(row.submittedAt),
+    recordedAt: canonicalInstant(row.recordedAt),
   };
   assertValidAttempt(attempt);
   return attempt;

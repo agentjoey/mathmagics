@@ -140,10 +140,15 @@ export class ParentProgressService {
     if (!student) throw new Error(`Unknown student id: ${studentId}`);
     const dataset = loadCurriculumDataset();
     const objectives = listLevelObjectivesInCurriculumOrder(student.levelId, dataset);
+    const objectiveProgress = await this.progress.getObjectivesProgress(
+      studentId,
+      objectives.map((objective) => objective.id),
+      evaluatedAt,
+    );
     const byTopic = new Map<string, ObjectiveProgressView[]>();
 
-    for (const objective of objectives) {
-      const progress = await this.progress.getObjectiveProgress(studentId, objective.id, evaluatedAt);
+    for (const [index, objective] of objectives.entries()) {
+      const progress = objectiveProgress[index]!;
       const view: ObjectiveProgressView = {
         objectiveId: objective.id,
         title: objective.title,
@@ -162,7 +167,16 @@ export class ParentProgressService {
     });
 
     const strategyIds = [...new Set(objectives.flatMap((objective) => objective.strategyIds))].sort();
-    const strategyEvidence = await this.dependencies.strategy.listEvidenceForStudent(studentId, evaluatedAt);
+    const [strategyEvidence, mistakes, next] = await Promise.all([
+      this.dependencies.strategy.listEvidenceForStudent(studentId, evaluatedAt),
+      this.projectMistakes(studentId, evaluatedAt),
+      findNextEffectiveLesson(
+        this.dependencies.planning,
+        this.dependencies.adaptive,
+        studentId,
+        evaluatedAt,
+      ),
+    ]);
     const strategies: StrategyProgressView[] = strategyIds.map((strategyId) => {
       const snapshot = deriveStrategyProgress(
         strategyId,
@@ -178,14 +192,6 @@ export class ParentProgressService {
         lastObservedAt: snapshot.lastObservedAt,
       };
     });
-
-    const mistakes = await this.projectMistakes(studentId, evaluatedAt);
-    const next = await findNextEffectiveLesson(
-      this.dependencies.planning,
-      this.dependencies.adaptive,
-      studentId,
-      evaluatedAt,
-    );
     const nextLesson = next
       ? toParentNextLessonView({ effectiveLesson: next.effectiveLesson, decision: next.decision })
       : null;
@@ -205,23 +211,28 @@ export class ParentProgressService {
     const mistakes = (await this.dependencies.mistakes.listMistakesForStudent(studentId))
       .filter((mistake) => Date.parse(mistake.firstObservedAt) <= Date.parse(cutoff)
         && Date.parse(mistake.createdAt) <= Date.parse(cutoff));
-    const inputs: MistakeProjectionInput[] = [];
-    for (const mistake of mistakes) {
-      const events = (await this.dependencies.mistakes.listEvents(mistake.id))
-        .filter((event) => Date.parse(event.occurredAt) <= Date.parse(cutoff));
-      const links = (await this.dependencies.mistakes.listAttemptLinks(mistake.id))
-        .filter((link) => Date.parse(link.linkedAt) <= Date.parse(cutoff));
-      const attempts = (await Promise.all(links.map((link) => this.dependencies.practice.getAttempt(link.attemptId))))
+    const inputs = await Promise.all(mistakes.map(async (mistake): Promise<MistakeProjectionInput> => {
+      const [events, links, evidence, correctionItems, reasoningChecks] = await Promise.all([
+        this.dependencies.mistakes.listEvents(mistake.id),
+        this.dependencies.mistakes.listAttemptLinks(mistake.id),
+        this.dependencies.learning.listEvidenceForObjective(studentId, mistake.objectiveId),
+        this.dependencies.mistakes.listCorrectionItems(mistake.id),
+        this.dependencies.mistakes.listReasoningChecks(mistake.id),
+      ]);
+      const availableLinks = links.filter((link) => Date.parse(link.linkedAt) <= Date.parse(cutoff));
+      const attempts = (await Promise.all(availableLinks.map((link) => this.dependencies.practice.getAttempt(link.attemptId))))
         .filter((attempt): attempt is NonNullable<typeof attempt> =>
           attempt !== undefined && factAvailable(attempt.submittedAt, attempt.recordedAt, cutoff));
-      const evidence = (await this.dependencies.learning.listEvidenceForObjective(studentId, mistake.objectiveId))
-        .filter((record) => factAvailable(record.observedAt, record.recordedAt, cutoff));
-      const correctionItems = (await this.dependencies.mistakes.listCorrectionItems(mistake.id))
-        .filter((item) => Date.parse(item.createdAt) <= Date.parse(cutoff));
-      const reasoningChecks = (await this.dependencies.mistakes.listReasoningChecks(mistake.id))
-        .filter((check) => factAvailable(check.submittedAt, check.recordedAt, cutoff));
-      inputs.push({ mistake, events, links, attempts, evidence, correctionItems, reasoningChecks });
-    }
+      return {
+        mistake,
+        events: events.filter((event) => Date.parse(event.occurredAt) <= Date.parse(cutoff)),
+        links: availableLinks,
+        attempts,
+        evidence: evidence.filter((record) => factAvailable(record.observedAt, record.recordedAt, cutoff)),
+        correctionItems: correctionItems.filter((item) => Date.parse(item.createdAt) <= Date.parse(cutoff)),
+        reasoningChecks: reasoningChecks.filter((check) => factAvailable(check.submittedAt, check.recordedAt, cutoff)),
+      };
+    }));
     return toParentMistakeGroups(deriveMisconceptionSummary(inputs));
   }
 }

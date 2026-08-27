@@ -18,6 +18,7 @@ import {
 } from '@/lib/planning';
 import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
+import { canonicalInstant } from './instant';
 import {
   dailyLessons,
   lessonBriefs,
@@ -40,7 +41,7 @@ function toPlan(row: typeof weeklyPlans.$inferSelect): WeeklyPlan {
     weekStart: row.weekStart,
     sessionsPerWeek: row.sessionsPerWeek,
     minutesPerSession: row.minutesPerSession,
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
 }
 
@@ -54,7 +55,7 @@ function toLesson(row: typeof dailyLessons.$inferSelect): DailyLesson {
     objectiveIds: structuredClone(row.objectiveIds),
     estimatedMinutes: row.estimatedMinutes,
     rationale: structuredClone(row.rationale as PlanningRationale[]),
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
 }
 
@@ -64,7 +65,7 @@ function toEvent(row: typeof lessonExecutionEvents.$inferSelect): LessonExecutio
     lessonId: row.lessonId,
     studentId: row.studentId,
     type: row.type as LessonExecutionEventType,
-    occurredAt: row.occurredAt,
+    occurredAt: canonicalInstant(row.occurredAt),
     actualMinutes: row.actualMinutes ?? undefined,
   };
 }
@@ -78,7 +79,7 @@ function toBrief(row: typeof lessonBriefs.$inferSelect): LessonBriefRecord {
     model: row.model,
     contextVersion: row.contextVersion,
     content: structuredClone(row.content as GeneratedLessonBriefContent),
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
 }
 

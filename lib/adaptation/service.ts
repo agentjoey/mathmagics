@@ -7,6 +7,7 @@ import type {
   EvidenceRecord,
   LearningStateRepository,
   ObjectiveReadiness,
+  StudentLevel,
 } from '@/lib/learning';
 import {
   canonicalMistakeId,
@@ -28,7 +29,11 @@ import type {
 } from '@/lib/planning';
 import type { Attempt, PracticeRepository } from '@/lib/practice';
 import { ProgressService } from '@/lib/progress';
-import type { ObjectiveProgress, PerformanceRiskFacts } from '@/lib/progress';
+import type {
+  ObjectiveProgress,
+  PerformanceRiskFacts,
+  PerformanceRiskSnapshot,
+} from '@/lib/progress';
 import { deriveStrategyProgress } from '@/lib/strategy';
 import type { StrategyEvidence, StrategyRepository } from '@/lib/strategy';
 import { listAdaptiveCandidates } from './candidates';
@@ -327,18 +332,6 @@ export class AdaptiveLearningService {
     };
   }
 
-  private async objectiveProgressCache(studentId: string, cutoff: string) {
-    const cache = new Map<string, Promise<ObjectiveProgress>>();
-    return (objectiveId: string): Promise<ObjectiveProgress> => {
-      let value = cache.get(objectiveId);
-      if (!value) {
-        value = this.progress.getObjectiveProgress(studentId, objectiveId, cutoff);
-        cache.set(objectiveId, value);
-      }
-      return value;
-    };
-  }
-
   private async readinessAt(
     studentId: string,
     objectiveId: string,
@@ -356,16 +349,18 @@ export class AdaptiveLearningService {
     return classifyReadiness(studentId, objectiveId, statuses);
   }
 
-  private async resolveAnchorObjective(studentId: string, cutoff: string): Promise<string> {
-    const student = await this.dependencies.learningRepository.getStudent(studentId);
-    if (!student) throw new Error(`Unknown student id: ${studentId}`);
-    const ordered = listLevelObjectivesInCurriculumOrder(student.levelId);
-    if (ordered.length === 0) throw new Error(`No curriculum objectives for level ${student.levelId}`);
+  private async resolveAnchorObjective(
+    studentId: string,
+    cutoff: string,
+    levelId: StudentLevel,
+  ): Promise<string> {
+    const ordered = listLevelObjectivesInCurriculumOrder(levelId);
+    if (ordered.length === 0) throw new Error(`No curriculum objectives for level ${levelId}`);
     const position = await this.dependencies.learningRepository.getCurrentPosition(studentId);
     if (!position || Date.parse(position.recordedAt) > Date.parse(cutoff)) return ordered[0]!.id;
     if (position.objectiveId) {
       const objective = getLearningObjective(position.objectiveId);
-      if (objective.levelId !== student.levelId) throw new Error('current position objective is outside student level');
+      if (objective.levelId !== levelId) throw new Error('current position objective is outside student level');
       return objective.id;
     }
     if (position.topicId) {
@@ -395,17 +390,38 @@ export class AdaptiveLearningService {
     const student = await this.dependencies.learningRepository.getStudent(studentId);
     if (!student) throw new Error(`Unknown student id: ${studentId}`);
     const ordered = listLevelObjectivesInCurriculumOrder(student.levelId);
-    const anchorId = await this.resolveAnchorObjective(studentId, cutoff);
+    const progressObjectiveIds = [...new Set(ordered.flatMap((objective) => [
+      objective.id,
+      ...getPrerequisites(objective.id).map((prerequisite) => prerequisite.id),
+    ]))];
+    const anchorId = await this.resolveAnchorObjective(studentId, cutoff, student.levelId);
     const anchorIndex = ordered.findIndex((objective) => objective.id === anchorId);
     if (anchorIndex < 0) throw new Error(`Anchor objective ${anchorId} is outside active curriculum order`);
 
-    const progressFor = await this.objectiveProgressCache(studentId, cutoff);
+    const riskSnapshot = this.dependencies.performanceRiskFacts.snapshot
+      ? await this.dependencies.performanceRiskFacts.snapshot(studentId, cutoff)
+      : undefined;
+    const [allProgress, strategyEvidence] = await Promise.all([
+      this.progress.getObjectivesProgress(
+        studentId,
+        progressObjectiveIds,
+        cutoff,
+        riskSnapshot,
+      ),
+      this.dependencies.strategyRepository.listEvidenceForStudent(studentId, cutoff),
+    ]);
+    const progressByObjective = new Map(allProgress.map((progress) => [progress.objectiveId, progress]));
+    const progressFor = async (objectiveId: string): Promise<ObjectiveProgress> => {
+      const progress = progressByObjective.get(objectiveId);
+      if (!progress) throw new Error(`Missing progress snapshot for objective ${objectiveId}`);
+      return progress;
+    };
+
     const anchorProgress = await progressFor(anchorId);
     let forwardObjectiveId: string | undefined;
     let current: AdaptiveCandidateInput['current'];
     const next: AdaptiveCandidateInput['next'] = [];
     const prerequisites: AdaptivePrerequisiteNeed[] = [];
-    const strategyEvidence = await this.dependencies.strategyRepository.listEvidenceForStudent(studentId, cutoff);
 
     if (anchorProgress.mastery.state !== 'MASTERED') {
       forwardObjectiveId = anchorId;
@@ -468,7 +484,12 @@ export class AdaptiveLearningService {
       }
     }
 
-    const mistakes = await this.mistakeNeeds(studentId, forwardObjectiveId ?? source.objectiveIds[0], cutoff);
+    const mistakes = await this.mistakeNeeds(
+      studentId,
+      forwardObjectiveId ?? source.objectiveIds[0],
+      cutoff,
+      riskSnapshot,
+    );
     return { mistakes, prerequisites, reviews, current, next };
   }
 
@@ -476,26 +497,33 @@ export class AdaptiveLearningService {
     studentId: string,
     forwardObjectiveId: string | undefined,
     cutoff: string,
+    riskSnapshot?: PerformanceRiskSnapshot,
   ): Promise<AdaptiveMistakeNeed[]> {
     const mistakes = (await this.dependencies.mistakeRepository.listMistakesForStudent(studentId))
       .filter((mistake) => Date.parse(mistake.firstObservedAt) <= Date.parse(cutoff));
     if (mistakes.length === 0) return [];
 
-    const attempts = (await this.dependencies.practiceRepository.listAttemptsForStudent(studentId))
-      .filter((attempt) => attemptAvailable(attempt, cutoff));
-    const evidence = (await this.dependencies.learningRepository.listEvidenceForStudent(studentId))
-      .filter((record) => evidenceAvailable(record, cutoff));
+    const [attempts, evidence] = await Promise.all([
+      this.dependencies.practiceRepository.listAttemptsForStudent(studentId)
+        .then((records) => records.filter((attempt) => attemptAvailable(attempt, cutoff))),
+      this.dependencies.learningRepository.listEvidenceForStudent(studentId)
+        .then((records) => records.filter((record) => evidenceAvailable(record, cutoff))),
+    ]);
     const needs: AdaptiveMistakeNeed[] = [];
 
     for (const mistake of mistakes) {
-      const events = (await this.dependencies.mistakeRepository.listEvents(mistake.id))
-        .filter((event) => Date.parse(event.occurredAt) <= Date.parse(cutoff));
+      const [rawEvents, rawLinks, rawCorrectionItems, rawReasoningChecks] = await Promise.all([
+        this.dependencies.mistakeRepository.listEvents(mistake.id),
+        this.dependencies.mistakeRepository.listAttemptLinks(mistake.id),
+        this.dependencies.mistakeRepository.listCorrectionItems(mistake.id),
+        this.dependencies.mistakeRepository.listReasoningChecks(mistake.id),
+      ]);
+      const events = rawEvents.filter((event) => Date.parse(event.occurredAt) <= Date.parse(cutoff));
       if (canonicalMistakeId(events)) continue;
-      const links = (await this.dependencies.mistakeRepository.listAttemptLinks(mistake.id))
-        .filter((link) => Date.parse(link.linkedAt) <= Date.parse(cutoff));
-      const correctionItems = (await this.dependencies.mistakeRepository.listCorrectionItems(mistake.id))
+      const links = rawLinks.filter((link) => Date.parse(link.linkedAt) <= Date.parse(cutoff));
+      const correctionItems = rawCorrectionItems
         .filter((item) => Date.parse(item.createdAt) <= Date.parse(cutoff));
-      const reasoningChecks = (await this.dependencies.mistakeRepository.listReasoningChecks(mistake.id))
+      const reasoningChecks = rawReasoningChecks
         .filter((check) => Date.parse(check.submittedAt) <= Date.parse(cutoff)
           && Date.parse(check.recordedAt) <= Date.parse(cutoff));
       const input: MistakeProjectionInput = {
@@ -510,11 +538,13 @@ export class AdaptiveLearningService {
       const state = projectMistakeState(input);
       if (state === 'RESOLVED') continue;
       const diagnosisTarget = confirmedDiagnosisTarget(events);
-      const recurrenceCount = await this.dependencies.performanceRiskFacts.recurrenceCount(
-        studentId,
-        mistake.objectiveId,
-        cutoff,
-      );
+      const recurrenceCount = riskSnapshot
+        ? riskSnapshot.recurrenceCount(mistake.objectiveId)
+        : await this.dependencies.performanceRiskFacts.recurrenceCount(
+          studentId,
+          mistake.objectiveId,
+          cutoff,
+        );
       const masteredBeforeMistake = this.masteredBeforeMistake(mistake, evidence);
       const priority = deriveMistakePriority({
         state,

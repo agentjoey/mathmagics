@@ -13,6 +13,7 @@ import {
 } from '@/lib/strategy';
 import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
+import { canonicalInstant } from './instant';
 import { strategyEvidence, strategyInteractions } from './schema';
 
 function same(left: unknown, right: unknown): boolean {
@@ -35,8 +36,8 @@ function toInteraction(row: typeof strategyInteractions.$inferSelect): StrategyI
     sourceRefId: row.sourceRefId,
     interactionType: row.interactionType as StrategyInteractionType,
     outcome: row.outcome as StrategyInteractionOutcome,
-    observedAt: row.observedAt,
-    recordedAt: row.recordedAt,
+    observedAt: canonicalInstant(row.observedAt),
+    recordedAt: canonicalInstant(row.recordedAt),
   };
   assertValidStrategyInteraction(interaction);
   return interaction;
@@ -50,8 +51,8 @@ function toEvidence(row: typeof strategyEvidence.$inferSelect): StrategyEvidence
     objectiveId: row.objectiveId,
     type: row.type as StrategyEvidenceType,
     interactionId: row.interactionId,
-    observedAt: row.observedAt,
-    recordedAt: row.recordedAt,
+    observedAt: canonicalInstant(row.observedAt),
+    recordedAt: canonicalInstant(row.recordedAt),
   };
   assertValidStrategyEvidence(evidence);
   return evidence;

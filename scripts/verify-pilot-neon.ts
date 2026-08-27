@@ -13,6 +13,14 @@ export const PILOT_NEON_TEST_FILES = [
   'tests/pilot-neon-full-loop.test.ts',
 ] as const;
 
+export const PILOT_NEON_VITEST_ARGS = [
+  'vitest',
+  'run',
+  '--no-file-parallelism',
+  '--testTimeout=120000',
+  ...PILOT_NEON_TEST_FILES,
+] as const;
+
 export function buildVerificationEnvironment(env: PilotRunnerEnvironment): PilotRunnerEnvironment {
   const testUrl = requireNonProductionDatabase(env);
   const childEnv: PilotRunnerEnvironment = {
@@ -24,7 +32,7 @@ export function buildVerificationEnvironment(env: PilotRunnerEnvironment): Pilot
 }
 
 export function runPilotNeonVerification(env: PilotRunnerEnvironment = process.env): number {
-  const result = spawnSync('npx', ['vitest', 'run', ...PILOT_NEON_TEST_FILES], {
+  const result = spawnSync('npx', [...PILOT_NEON_VITEST_ARGS], {
     stdio: 'inherit',
     env: buildVerificationEnvironment(env) as NodeJS.ProcessEnv,
     shell: false,

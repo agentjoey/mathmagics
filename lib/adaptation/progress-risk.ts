@@ -12,7 +12,7 @@ import type {
 import { deriveMastery } from '@/lib/learning';
 import type { LearningStateRepository } from '@/lib/learning';
 import type { PracticeRepository } from '@/lib/practice';
-import type { PerformanceRiskFacts } from '@/lib/progress';
+import type { PerformanceRiskFacts, PerformanceRiskSnapshot } from '@/lib/progress';
 import { deriveMistakePriority } from './mistake-priority';
 
 export interface CorrectionPerformanceRiskFactsDependencies {
@@ -54,30 +54,29 @@ export class CorrectionPerformanceRiskFacts implements PerformanceRiskFacts {
   constructor(private readonly dependencies: CorrectionPerformanceRiskFactsDependencies) {}
 
   private async hydrate(mistake: Mistake, cutoff: string): Promise<MistakeProjectionInput> {
-    const events = (await this.dependencies.mistakes.listEvents(mistake.id))
-      .filter((event) => onOrBefore(event.occurredAt, cutoff));
-    const links = (await this.dependencies.mistakes.listAttemptLinks(mistake.id))
-      .filter((link) => onOrBefore(link.linkedAt, cutoff));
+    const [events, links, evidence, correctionItems, reasoningChecks] = await Promise.all([
+      this.dependencies.mistakes.listEvents(mistake.id),
+      this.dependencies.mistakes.listAttemptLinks(mistake.id),
+      this.dependencies.learning.listEvidenceForObjective(mistake.studentId, mistake.objectiveId),
+      this.dependencies.mistakes.listCorrectionItems(mistake.id),
+      this.dependencies.mistakes.listReasoningChecks(mistake.id),
+    ]);
+    const availableEvents = events.filter((event) => onOrBefore(event.occurredAt, cutoff));
+    const availableLinks = links.filter((link) => onOrBefore(link.linkedAt, cutoff));
     const attempts = (await Promise.all(
-      links.map((link) => this.dependencies.practice.getAttempt(link.attemptId)),
+      availableLinks.map((link) => this.dependencies.practice.getAttempt(link.attemptId)),
     )).filter((attempt): attempt is NonNullable<typeof attempt> =>
       attempt !== undefined && factOnOrBefore(attempt.submittedAt, attempt.recordedAt, cutoff));
-    const evidence = (await this.dependencies.learning.listEvidenceForObjective(mistake.studentId, mistake.objectiveId))
-      .filter((record) => factOnOrBefore(record.observedAt, record.recordedAt, cutoff));
-    const correctionItems = (await this.dependencies.mistakes.listCorrectionItems(mistake.id))
-      .filter((item) => onOrBefore(item.createdAt, cutoff));
-    const reasoningChecks = (await this.dependencies.mistakes.listReasoningChecks(mistake.id))
-      .filter((check) => factOnOrBefore(check.submittedAt, check.recordedAt, cutoff));
 
-    return { mistake, events, links, attempts, evidence, correctionItems, reasoningChecks };
-  }
-
-  private async wasMasteredBefore(mistake: Mistake): Promise<boolean> {
-    const evidence = (await this.dependencies.learning.listEvidenceForObjective(mistake.studentId, mistake.objectiveId))
-      .filter((record) =>
-        Date.parse(record.observedAt) < Date.parse(mistake.firstObservedAt)
-        && Date.parse(record.recordedAt) <= Date.parse(mistake.firstObservedAt));
-    return deriveMastery(mistake.studentId, mistake.objectiveId, evidence).state === 'MASTERED';
+    return {
+      mistake,
+      events: availableEvents,
+      links: availableLinks,
+      attempts,
+      evidence: evidence.filter((record) => factOnOrBefore(record.observedAt, record.recordedAt, cutoff)),
+      correctionItems: correctionItems.filter((item) => onOrBefore(item.createdAt, cutoff)),
+      reasoningChecks: reasoningChecks.filter((check) => factOnOrBefore(check.submittedAt, check.recordedAt, cutoff)),
+    };
   }
 
   private async projectEpisodes(studentId: string, cutoff: string): Promise<ProjectedEpisode[]> {
@@ -86,44 +85,60 @@ export class CorrectionPerformanceRiskFacts implements PerformanceRiskFacts {
       .filter((mistake) => onOrBefore(mistake.firstObservedAt, cutoff) && onOrBefore(mistake.createdAt, cutoff))
       .sort((left, right) =>
         Date.parse(left.firstObservedAt) - Date.parse(right.firstObservedAt) || left.id.localeCompare(right.id));
+    const hydrated = await Promise.all(mistakes.map(async (mistake) => {
+      const input = await this.hydrate(mistake, cutoff);
+      const masteredBeforeMistake = deriveMastery(
+        mistake.studentId,
+        mistake.objectiveId,
+        input.evidence.filter((record) =>
+          Date.parse(record.observedAt) < Date.parse(mistake.firstObservedAt)
+          && Date.parse(record.recordedAt) <= Date.parse(mistake.firstObservedAt)),
+      ).state === 'MASTERED';
+      return { mistake, input, masteredBeforeMistake };
+    }));
 
     const projected: ProjectedEpisode[] = [];
-    for (const mistake of mistakes) {
-      const input = await this.hydrate(mistake, cutoff);
-      const target = confirmedDiagnosisTarget(input.events);
-      const state = projectMistakeState(input);
+    for (const item of hydrated) {
+      const target = confirmedDiagnosisTarget(item.input.events);
+      const state = projectMistakeState(item.input);
       const key = targetKey(target);
       const recurrent = key !== null && projected.some((earlier) =>
-        earlier.mistake.objectiveId === mistake.objectiveId
+        earlier.mistake.objectiveId === item.mistake.objectiveId
         && targetKey(earlier.target) === key
         && earlier.state === 'RESOLVED'
-        && Date.parse(earlier.mistake.firstObservedAt) < Date.parse(mistake.firstObservedAt));
+        && Date.parse(earlier.mistake.firstObservedAt) < Date.parse(item.mistake.firstObservedAt));
       projected.push({
-        mistake,
+        mistake: item.mistake,
         state,
         target,
         recurrent,
-        masteredBeforeMistake: await this.wasMasteredBefore(mistake),
+        masteredBeforeMistake: item.masteredBeforeMistake,
       });
     }
     return projected;
   }
 
-  async recurrenceCount(studentId: string, objectiveId: string, cutoff: string): Promise<number> {
+  async snapshot(studentId: string, cutoff: string): Promise<PerformanceRiskSnapshot> {
     const episodes = await this.projectEpisodes(studentId, cutoff);
-    return episodes.filter((episode) =>
-      episode.mistake.objectiveId === objectiveId && episode.recurrent).length;
+    return {
+      recurrenceCount: (objectiveId: string) => episodes.filter((episode) =>
+        episode.mistake.objectiveId === objectiveId && episode.recurrent).length,
+      hasBlockingMistake: (objectiveId: string) => episodes.some((episode) => deriveMistakePriority({
+        state: episode.state,
+        diagnosisTarget: episode.target,
+        mistakeObjectiveId: episode.mistake.objectiveId,
+        forwardObjectiveId: objectiveId,
+        recurrent: episode.recurrent,
+        masteredBeforeMistake: episode.masteredBeforeMistake,
+      }) === 'BLOCKING'),
+    };
+  }
+
+  async recurrenceCount(studentId: string, objectiveId: string, cutoff: string): Promise<number> {
+    return (await this.snapshot(studentId, cutoff)).recurrenceCount(objectiveId);
   }
 
   async hasBlockingMistake(studentId: string, objectiveId: string, cutoff: string): Promise<boolean> {
-    const episodes = await this.projectEpisodes(studentId, cutoff);
-    return episodes.some((episode) => deriveMistakePriority({
-      state: episode.state,
-      diagnosisTarget: episode.target,
-      mistakeObjectiveId: episode.mistake.objectiveId,
-      forwardObjectiveId: objectiveId,
-      recurrent: episode.recurrent,
-      masteredBeforeMistake: episode.masteredBeforeMistake,
-    }) === 'BLOCKING');
+    return (await this.snapshot(studentId, cutoff)).hasBlockingMistake(objectiveId);
   }
 }

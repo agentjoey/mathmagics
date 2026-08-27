@@ -16,6 +16,7 @@ import type {
 } from '@/lib/learning';
 import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
+import { canonicalInstant } from './instant';
 import { currentPositions, evidenceRecords, students } from './schema';
 
 function toStudent(row: typeof students.$inferSelect): StudentProfile {
@@ -26,8 +27,8 @@ function toStudent(row: typeof students.$inferSelect): StudentProfile {
     learningMode: row.learningMode as LearningMode,
     sessionsPerWeek: row.sessionsPerWeek,
     minutesPerSession: row.minutesPerSession,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    createdAt: canonicalInstant(row.createdAt),
+    updatedAt: canonicalInstant(row.updatedAt),
   };
 }
 
@@ -37,7 +38,7 @@ function toPosition(row: typeof currentPositions.$inferSelect): CurrentPositionA
     levelId: row.levelId as StudentLevel,
     topicId: row.topicId ?? undefined,
     objectiveId: row.objectiveId ?? undefined,
-    recordedAt: row.recordedAt,
+    recordedAt: canonicalInstant(row.recordedAt),
     source: 'MANUAL_SETUP',
   };
 }
@@ -48,8 +49,8 @@ function toEvidence(row: typeof evidenceRecords.$inferSelect): EvidenceRecord {
     studentId: row.studentId,
     objectiveId: row.objectiveId,
     type: row.type as EvidenceType,
-    observedAt: row.observedAt,
-    recordedAt: row.recordedAt,
+    observedAt: canonicalInstant(row.observedAt),
+    recordedAt: canonicalInstant(row.recordedAt),
     origin: {
       kind: row.originKind as EvidenceOriginKind,
       refId: row.originRefId ?? undefined,

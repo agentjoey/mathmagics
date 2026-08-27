@@ -33,7 +33,13 @@ export interface TopicProgressSummary {
   performance: { insufficientData: number; struggling: number; unstable: number; stable: number };
 }
 
+export interface PerformanceRiskSnapshot {
+  recurrenceCount(objectiveId: string): number;
+  hasBlockingMistake(objectiveId: string): boolean;
+}
+
 export interface PerformanceRiskFacts {
   recurrenceCount(studentId: string, objectiveId: string, cutoff: string): Promise<number>;
   hasBlockingMistake(studentId: string, objectiveId: string, cutoff: string): Promise<boolean>;
+  snapshot?(studentId: string, cutoff: string): Promise<PerformanceRiskSnapshot>;
 }

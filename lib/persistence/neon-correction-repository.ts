@@ -18,6 +18,7 @@ import {
 import type { AnswerSpec, PracticeProblemSpec } from '@/lib/practice';
 import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
+import { canonicalInstant } from './instant';
 import {
   correctionItems,
   correctionReasoningChecks,
@@ -38,8 +39,8 @@ function toMistake(row: typeof mistakes.$inferSelect): Mistake {
     initialAttemptId: row.initialAttemptId,
     initialDiagnosisTarget: structuredClone(row.initialDiagnosisTarget as DiagnosisTarget),
     diagnosisPolicyVersion: row.diagnosisPolicyVersion as Mistake['diagnosisPolicyVersion'],
-    firstObservedAt: row.firstObservedAt,
-    createdAt: row.createdAt,
+    firstObservedAt: canonicalInstant(row.firstObservedAt),
+    createdAt: canonicalInstant(row.createdAt),
   };
   assertValidMistake(value);
   return value;
@@ -50,7 +51,7 @@ function toLink(row: typeof mistakeAttemptLinks.$inferSelect): MistakeAttemptLin
     mistakeId: row.mistakeId,
     attemptId: row.attemptId,
     role: row.role as MistakeAttemptLink['role'],
-    linkedAt: row.linkedAt,
+    linkedAt: canonicalInstant(row.linkedAt),
   };
 }
 
@@ -62,7 +63,7 @@ function toEvent(row: typeof mistakeEvents.$inferSelect): MistakeEvent {
     payload: structuredClone(row.payload as Record<string, unknown>),
     actorKind: row.actorKind as MistakeEvent['actorKind'],
     policyVersion: row.policyVersion,
-    occurredAt: row.occurredAt,
+    occurredAt: canonicalInstant(row.occurredAt),
   };
 }
 
@@ -82,7 +83,7 @@ function toCorrectionItem(row: typeof correctionItems.$inferSelect): CorrectionI
     solutionOutline: structuredClone(row.solutionOutline),
     generator: row.generator,
     generatorVersion: row.generatorVersion,
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
 }
 
@@ -97,8 +98,8 @@ function toReasoningCheck(row: typeof correctionReasoningChecks.$inferSelect): C
     outcome: row.outcome as CorrectionReasoningCheck['outcome'],
     assisted: row.assisted,
     policyVersion: row.policyVersion as CorrectionReasoningCheck['policyVersion'],
-    submittedAt: row.submittedAt,
-    recordedAt: row.recordedAt,
+    submittedAt: canonicalInstant(row.submittedAt),
+    recordedAt: canonicalInstant(row.recordedAt),
   };
 }
 

@@ -14,6 +14,7 @@ import type { DailyLesson, LessonIntent, PlanningRationale } from '@/lib/plannin
 import { assertValidDailyLesson } from '@/lib/planning';
 import { createNeonDatabase } from './db';
 import type { MathMagicsDatabase } from './db';
+import { canonicalInstant } from './instant';
 import {
   adaptiveDecisions,
   dailyLessons,
@@ -38,7 +39,7 @@ function toLesson(row: typeof dailyLessons.$inferSelect): DailyLesson {
     objectiveIds: structuredClone(row.objectiveIds),
     estimatedMinutes: row.estimatedMinutes,
     rationale: structuredClone(row.rationale as PlanningRationale[]),
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
   assertValidDailyLesson(lesson);
   return lesson;
@@ -55,9 +56,9 @@ function toDecision(row: typeof adaptiveDecisions.$inferSelect): AdaptiveDecisio
     targetMistakeId: row.targetMistakeId ?? undefined,
     rationaleCodes: structuredClone(row.rationaleCodes as AdaptiveRationaleCode[]),
     policyVersion: row.policyVersion as 'adaptive-policy-v1',
-    evaluatedAt: row.evaluatedAt,
-    inputFactCutoff: row.inputFactCutoff,
-    createdAt: row.createdAt,
+    evaluatedAt: canonicalInstant(row.evaluatedAt),
+    inputFactCutoff: canonicalInstant(row.inputFactCutoff),
+    createdAt: canonicalInstant(row.createdAt),
   };
   assertValidAdaptiveDecision(decision);
   return decision;
@@ -70,7 +71,7 @@ function toSupersession(row: typeof lessonSupersessions.$inferSelect): LessonSup
     sourceLessonId: row.sourceLessonId,
     replacementLessonId: row.replacementLessonId,
     adaptiveDecisionId: row.adaptiveDecisionId,
-    createdAt: row.createdAt,
+    createdAt: canonicalInstant(row.createdAt),
   };
   assertValidLessonSupersession(supersession);
   return supersession;

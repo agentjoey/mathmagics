@@ -9,6 +9,7 @@ import { derivePerformance } from './performance';
 import type {
   ObjectiveProgress,
   PerformanceRiskFacts,
+  PerformanceRiskSnapshot,
   TopicProgressSummary,
 } from './types';
 
@@ -41,70 +42,111 @@ export class ProgressService {
   constructor(private readonly dependencies: ProgressServiceDependencies) {}
 
   private async completedLearnLessons(studentId: string, cutoff: string): Promise<Array<{ lessonId: string; objectiveIds: string[] }>> {
-    const plans = await this.dependencies.planning.listWeeklyPlansForStudent(studentId);
-    const completed: Array<{ lessonId: string; objectiveIds: string[] }> = [];
+    const plans = (await this.dependencies.planning.listWeeklyPlansForStudent(studentId))
+      .filter((plan) => Date.parse(plan.createdAt) <= Date.parse(cutoff));
+    const lessonsByPlan = await Promise.all(
+      plans.map((plan) => this.dependencies.planning.listDailyLessonsForPlan(plan.id)),
+    );
+    const learnLessons = lessonsByPlan.flat()
+      .filter((lesson) => lesson.intent === 'LEARN' && Date.parse(lesson.createdAt) <= Date.parse(cutoff));
+    const eventGroups = await Promise.all(
+      learnLessons.map((lesson) => this.dependencies.planning.listExecutionEvents(lesson.id)),
+    );
 
-    for (const plan of plans) {
-      if (Date.parse(plan.createdAt) > Date.parse(cutoff)) continue;
-      const lessons = await this.dependencies.planning.listDailyLessonsForPlan(plan.id);
-      for (const lesson of lessons) {
-        if (lesson.intent !== 'LEARN' || Date.parse(lesson.createdAt) > Date.parse(cutoff)) continue;
-        const events = (await this.dependencies.planning.listExecutionEvents(lesson.id))
-          .filter((event) => Date.parse(event.occurredAt) <= Date.parse(cutoff));
-        const state = deriveLessonExecutionState(lesson.id, events);
-        if (state.status === 'COMPLETED') {
-          completed.push({ lessonId: lesson.id, objectiveIds: [...lesson.objectiveIds] });
-        }
-      }
-    }
-
-    return completed;
+    return learnLessons.flatMap((lesson, index) => {
+      const events = eventGroups[index]!
+        .filter((event) => Date.parse(event.occurredAt) <= Date.parse(cutoff));
+      const state = deriveLessonExecutionState(lesson.id, events);
+      return state.status === 'COMPLETED'
+        ? [{ lessonId: lesson.id, objectiveIds: [...lesson.objectiveIds] }]
+        : [];
+    });
   }
 
-  async getObjectiveProgress(studentId: string, objectiveId: string, cutoff: string): Promise<ObjectiveProgress> {
+  async getObjectivesProgress(
+    studentId: string,
+    objectiveIds: string[],
+    cutoff: string,
+    suppliedRiskSnapshot?: PerformanceRiskSnapshot,
+  ): Promise<ObjectiveProgress[]> {
     requireCutoff(cutoff);
     const student = await this.dependencies.learning.getStudent(studentId);
     if (!student) throw new Error(`Unknown student id: ${studentId}`);
 
-    const objective = getLearningObjective(objectiveId);
-    const evidence = (await this.dependencies.learning.listEvidenceForObjective(studentId, objectiveId))
-      .filter((record) => evidenceAvailable(record, cutoff));
-    const attempts = (await this.dependencies.practice.listAttemptsForStudent(studentId))
-      .filter((attempt) => attempt.objectiveId === objectiveId && attemptAvailable(attempt, cutoff));
-    const completedLearnLessons = await this.completedLearnLessons(studentId, cutoff);
-    const recurrenceCount = await this.dependencies.riskFacts.recurrenceCount(studentId, objectiveId, cutoff);
-    const hasBlockingMistake = await this.dependencies.riskFacts.hasBlockingMistake(studentId, objectiveId, cutoff);
+    const objectives = objectiveIds.map((objectiveId) => getLearningObjective(objectiveId));
+    const riskSnapshotPromise = suppliedRiskSnapshot
+      ? Promise.resolve(suppliedRiskSnapshot)
+      : this.dependencies.riskFacts.snapshot
+        ? this.dependencies.riskFacts.snapshot(studentId, cutoff)
+        : Promise.resolve<PerformanceRiskSnapshot | undefined>(undefined);
+    const [allAttempts, completedLearnLessons, riskSnapshot] = await Promise.all([
+      this.dependencies.practice.listAttemptsForStudent(studentId),
+      this.completedLearnLessons(studentId, cutoff),
+      riskSnapshotPromise,
+    ]);
+    const availableAttempts = allAttempts.filter((attempt) => attemptAvailable(attempt, cutoff));
+    const evidenceByObjective = await Promise.all(
+      objectives.map(async (objective) => (await this.dependencies.learning.listEvidenceForObjective(studentId, objective.id))
+        .filter((record) => evidenceAvailable(record, cutoff))),
+    );
+    const riskByObjective = await Promise.all(
+      objectives.map(async (objective) => {
+        if (riskSnapshot) {
+          return {
+            recurrenceCount: riskSnapshot.recurrenceCount(objective.id),
+            hasBlockingMistake: riskSnapshot.hasBlockingMistake(objective.id),
+          };
+        }
+        const [recurrenceCount, hasBlockingMistake] = await Promise.all([
+          this.dependencies.riskFacts.recurrenceCount(studentId, objective.id, cutoff),
+          this.dependencies.riskFacts.hasBlockingMistake(studentId, objective.id, cutoff),
+        ]);
+        return { recurrenceCount, hasBlockingMistake };
+      }),
+    );
 
-    const mastery = deriveMastery(studentId, objectiveId, evidence);
-    const coverage = deriveCoverage({
-      objectiveId,
-      evidence,
-      rootAttempts: attempts,
-      completedLearnLessons,
-    });
-    const performance = derivePerformance({
-      attempts,
-      evaluatedAt: cutoff,
-      recurrenceCount,
-      hasBlockingMistake,
-    });
+    return objectives.map((objective, index) => {
+      const evidence = evidenceByObjective[index]!;
+      const attempts = availableAttempts.filter((attempt) => attempt.objectiveId === objective.id);
+      const risk = riskByObjective[index]!;
+      const mastery = deriveMastery(studentId, objective.id, evidence);
+      const coverage = deriveCoverage({
+        objectiveId: objective.id,
+        evidence,
+        rootAttempts: attempts,
+        completedLearnLessons,
+      });
+      const performance = derivePerformance({
+        attempts,
+        evaluatedAt: cutoff,
+        recurrenceCount: risk.recurrenceCount,
+        hasBlockingMistake: risk.hasBlockingMistake,
+      });
 
-    return {
-      studentId,
-      objectiveId,
-      coverage,
-      mastery,
-      performance,
-      reviewDue: mastery.reviewDue,
-      strategyIds: [...objective.strategyIds],
-    };
+      return {
+        studentId,
+        objectiveId: objective.id,
+        coverage,
+        mastery,
+        performance,
+        reviewDue: mastery.reviewDue,
+        strategyIds: [...objective.strategyIds],
+      };
+    });
+  }
+
+  async getObjectiveProgress(studentId: string, objectiveId: string, cutoff: string): Promise<ObjectiveProgress> {
+    const [progress] = await this.getObjectivesProgress(studentId, [objectiveId], cutoff);
+    return progress!;
   }
 
   async getTopicProgress(studentId: string, topicId: string, cutoff: string): Promise<TopicProgressSummary> {
     requireCutoff(cutoff);
     const objectives = listObjectivesForTopic(topicId);
-    const progress = await Promise.all(
-      objectives.map((objective) => this.getObjectiveProgress(studentId, objective.id, cutoff)),
+    const progress = await this.getObjectivesProgress(
+      studentId,
+      objectives.map((objective) => objective.id),
+      cutoff,
     );
 
     const summary: TopicProgressSummary = {
