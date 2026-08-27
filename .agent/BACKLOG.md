@@ -28,7 +28,7 @@
 - [ ] Before first durable-data deployment, provision separated Neon development/Preview and production databases in Singapore.
 - [ ] Apply committed `0000`–`0004` Drizzle migrations against non-production first and pass learning/planning, practice, homework, correction, strategy and adaptive Neon contract suites with explicit `TEST_DATABASE_URL` before production promotion.
 - [ ] Decide whether to retain source homework images only when durable image review/history becomes a real product requirement; Phase 5 deliberately stores structured provenance only.
-- [ ] Decide whether to self-host/package Geist fonts so sandbox builds do not depend on Google Fonts network access.
+- [x] Remove the unused `next/font/google` Geist dependency and keep local/system font tokens so sandbox and production builds do not require Google Fonts network access.
 - [ ] Review npm audit findings separately; current toolchain install reports 13 findings (1 low, 4 moderate, 8 high). Do not use forced upgrades as incidental feature work.
 - [ ] Add first-class GrandeGPT MathMagics profiles/capabilities for exact typecheck, curriculum validation and Drizzle migration generation so these no longer require Host fallback.
 - [ ] Introduce multi-household User/Household/Membership identity only when the product leaves the single-household V1 boundary.
