@@ -15,6 +15,8 @@ export type { PilotReviewServiceDependencies } from './review';
 export { PilotSessionService } from './session';
 export type {
   PilotLessonSessionView,
+  PilotPracticeAttemptView,
+  PilotPracticeSessionView,
   PilotSessionDependencies,
   PracticeOwnershipReader,
 } from './session';

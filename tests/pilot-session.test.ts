@@ -70,6 +70,7 @@ async function harness() {
       getPracticeItem: async (itemId: string) => itemId === 'item-1'
         ? { id: 'item-1', sessionId: 'session-1', studentId: STUDENT }
         : undefined,
+      listPracticeItems: async () => [],
     },
     clock: { now: () => START_AT },
     ids: { executionEventId: (lessonId: string, type: string, at: string) => `${lessonId}:${type}:${at}` },
@@ -110,7 +111,15 @@ describe('PilotSessionService', () => {
     await expect(service.createPracticeSession(STUDENT, lesson.id, 'P2-AS-999', START_AT))
       .rejects.toThrow('objective does not belong to lesson');
     await expect(service.createPracticeSession(STUDENT, lesson.id, lesson.objectiveIds[0], START_AT))
-      .resolves.toEqual(practiceSession());
+      .resolves.toEqual({
+        session: {
+          id: 'session-1',
+          lessonId: lesson.id,
+          objectiveId: lesson.objectiveIds[0],
+          createdAt: START_AT,
+        },
+        items: [],
+      });
     expect(createPracticeSession).toHaveBeenCalledWith(lesson.id, lesson.objectiveIds[0], START_AT);
   });
 
@@ -126,7 +135,12 @@ describe('PilotSessionService', () => {
     expect(submitAttempt).not.toHaveBeenCalled();
 
     await expect(service.revealHint(STUDENT, 'session-1', 'item-1', START_AT)).resolves.toBe('trusted hint');
-    await expect(service.submitPracticeAttempt(STUDENT, input, COMPLETE_AT)).resolves.toEqual(attempt(input));
+    await expect(service.submitPracticeAttempt(STUDENT, input, COMPLETE_AT)).resolves.toEqual({
+      id: 'attempt-1',
+      outcome: 'CORRECT',
+      hintUsed: false,
+      submittedAt: COMPLETE_AT,
+    });
     expect(revealHint).toHaveBeenCalledWith('session-1', 'item-1', START_AT);
     expect(submitAttempt).toHaveBeenCalledWith(input, COMPLETE_AT);
   });
