@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "validate:curriculum": "node scripts/validate-curriculum.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:migrate:test": "node scripts/migrate-test-database.ts",
+    "verify:pilot-neon": "node scripts/verify-pilot-neon.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
