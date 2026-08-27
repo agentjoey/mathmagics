@@ -11,7 +11,7 @@ import type {
   Representation,
   TextbookReference,
 } from './types';
-import { assertValidCurriculumDataset } from './validate';
+import { assertValidCurriculumDataset } from './validate.ts';
 
 const DEFAULT_ROOT = path.join(process.cwd(), 'content', 'curriculum', 'singapore-primary-math');
 
