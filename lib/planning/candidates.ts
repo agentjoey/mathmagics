@@ -42,6 +42,7 @@ export async function listLearningCandidates(
 
   const candidates: LearningCandidate[] = [];
   const seen = new Set<string>();
+  const prerequisiteExpansion = new Set<string>();
 
   async function addCandidate(
     objectiveId: string,
@@ -71,6 +72,8 @@ export async function listLearningCandidates(
   }
 
   async function addPrerequisiteSupport(targetObjectiveId: string): Promise<void> {
+    if (prerequisiteExpansion.has(targetObjectiveId)) return;
+    prerequisiteExpansion.add(targetObjectiveId);
     const readiness = await getObjectiveReadiness(repository, studentId, targetObjectiveId);
     const nonMastered = readiness.prerequisites
       .filter((prerequisite) => prerequisite.mastery !== 'MASTERED')
@@ -81,6 +84,10 @@ export async function listLearningCandidates(
           - (globalIndex.get(right.objectiveId) ?? Number.MAX_SAFE_INTEGER);
       });
     for (const prerequisite of nonMastered) {
+      const prerequisiteReadiness = await getObjectiveReadiness(repository, studentId, prerequisite.objectiveId);
+      if (prerequisiteReadiness.state !== 'READY') {
+        await addPrerequisiteSupport(prerequisite.objectiveId);
+      }
       await addCandidate(prerequisite.objectiveId, 'PREREQUISITE_SUPPORT', targetObjectiveId);
     }
   }

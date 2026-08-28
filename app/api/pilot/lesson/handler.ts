@@ -34,6 +34,13 @@ function nonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function serviceError(reason: unknown) {
+  if (reason instanceof Error && reason.message === 'No available lesson for student') {
+    return error('当前没有可开始的学习安排', 409);
+  }
+  return error('学习安排暂时无法处理', 500);
+}
+
 export function createPilotLessonPostHandler(dependencies: PilotLessonPostDependencies) {
   return async function pilotLessonPost(req: NextRequest) {
     if (!(await authorized(req, dependencies.sessionSecret()))) return error('Unauthorized', 401);
@@ -49,25 +56,29 @@ export function createPilotLessonPostHandler(dependencies: PilotLessonPostDepend
     if (!(await dependencies.studentExists(studentId))) return error('Student not found', 404);
     const at = dependencies.now();
 
-    if (body.command === 'START') {
-      if (!hasExactKeys(body, ['command', 'studentId'])) return error('Unsupported request field', 400);
-      return NextResponse.json(await dependencies.startNextLesson(studentId, at));
-    }
-    if (body.command === 'COMPLETE') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'lessonId', 'actualMinutes'])
-        || !nonEmptyString(body.lessonId)
-        || !Number.isInteger(body.actualMinutes)
-        || (body.actualMinutes as number) <= 0) return error('Invalid COMPLETE command', 400);
-      return NextResponse.json(await dependencies.completeLesson(studentId, body.lessonId, body.actualMinutes as number, at));
-    }
-    if (body.command === 'SKIP') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'lessonId'], ['actualMinutes'])
-        || !nonEmptyString(body.lessonId)
-        || (body.actualMinutes !== undefined && (!Number.isInteger(body.actualMinutes) || (body.actualMinutes as number) <= 0))) {
-        return error('Invalid SKIP command', 400);
+    try {
+      if (body.command === 'START') {
+        if (!hasExactKeys(body, ['command', 'studentId'])) return error('Unsupported request field', 400);
+        return NextResponse.json(await dependencies.startNextLesson(studentId, at));
       }
-      return NextResponse.json(await dependencies.skipLesson(studentId, body.lessonId, body.actualMinutes as number | undefined, at));
+      if (body.command === 'COMPLETE') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'lessonId', 'actualMinutes'])
+          || !nonEmptyString(body.lessonId)
+          || !Number.isInteger(body.actualMinutes)
+          || (body.actualMinutes as number) <= 0) return error('Invalid COMPLETE command', 400);
+        return NextResponse.json(await dependencies.completeLesson(studentId, body.lessonId, body.actualMinutes as number, at));
+      }
+      if (body.command === 'SKIP') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'lessonId'], ['actualMinutes'])
+          || !nonEmptyString(body.lessonId)
+          || (body.actualMinutes !== undefined && (!Number.isInteger(body.actualMinutes) || (body.actualMinutes as number) <= 0))) {
+          return error('Invalid SKIP command', 400);
+        }
+        return NextResponse.json(await dependencies.skipLesson(studentId, body.lessonId, body.actualMinutes as number | undefined, at));
+      }
+      return error('Unsupported lesson command', 400);
+    } catch (reason) {
+      return serviceError(reason);
     }
-    return error('Unsupported lesson command', 400);
   };
 }

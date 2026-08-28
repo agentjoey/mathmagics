@@ -24,3 +24,20 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.pilot-student-profile-shell.has-profile header div:has(> input[placeholder="学生 ID"])::before {
+  content: var(--pilot-student-label);
+  min-width: 0;
+  flex: 1 1 0%;
+  border: 1px solid #d6d3d1;
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.75rem 1rem;
+  color: #1c1917;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.pilot-student-profile-shell.has-profile header input[placeholder="学生 ID"] {
+  display: none;
+}
