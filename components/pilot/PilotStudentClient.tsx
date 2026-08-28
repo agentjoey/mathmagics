@@ -2,6 +2,12 @@
 
 import { useMemo, useState } from 'react';
 
+const STORAGE_KEY = 'mathmagics.pilot.studentId';
+
+function initialStudentId(): string {
+  return typeof window === 'undefined' ? '' : localStorage.getItem(STORAGE_KEY) ?? '';
+}
+
 type NextLesson = {
   lessonId: string;
   intent: string;
@@ -124,7 +130,7 @@ function newId(prefix: string): string {
 }
 
 export function PilotStudentClient() {
-  const [studentId, setStudentId] = useState('');
+  const [studentId, setStudentId] = useState(initialStudentId);
   const [nextLesson, setNextLesson] = useState<NextLesson | null>(null);
   const [lesson, setLesson] = useState<LessonSession | null>(null);
   const [practice, setPractice] = useState<PracticeSessionView | null>(null);

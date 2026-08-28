@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import { ProgressDimensionCard } from './ProgressDimensionCard';
 
+const STORAGE_KEY = 'mathmagics.pilot.studentId';
+
+function initialStudentId(): string {
+  return typeof window === 'undefined' ? '' : localStorage.getItem(STORAGE_KEY) ?? '';
+}
+
 type ObjectiveView = {
   objectiveId: string;
   title: string;
@@ -69,7 +75,7 @@ function executionTime(lesson: Review['lessons'][number]): string | undefined {
 }
 
 export function PilotParentClient() {
-  const [studentId, setStudentId] = useState('');
+  const [studentId, setStudentId] = useState(initialStudentId);
   const [review, setReview] = useState<Review | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
