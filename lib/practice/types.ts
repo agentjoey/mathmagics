@@ -32,6 +32,13 @@ export type EquationChoiceProblemSpec = {
   correctOptionId: string;
 };
 
+export type NumberSequenceProblemSpec = {
+  kind: 'NUMBER_SEQUENCE';
+  terms: number[];
+  step: number;
+  nextValue: number;
+};
+
 export type FractionProblemSpec =
   | {
       kind: 'FRACTION_COMPARE';
@@ -79,6 +86,7 @@ export type WordProblemSpec = {
 export type PracticeProblemSpec =
   | ArithmeticProblemSpec
   | EquationChoiceProblemSpec
+  | NumberSequenceProblemSpec
   | FractionProblemSpec
   | WordProblemSpec;
 

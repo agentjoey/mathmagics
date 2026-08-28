@@ -247,6 +247,7 @@ function contentFor(original: PracticeProblemSpec, round: number): TransferConte
   switch (original.kind) {
     case 'ARITHMETIC': return arithmetic(original, round);
     case 'EQUATION_CHOICE': return equationChoice(original, round);
+    case 'NUMBER_SEQUENCE': throw new UnsupportedCorrectionTransferError('number-sequence correction transfer is not yet supported');
     case 'FRACTION_COMPARE': return fractionCompare(original, round);
     case 'FRACTION_EQUIVALENT': return fractionEquivalent(original, round);
     case 'FRACTION_SIMPLIFY': return fractionSimplify(round);

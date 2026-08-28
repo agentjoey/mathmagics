@@ -35,6 +35,13 @@ function nonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function serviceError(reason: unknown) {
+  if (reason instanceof Error && reason.message.startsWith('Unsupported practice objective:')) {
+    return error('本节暂无系统练习题', 409);
+  }
+  return error('练习暂时无法处理', 500);
+}
+
 export function createPilotPracticePostHandler(dependencies: PilotPracticePostDependencies) {
   return async function pilotPracticePost(req: NextRequest) {
     if (!(await authorized(req, dependencies.sessionSecret()))) return error('Unauthorized', 401);
@@ -50,36 +57,40 @@ export function createPilotPracticePostHandler(dependencies: PilotPracticePostDe
     if (!(await dependencies.studentExists(studentId))) return error('Student not found', 404);
     const at = dependencies.now();
 
-    if (body.command === 'CREATE_SESSION') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'lessonId', 'objectiveId'])
-        || !nonEmptyString(body.lessonId)
-        || !nonEmptyString(body.objectiveId)) return error('Invalid CREATE_SESSION command', 400);
-      return NextResponse.json(await dependencies.createPracticeSession(studentId, body.lessonId, body.objectiveId, at));
-    }
-    if (body.command === 'REVEAL_HINT') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'sessionId', 'itemId'])
-        || !nonEmptyString(body.sessionId)
-        || !nonEmptyString(body.itemId)) return error('Invalid REVEAL_HINT command', 400);
-      return NextResponse.json({ hint: await dependencies.revealHint(studentId, body.sessionId, body.itemId, at) });
-    }
-    if (body.command === 'SUBMIT_ATTEMPT') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'attemptId', 'sessionId', 'itemId', 'answerText'], ['retryOfAttemptId'])
-        || !nonEmptyString(body.attemptId)
-        || !nonEmptyString(body.sessionId)
-        || !nonEmptyString(body.itemId)
-        || typeof body.answerText !== 'string'
-        || (body.retryOfAttemptId !== undefined && !nonEmptyString(body.retryOfAttemptId))) {
-        return error('Invalid SUBMIT_ATTEMPT command', 400);
+    try {
+      if (body.command === 'CREATE_SESSION') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'lessonId', 'objectiveId'])
+          || !nonEmptyString(body.lessonId)
+          || !nonEmptyString(body.objectiveId)) return error('Invalid CREATE_SESSION command', 400);
+        return NextResponse.json(await dependencies.createPracticeSession(studentId, body.lessonId, body.objectiveId, at));
       }
-      const input: SubmitAttemptInput = {
-        attemptId: body.attemptId,
-        sessionId: body.sessionId,
-        itemId: body.itemId,
-        answerText: body.answerText,
-        ...(body.retryOfAttemptId ? { retryOfAttemptId: body.retryOfAttemptId as string } : {}),
-      };
-      return NextResponse.json(await dependencies.submitPracticeAttempt(studentId, input, at));
+      if (body.command === 'REVEAL_HINT') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'sessionId', 'itemId'])
+          || !nonEmptyString(body.sessionId)
+          || !nonEmptyString(body.itemId)) return error('Invalid REVEAL_HINT command', 400);
+        return NextResponse.json({ hint: await dependencies.revealHint(studentId, body.sessionId, body.itemId, at) });
+      }
+      if (body.command === 'SUBMIT_ATTEMPT') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'attemptId', 'sessionId', 'itemId', 'answerText'], ['retryOfAttemptId'])
+          || !nonEmptyString(body.attemptId)
+          || !nonEmptyString(body.sessionId)
+          || !nonEmptyString(body.itemId)
+          || typeof body.answerText !== 'string'
+          || (body.retryOfAttemptId !== undefined && !nonEmptyString(body.retryOfAttemptId))) {
+          return error('Invalid SUBMIT_ATTEMPT command', 400);
+        }
+        const input: SubmitAttemptInput = {
+          attemptId: body.attemptId,
+          sessionId: body.sessionId,
+          itemId: body.itemId,
+          answerText: body.answerText,
+          ...(body.retryOfAttemptId ? { retryOfAttemptId: body.retryOfAttemptId as string } : {}),
+        };
+        return NextResponse.json(await dependencies.submitPracticeAttempt(studentId, input, at));
+      }
+      return error('Unsupported practice command', 400);
+    } catch (reason) {
+      return serviceError(reason);
     }
-    return error('Unsupported practice command', 400);
   };
 }

@@ -2,6 +2,7 @@ import type { PracticePreparationContext } from '../preparation';
 import type { PracticeBlueprint, PracticeItem, PracticeSession } from '../types';
 import { fractionPracticeGenerator } from './fractions';
 import { multiplicationPracticeGenerator } from './multiplication';
+import { numberSequencePracticeGenerator } from './number-sequences';
 import { wordProblemPracticeGenerator } from './word-problems';
 
 export interface PracticeItemGenerationInput {
@@ -17,10 +18,15 @@ export interface PracticeItemGenerator {
 }
 
 const GENERATORS: PracticeItemGenerator[] = [
+  numberSequencePracticeGenerator,
   multiplicationPracticeGenerator,
   fractionPracticeGenerator,
   wordProblemPracticeGenerator,
 ];
+
+export function supportsPracticeObjective(objectiveId: string): boolean {
+  return GENERATORS.some((candidate) => candidate.supports(objectiveId));
+}
 
 export function getPracticeItemGenerator(objectiveId: string): PracticeItemGenerator {
   const generator = GENERATORS.find((candidate) => candidate.supports(objectiveId));
