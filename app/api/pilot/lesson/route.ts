@@ -1,8 +1,17 @@
 import { NextRequest } from 'next/server';
 import { createPilotSessionRuntime } from '@/lib/pilot/runtime';
-import { createPilotLessonPostHandler } from './handler';
+import { createPilotLessonGetHandler, createPilotLessonPostHandler } from './handler';
 
 export const runtime = 'nodejs';
+
+export async function GET(req: NextRequest) {
+  const services = createPilotSessionRuntime();
+  return createPilotLessonGetHandler({
+    sessionSecret: () => process.env.SESSION_SECRET,
+    studentExists: async (studentId) => (await services.learning.getStudent(studentId)) !== undefined,
+    getStartedLesson: (studentId) => services.pilotSession.getStartedLesson(studentId, services.clock.now()),
+  })(req);
+}
 
 export async function POST(req: NextRequest) {
   const services = createPilotSessionRuntime();

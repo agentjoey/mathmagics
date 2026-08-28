@@ -39,6 +39,25 @@ function misconception(misconceptionId: string): DiagnosisTarget {
 }
 
 describe('correction-reasoning-v1', () => {
+  test('builds a trusted step check for number-sequence corrections even with a generic diagnosis', () => {
+    const problem = trusted(
+      'P2-WN-005',
+      { kind: 'NUMBER_SEQUENCE', terms: [17, 19, 21, 23], step: 2, nextValue: 25 },
+      { kind: 'INTEGER', value: '25' },
+    );
+
+    const checks = buildReasoningChecks(problem, { kind: 'GENERIC', code: 'UNKNOWN' });
+    expect(checks).toEqual([{
+      id: 'reasoning:number-sequence-step',
+      kind: 'FIELDS',
+      prompt: 'How much does the number change each time?',
+      fields: ['step'],
+      expected: { step: '2' },
+    }]);
+    expect(gradeReasoningResponse(checks[0]!, { step: '2' })).toBe('PASS');
+    expect(gradeReasoningResponse(checks[0]!, { step: '3' })).toBe('FAIL');
+  });
+
   test('builds equal-groups fields from trusted quantities', () => {
     const problem = trusted(
       'P2-MD-005',

@@ -89,6 +89,21 @@ function equationChoice(
   };
 }
 
+function numberSequence(
+  original: Extract<PracticeProblemSpec, { kind: 'NUMBER_SEQUENCE' }>,
+  round: number,
+): TransferContent {
+  const shift = Math.max(1, Math.abs(original.step)) * (round + 2);
+  const terms = original.terms.map((value) => value + shift);
+  const nextValue = original.nextValue + shift;
+  return {
+    problemSpec: { kind: 'NUMBER_SEQUENCE', terms, step: original.step, nextValue },
+    answerSpec: { kind: 'INTEGER', value: String(nextValue) },
+    prompt: `Continue the pattern: ${terms.join(', ')}, ?`,
+    solutionOutline: [`Each term changes by ${original.step}; the next value is ${nextValue}.`],
+  };
+}
+
 function fractionCompare(
   original: Extract<PracticeProblemSpec, { kind: 'FRACTION_COMPARE' }>,
   round: number,
@@ -247,7 +262,7 @@ function contentFor(original: PracticeProblemSpec, round: number): TransferConte
   switch (original.kind) {
     case 'ARITHMETIC': return arithmetic(original, round);
     case 'EQUATION_CHOICE': return equationChoice(original, round);
-    case 'NUMBER_SEQUENCE': throw new UnsupportedCorrectionTransferError('number-sequence correction transfer is not yet supported');
+    case 'NUMBER_SEQUENCE': return numberSequence(original, round);
     case 'FRACTION_COMPARE': return fractionCompare(original, round);
     case 'FRACTION_EQUIVALENT': return fractionEquivalent(original, round);
     case 'FRACTION_SIMPLIFY': return fractionSimplify(round);

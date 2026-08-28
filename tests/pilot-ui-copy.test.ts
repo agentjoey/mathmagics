@@ -38,7 +38,7 @@ describe('Phase 8 family pilot shell', () => {
     expect(text).not.toContain('evidence');
   });
 
-  it('keeps the student experience on the bounded daily learning loop and shows family identity instead of the raw id', () => {
+  it('keeps the student experience on the bounded daily learning loop and routes correction before a dead lesson start', () => {
     const text = [
       source('components/pilot/PilotStudentClient.tsx'),
       source('components/pilot/PilotStudentIdentityShell.tsx'),
@@ -54,15 +54,21 @@ describe('Phase 8 family pilot shell', () => {
       '完成本节',
       '跳过本节',
       '接下来',
+      '去订正',
+      '本轮学习安排已完成',
+      '家长确认',
     ]) expect(text).toContain(phrase);
     for (const endpoint of [
       '/api/pilot/student',
       '/api/learning/next',
+      '/api/pilot/lesson?studentId=',
       '/api/pilot/lesson',
       '/api/pilot/practice',
       '/api/pilot/homework',
       '/api/pilot/correction',
     ]) expect(text).toContain(endpoint);
+    expect(text).toContain('PROPOSE_DIAGNOSIS');
+    expect(text).toContain('CONFIRM_DIAGNOSIS');
     expect(text).toContain('mathmagics.pilot.studentId');
     expect(text).toContain('localStorage.getItem');
     expect(text).toContain('displayName');

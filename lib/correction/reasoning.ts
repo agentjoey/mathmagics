@@ -10,6 +10,16 @@ export function buildReasoningChecks(
 ): ReasoningCheckSpec[] {
   const spec = problem.problemSpec;
 
+  if (spec.kind === 'NUMBER_SEQUENCE') {
+    return [{
+      id: 'reasoning:number-sequence-step',
+      kind: 'FIELDS',
+      prompt: 'How much does the number change each time?',
+      fields: ['step'],
+      expected: { step: String(spec.step) },
+    }];
+  }
+
   if (
     isMisconception(target, 'MIS-MD-GROUP-SIZE')
     && spec.kind === 'WORD_PROBLEM'
