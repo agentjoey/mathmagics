@@ -9,6 +9,7 @@ const files = [
   'app/pilot/parent/page.tsx',
   'components/pilot/PilotSetupClient.tsx',
   'components/pilot/PilotStudentClient.tsx',
+  'components/pilot/PilotStudentIdentityShell.tsx',
   'components/pilot/PilotParentClient.tsx',
   'components/pilot/ProgressDimensionCard.tsx',
 ] as const;
@@ -37,8 +38,11 @@ describe('Phase 8 family pilot shell', () => {
     expect(text).not.toContain('evidence');
   });
 
-  it('keeps the student experience on the bounded daily learning loop and reuses saved student id', () => {
-    const text = source('components/pilot/PilotStudentClient.tsx');
+  it('keeps the student experience on the bounded daily learning loop and shows family identity instead of the raw id', () => {
+    const text = [
+      source('components/pilot/PilotStudentClient.tsx'),
+      source('components/pilot/PilotStudentIdentityShell.tsx'),
+    ].join('\n');
     for (const phrase of [
       '今天学什么？',
       '开始学习',
@@ -52,6 +56,7 @@ describe('Phase 8 family pilot shell', () => {
       '接下来',
     ]) expect(text).toContain(phrase);
     for (const endpoint of [
+      '/api/pilot/student',
       '/api/learning/next',
       '/api/pilot/lesson',
       '/api/pilot/practice',
@@ -60,6 +65,8 @@ describe('Phase 8 family pilot shell', () => {
     ]) expect(text).toContain(endpoint);
     expect(text).toContain('mathmagics.pilot.studentId');
     expect(text).toContain('localStorage.getItem');
+    expect(text).toContain('displayName');
+    expect(text).toContain('levelId');
   });
 
   it('keeps parent progress dimensions separate, explains the next lesson, and reuses saved student id', () => {

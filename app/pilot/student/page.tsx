@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { PilotStudentClient } from '@/components/pilot/PilotStudentClient';
+import { PilotStudentIdentityShell } from '@/components/pilot/PilotStudentIdentityShell';
 
 export default function PilotStudentPage() {
   return (
@@ -9,7 +10,9 @@ export default function PilotStudentPage() {
           <Link href="/pilot" className="text-sm font-medium text-stone-500 hover:text-stone-900">← 家庭试用</Link>
           <Link href="/pilot/parent" className="text-sm font-medium text-amber-700 hover:text-amber-800">家长查看</Link>
         </div>
-        <PilotStudentClient />
+        <PilotStudentIdentityShell>
+          <PilotStudentClient />
+        </PilotStudentIdentityShell>
       </div>
     </main>
   );
