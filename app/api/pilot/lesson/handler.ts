@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/auth/session';
 
+export interface PilotLessonGetDependencies {
+  sessionSecret(): string | undefined;
+  studentExists(studentId: string): Promise<boolean>;
+  getStartedLesson(studentId: string): Promise<unknown>;
+}
+
 export interface PilotLessonPostDependencies {
   sessionSecret(): string | undefined;
   now(): string;
@@ -39,6 +45,19 @@ function serviceError(reason: unknown) {
     return error('当前没有可开始的学习安排', 409);
   }
   return error('学习安排暂时无法处理', 500);
+}
+
+export function createPilotLessonGetHandler(dependencies: PilotLessonGetDependencies) {
+  return async function pilotLessonGet(req: NextRequest) {
+    if (!(await authorized(req, dependencies.sessionSecret()))) return error('Unauthorized', 401);
+    if ([...req.nextUrl.searchParams.keys()].some((key) => key !== 'studentId')) {
+      return error('Unsupported query parameter', 400);
+    }
+    const studentId = req.nextUrl.searchParams.get('studentId')?.trim();
+    if (!studentId) return error('studentId is required', 400);
+    if (!(await dependencies.studentExists(studentId))) return error('Student not found', 404);
+    return NextResponse.json({ lesson: await dependencies.getStartedLesson(studentId) });
+  };
 }
 
 export function createPilotLessonPostHandler(dependencies: PilotLessonPostDependencies) {

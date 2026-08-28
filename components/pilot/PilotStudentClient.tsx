@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { derivePilotStudentFlow } from '@/lib/pilot/student-flow';
 
 const STORAGE_KEY = 'mathmagics.pilot.studentId';
 
@@ -54,6 +55,16 @@ type HomeworkProblemView = {
 type HomeworkView = {
   submission: { id: string };
   problems: HomeworkProblemView[];
+};
+
+type DiagnosisTarget =
+  | { kind: 'MISCONCEPTION'; misconceptionId: string }
+  | { kind: 'GENERIC'; code: 'FACT_ERROR' | 'PROCEDURE_ERROR' | 'REPRESENTATION_ERROR' | 'UNKNOWN' };
+
+type DiagnosisCandidateView = {
+  mistakeId: string;
+  target: DiagnosisTarget;
+  rationale: string;
 };
 
 type MistakeView = {
@@ -129,6 +140,16 @@ function newId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
 }
 
+function diagnosisLabel(target: DiagnosisTarget): string {
+  if (target.kind === 'MISCONCEPTION') return '具体知识误区';
+  switch (target.code) {
+    case 'FACT_ERROR': return '基础事实或记忆错误';
+    case 'PROCEDURE_ERROR': return '步骤或方法错误';
+    case 'REPRESENTATION_ERROR': return '表示或理解错误';
+    case 'UNKNOWN': return '暂时无法进一步细分';
+  }
+}
+
 export function PilotStudentClient() {
   const [studentId, setStudentId] = useState(initialStudentId);
   const [nextLesson, setNextLesson] = useState<NextLesson | null>(null);
@@ -143,6 +164,7 @@ export function PilotStudentClient() {
   const [homeworkCorrections, setHomeworkCorrections] = useState<Record<string, string>>({});
   const [homeworkResults, setHomeworkResults] = useState<Record<string, string>>({});
   const [mistakes, setMistakes] = useState<MistakeView[]>([]);
+  const [diagnosisCandidate, setDiagnosisCandidate] = useState<DiagnosisCandidateView | null>(null);
   const [correction, setCorrection] = useState<CorrectionStartView | null>(null);
   const [correctionAnswer, setCorrectionAnswer] = useState('');
   const [correctionAttempt, setCorrectionAttempt] = useState<CorrectionAttemptView | null>(null);
@@ -159,13 +181,20 @@ export function PilotStudentClient() {
   const reasoningComplete = correction?.reasoningChecks.length
     ? correction.reasoningChecks.every((check) => reasoningResults[check.id]?.outcome === 'PASS')
     : false;
+  const flow = derivePilotStudentFlow({
+    hasStartedLesson: lesson !== null,
+    hasNextLesson: nextLesson !== null,
+    mistakeState: activeMistake?.state ?? null,
+    correctionActive: correction !== null,
+  });
 
   const stepLabel = useMemo(() => {
-    if (correction || activeMistake) return '订正';
-    if (practice) return '练习';
-    if (lesson) return '学习中';
-    return '准备开始';
-  }, [activeMistake, correction, lesson, practice]);
+    if (practice && lesson) return '练习';
+    if (flow === 'CORRECTION') return '订正';
+    if (flow === 'ACTIVE_LESSON') return '学习中';
+    if (flow === 'NEXT_LESSON') return '准备开始';
+    return '本轮完成';
+  }, [flow, lesson, practice]);
 
   async function post<T>(url: string, body: Record<string, unknown>): Promise<T> {
     const response = await fetch(url, {
@@ -185,14 +214,19 @@ export function PilotStudentClient() {
     setBusy('refresh');
     setError('');
     try {
-      const [nextResponse, correctionResponse] = await Promise.all([
+      const [currentResponse, nextResponse, correctionResponse] = await Promise.all([
+        fetch(`/api/pilot/lesson?studentId=${encodeURIComponent(id)}`, { cache: 'no-store' }),
         fetch(`/api/learning/next?studentId=${encodeURIComponent(id)}`, { cache: 'no-store' }),
         fetch(`/api/pilot/correction?studentId=${encodeURIComponent(id)}`, { cache: 'no-store' }),
       ]);
+      const currentPayload = await readJson<{ lesson: LessonSession | null }>(currentResponse);
       const nextPayload = await readJson<{ nextLesson: NextLesson | null }>(nextResponse);
       const correctionPayload = await readJson<{ mistakes: MistakeView[] }>(correctionResponse);
+      setLesson(currentPayload.lesson);
       setNextLesson(nextPayload.nextLesson);
       setMistakes(correctionPayload.mistakes);
+      const observed = correctionPayload.mistakes.find((mistake) => mistake.state === 'OBSERVED');
+      if (!observed || diagnosisCandidate?.mistakeId !== observed.mistakeId) setDiagnosisCandidate(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '读取失败');
     } finally {
@@ -203,6 +237,7 @@ export function PilotStudentClient() {
   async function startLesson() {
     const id = studentId.trim();
     if (!id) return setError('请输入学生 ID。');
+    if (flow !== 'NEXT_LESSON') return;
     setBusy('lesson');
     setError('');
     try {
@@ -386,6 +421,49 @@ export function PilotStudentClient() {
     }
   }
 
+  async function proposeDiagnosis() {
+    if (!activeMistake || activeMistake.state !== 'OBSERVED') return;
+    setBusy('correction');
+    setError('');
+    try {
+      const result = await post<{ target: DiagnosisTarget; rationale: string }>('/api/pilot/correction', {
+        command: 'PROPOSE_DIAGNOSIS',
+        studentId: studentId.trim(),
+        mistakeId: activeMistake.mistakeId,
+      });
+      setDiagnosisCandidate({ mistakeId: activeMistake.mistakeId, ...result });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '暂时无法生成诊断建议');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function confirmDiagnosis() {
+    if (!activeMistake || activeMistake.state !== 'OBSERVED' || diagnosisCandidate?.mistakeId !== activeMistake.mistakeId) return;
+    setBusy('correction');
+    setError('');
+    try {
+      await post<MistakeView>('/api/pilot/correction', {
+        command: 'CONFIRM_DIAGNOSIS',
+        studentId: studentId.trim(),
+        mistakeId: activeMistake.mistakeId,
+        target: diagnosisCandidate.target,
+        confirmerRole: 'PARENT',
+      });
+      setDiagnosisCandidate(null);
+      await refresh();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '诊断确认失败');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  function scrollToCorrection() {
+    document.getElementById('pilot-correction')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   async function startCorrection() {
     if (!activeMistake || activeMistake.state === 'OBSERVED') return;
     setBusy('correction');
@@ -532,18 +610,24 @@ export function PilotStudentClient() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">Today</p>
             <h2 className="mt-2 text-xl font-semibold">学习安排</h2>
-            {nextLesson ? (
+            {flow === 'CORRECTION' ? (
+              <p className="mt-3 text-sm leading-6 text-stone-600">当前有需要处理的订正。完成订正后，系统再决定下一步学习安排。</p>
+            ) : flow === 'COMPLETE' ? (
+              <p className="mt-3 text-sm leading-6 text-stone-600">本轮学习安排已完成。没有待开始课程时不会再发送无效的开始请求。</p>
+            ) : nextLesson ? (
               <div className="mt-3 text-sm leading-6 text-stone-600">
                 <p className="font-medium text-stone-900">{nextLesson.objectiveSummary}</p>
                 <p>{nextLesson.intent}{nextLesson.adapted ? ' · 已根据近期学习事实调整' : ''}</p>
               </div>
             ) : (
-              <p className="mt-3 text-sm leading-6 text-stone-600">读取安排后，这里会显示当前下一节。若已有课程进行中，开始按钮会继续该课程。</p>
+              <p className="mt-3 text-sm leading-6 text-stone-600">当前课程正在进行，完成这一节后再读取下一步安排。</p>
             )}
           </div>
-          <button onClick={startLesson} disabled={busy !== '' || !studentId.trim()} className="rounded-2xl bg-amber-600 px-5 py-3 font-semibold text-white disabled:opacity-50">
-            开始学习
-          </button>
+          {flow === 'CORRECTION' ? (
+            <button onClick={scrollToCorrection} disabled={busy !== ''} className="rounded-2xl bg-amber-600 px-5 py-3 font-semibold text-white disabled:opacity-50">去订正</button>
+          ) : flow === 'NEXT_LESSON' ? (
+            <button onClick={startLesson} disabled={busy !== '' || !studentId.trim()} className="rounded-2xl bg-amber-600 px-5 py-3 font-semibold text-white disabled:opacity-50">开始学习</button>
+          ) : null}
         </div>
 
         {lesson && (
@@ -628,7 +712,7 @@ export function PilotStudentClient() {
         )}
       </section>
 
-      <section className="mt-5 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
+      <section id="pilot-correction" className="mt-5 scroll-mt-6 rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">订正</h2>
@@ -639,7 +723,22 @@ export function PilotStudentClient() {
           )}
         </div>
         {!activeMistake && <p className="mt-4 text-sm text-stone-600">当前没有需要订正的错误。</p>}
-        {activeMistake?.state === 'OBSERVED' && <p className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">这个错误还需要家长确认诊断后再进入订正。</p>}
+        {activeMistake?.state === 'OBSERVED' && (
+          <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+            <p>这个错误无法仅凭一次作答唯一判断原因，需要家长确认后再进入订正。</p>
+            {!diagnosisCandidate || diagnosisCandidate.mistakeId !== activeMistake.mistakeId ? (
+              <button onClick={proposeDiagnosis} disabled={busy !== ''} className="mt-3 rounded-xl border border-amber-300 bg-white px-4 py-2 font-medium disabled:opacity-50">
+                {busy === 'correction' ? '分析中…' : '生成诊断建议'}
+              </button>
+            ) : (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-white p-4">
+                <p className="font-medium">建议判断：{diagnosisLabel(diagnosisCandidate.target)}</p>
+                <p className="mt-1 text-stone-600">{diagnosisCandidate.rationale}</p>
+                <button onClick={confirmDiagnosis} disabled={busy !== ''} className="mt-3 rounded-xl bg-stone-900 px-4 py-2 font-semibold text-white disabled:opacity-50">家长确认</button>
+              </div>
+            )}
+          </div>
+        )}
 
         {correction && (
           <div className="mt-5 space-y-5">

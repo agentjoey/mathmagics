@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { createPilotLessonPostHandler } from '@/app/api/pilot/lesson/handler';
+import { createPilotLessonGetHandler, createPilotLessonPostHandler } from '@/app/api/pilot/lesson/handler';
 import { createPilotPracticePostHandler } from '@/app/api/pilot/practice/handler';
 import { issueSessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session';
 
@@ -43,6 +43,25 @@ describe('pilot lesson and practice API', () => {
     expect(studentExists).not.toHaveBeenCalled();
     expect(startNextLesson).not.toHaveBeenCalled();
     expect(createPracticeSession).not.toHaveBeenCalled();
+  });
+
+  it('reads the current STARTED lesson without mutating lesson execution', async () => {
+    const headers = await authorizedHeaders();
+    const getStartedLesson = vi.fn(async (studentId: string) => studentId === 'student-1'
+      ? { lessonId: 'lesson-1', intent: 'LEARN', objectiveIds: ['P2-WN-005'], adapted: false, execution: { status: 'STARTED' } }
+      : null);
+    const handler = createPilotLessonGetHandler({
+      sessionSecret: () => SECRET,
+      studentExists: async (studentId: string) => studentId === 'student-1',
+      getStartedLesson,
+    });
+
+    expect((await handler(new NextRequest('http://localhost/api/pilot/lesson?studentId=student-1'))).status).toBe(401);
+    expect((await handler(new NextRequest('http://localhost/api/pilot/lesson', { headers }))).status).toBe(400);
+    const response = await handler(new NextRequest('http://localhost/api/pilot/lesson?studentId=student-1', { headers }));
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ lesson: { lessonId: 'lesson-1', execution: { status: 'STARTED' } } });
+    expect(getStartedLesson).toHaveBeenCalledWith('student-1');
   });
 
   it('dispatches only the approved lesson command union', async () => {
@@ -108,7 +127,7 @@ describe('pilot lesson and practice API', () => {
     expect(submitPracticeAttempt).toHaveBeenCalledTimes(1);
   });
 
-  it('returns 400 for missing/unknown students and exposes POST-only route modules', async () => {
+  it('returns 400 for missing/unknown students and exposes bounded route modules', async () => {
     const headers = await authorizedHeaders();
     const lesson = createPilotLessonPostHandler({
       sessionSecret: () => SECRET,
@@ -121,10 +140,13 @@ describe('pilot lesson and practice API', () => {
 
     const lessonRoute = await import('@/app/api/pilot/lesson/route');
     const practiceRoute = await import('@/app/api/pilot/practice/route');
-    for (const route of [lessonRoute, practiceRoute]) {
-      expect(typeof route.POST).toBe('function');
-      expect(route.runtime).toBe('nodejs');
-      for (const method of ['GET', 'PUT', 'PATCH', 'DELETE']) expect(method in route).toBe(false);
-    }
+    expect(typeof lessonRoute.GET).toBe('function');
+    expect(typeof lessonRoute.POST).toBe('function');
+    expect(lessonRoute.runtime).toBe('nodejs');
+    for (const method of ['PUT', 'PATCH', 'DELETE']) expect(method in lessonRoute).toBe(false);
+
+    expect(typeof practiceRoute.POST).toBe('function');
+    expect(practiceRoute.runtime).toBe('nodejs');
+    for (const method of ['GET', 'PUT', 'PATCH', 'DELETE']) expect(method in practiceRoute).toBe(false);
   });
 });

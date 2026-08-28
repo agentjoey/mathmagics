@@ -77,6 +77,11 @@ function toPilotPracticeAttemptView(attempt: Attempt): PilotPracticeAttemptView 
 export class PilotSessionService {
   constructor(private readonly dependencies: PilotSessionDependencies) {}
 
+  async getStartedLesson(studentId: string, at = this.dependencies.clock.now()): Promise<PilotLessonSessionView | null> {
+    requireTimestamp(at);
+    return this.findStartedLesson(studentId, at);
+  }
+
   async startNextLesson(studentId: string, at = this.dependencies.clock.now()): Promise<PilotLessonSessionView> {
     requireTimestamp(at);
     const started = await this.findStartedLesson(studentId, at);

@@ -120,75 +120,79 @@ export function createPilotCorrectionPostHandler(dependencies: PilotCorrectionHa
     if (!(await dependencies.studentExists(studentId))) return error('Student not found', 404);
     const at = dependencies.now();
 
-    if (body.command === 'PROPOSE_DIAGNOSIS' || body.command === 'START' || body.command === 'PREPARE_TRANSFER') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId']) || !nonEmptyString(body.mistakeId)) {
-        return error(`Invalid ${body.command} command`, 400);
+    try {
+      if (body.command === 'PROPOSE_DIAGNOSIS' || body.command === 'START' || body.command === 'PREPARE_TRANSFER') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId']) || !nonEmptyString(body.mistakeId)) {
+          return error(`Invalid ${body.command} command`, 400);
+        }
+        if (body.command === 'PROPOSE_DIAGNOSIS') return NextResponse.json(await dependencies.proposeDiagnosis(studentId, body.mistakeId, at));
+        if (body.command === 'START') return NextResponse.json(await dependencies.startCorrection(studentId, body.mistakeId, at));
+        return NextResponse.json(await dependencies.prepareTransfer(studentId, body.mistakeId, at));
       }
-      if (body.command === 'PROPOSE_DIAGNOSIS') return NextResponse.json(await dependencies.proposeDiagnosis(studentId, body.mistakeId, at));
-      if (body.command === 'START') return NextResponse.json(await dependencies.startCorrection(studentId, body.mistakeId, at));
-      return NextResponse.json(await dependencies.prepareTransfer(studentId, body.mistakeId, at));
-    }
 
-    if (body.command === 'CONFIRM_DIAGNOSIS') {
-      const target = diagnosisTarget(body.target);
-      if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId', 'target', 'confirmerRole'])
-        || !nonEmptyString(body.mistakeId)
-        || !target
-        || (body.confirmerRole !== 'STUDENT' && body.confirmerRole !== 'PARENT')) {
-        return error('Invalid CONFIRM_DIAGNOSIS command', 400);
+      if (body.command === 'CONFIRM_DIAGNOSIS') {
+        const target = diagnosisTarget(body.target);
+        if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId', 'target', 'confirmerRole'])
+          || !nonEmptyString(body.mistakeId)
+          || !target
+          || (body.confirmerRole !== 'STUDENT' && body.confirmerRole !== 'PARENT')) {
+          return error('Invalid CONFIRM_DIAGNOSIS command', 400);
+        }
+        return NextResponse.json(await dependencies.confirmDiagnosis(studentId, {
+          mistakeId: body.mistakeId,
+          target,
+          confirmerRole: body.confirmerRole,
+        }, at));
       }
-      return NextResponse.json(await dependencies.confirmDiagnosis(studentId, {
-        mistakeId: body.mistakeId,
-        target,
-        confirmerRole: body.confirmerRole,
-      }, at));
-    }
 
-    if (body.command === 'SUBMIT_RETRY' || body.command === 'SUBMIT_TRANSFER') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId', 'correctionItemId', 'attemptId', 'answerText'])
-        || !nonEmptyString(body.mistakeId)
-        || !nonEmptyString(body.correctionItemId)
-        || !nonEmptyString(body.attemptId)
-        || typeof body.answerText !== 'string') {
-        return error(`Invalid ${body.command} command`, 400);
+      if (body.command === 'SUBMIT_RETRY' || body.command === 'SUBMIT_TRANSFER') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId', 'correctionItemId', 'attemptId', 'answerText'])
+          || !nonEmptyString(body.mistakeId)
+          || !nonEmptyString(body.correctionItemId)
+          || !nonEmptyString(body.attemptId)
+          || typeof body.answerText !== 'string') {
+          return error(`Invalid ${body.command} command`, 400);
+        }
+        const input = {
+          mistakeId: body.mistakeId,
+          correctionItemId: body.correctionItemId,
+          attemptId: body.attemptId,
+          answerText: body.answerText,
+        };
+        return NextResponse.json(body.command === 'SUBMIT_RETRY'
+          ? await dependencies.submitCorrectionRetry(studentId, input, at)
+          : await dependencies.submitTransferAttempt(studentId, input, at));
       }
-      const input = {
-        mistakeId: body.mistakeId,
-        correctionItemId: body.correctionItemId,
-        attemptId: body.attemptId,
-        answerText: body.answerText,
-      };
-      return NextResponse.json(body.command === 'SUBMIT_RETRY'
-        ? await dependencies.submitCorrectionRetry(studentId, input, at)
-        : await dependencies.submitTransferAttempt(studentId, input, at));
-    }
 
-    if (body.command === 'REVEAL_REASONING_HELP') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId', 'checkId'])
-        || !nonEmptyString(body.mistakeId)
-        || !nonEmptyString(body.checkId)) {
-        return error('Invalid REVEAL_REASONING_HELP command', 400);
+      if (body.command === 'REVEAL_REASONING_HELP') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId', 'checkId'])
+          || !nonEmptyString(body.mistakeId)
+          || !nonEmptyString(body.checkId)) {
+          return error('Invalid REVEAL_REASONING_HELP command', 400);
+        }
+        await dependencies.revealReasoningHelp(studentId, body.mistakeId, body.checkId, at);
+        return NextResponse.json({ ok: true });
       }
-      await dependencies.revealReasoningHelp(studentId, body.mistakeId, body.checkId, at);
-      return NextResponse.json({ ok: true });
-    }
 
-    if (body.command === 'SUBMIT_REASONING') {
-      if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId', 'checkId', 'submissionId', 'response'])
-        || !nonEmptyString(body.mistakeId)
-        || !nonEmptyString(body.checkId)
-        || !nonEmptyString(body.submissionId)
-        || !stringRecord(body.response)) {
-        return error('Invalid SUBMIT_REASONING command', 400);
+      if (body.command === 'SUBMIT_REASONING') {
+        if (!hasExactKeys(body, ['command', 'studentId', 'mistakeId', 'checkId', 'submissionId', 'response'])
+          || !nonEmptyString(body.mistakeId)
+          || !nonEmptyString(body.checkId)
+          || !nonEmptyString(body.submissionId)
+          || !stringRecord(body.response)) {
+          return error('Invalid SUBMIT_REASONING command', 400);
+        }
+        return NextResponse.json(await dependencies.submitReasoningCheck(studentId, {
+          mistakeId: body.mistakeId,
+          checkId: body.checkId,
+          submissionId: body.submissionId,
+          response: body.response,
+        }, at));
       }
-      return NextResponse.json(await dependencies.submitReasoningCheck(studentId, {
-        mistakeId: body.mistakeId,
-        checkId: body.checkId,
-        submissionId: body.submissionId,
-        response: body.response,
-      }, at));
-    }
 
-    return error('Unsupported correction command', 400);
+      return error('Unsupported correction command', 400);
+    } catch {
+      return error('订正暂时无法处理', 500);
+    }
   };
 }
