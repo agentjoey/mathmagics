@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { PilotSetupClient } from '@/components/pilot/PilotSetupClient';
+import { listLevelObjectivesInCurriculumOrder } from '@/lib/planning';
 
 const entryCards = [
   {
@@ -16,6 +18,14 @@ const entryCards = [
 ] as const;
 
 export default function PilotHomePage() {
+  const objectives = (['P2', 'P3'] as const).flatMap((levelId) =>
+    listLevelObjectivesInCurriculumOrder(levelId).map((objective) => ({
+      id: objective.id,
+      title: objective.title,
+      levelId,
+    })),
+  );
+
   return (
     <main className="min-h-screen bg-stone-50 px-6 py-12 text-stone-900">
       <div className="mx-auto max-w-5xl">
@@ -26,6 +36,8 @@ export default function PilotHomePage() {
             单家庭试用入口。学习事实来自现有课程、练习、作业与订正记录，不在这里制造额外的分数或任务。
           </p>
         </header>
+
+        <PilotSetupClient objectives={objectives} />
 
         <section className="mt-10 grid gap-5 md:grid-cols-2">
           {entryCards.map((card) => (
