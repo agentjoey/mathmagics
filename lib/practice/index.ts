@@ -2,7 +2,7 @@ export { derivePracticeBlueprint } from './blueprint';
 export { evidenceIdForAttempt, projectAttemptToEvidence } from './evidence';
 export { gradeAnswer } from './grading';
 export type { AttemptGrade } from './grading';
-export { getPracticeItemGenerator } from './generators/registry';
+export { getPracticeItemGenerator, supportsPracticeObjective } from './generators/registry';
 export type {
   PracticeItemGenerationInput,
   PracticeItemGenerator,
@@ -33,6 +33,7 @@ export type {
   AttemptSource,
   EquationChoiceProblemSpec,
   FractionProblemSpec,
+  NumberSequenceProblemSpec,
   PracticeBlueprint,
   PracticeHintReveal,
   PracticeItem,

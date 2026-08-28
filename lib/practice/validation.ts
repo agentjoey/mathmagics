@@ -57,6 +57,23 @@ function assertValidProblemSpec(spec: PracticeProblemSpec): void {
       if (!ids.includes(spec.correctOptionId)) throw new Error('equation choice correctOptionId must reference an option');
       return;
     }
+    case 'NUMBER_SEQUENCE': {
+      requireFinite([...spec.terms, spec.step, spec.nextValue]);
+      if (spec.terms.length < 3) throw new Error('number sequence must contain at least three terms');
+      if (!Number.isInteger(spec.step) || spec.step === 0) throw new Error('number sequence step must be a non-zero integer');
+      if (!spec.terms.every(Number.isInteger) || !Number.isInteger(spec.nextValue)) {
+        throw new Error('number sequence values must be integers');
+      }
+      for (let index = 1; index < spec.terms.length; index += 1) {
+        if (spec.terms[index]! - spec.terms[index - 1]! !== spec.step) {
+          throw new Error('number sequence terms must follow the declared step');
+        }
+      }
+      if (spec.nextValue !== spec.terms.at(-1)! + spec.step) {
+        throw new Error('number sequence nextValue must continue the declared step');
+      }
+      return;
+    }
     case 'FRACTION_COMPARE':
       requireFinite([spec.leftNumerator, spec.leftDenominator, spec.rightNumerator, spec.rightDenominator]);
       requirePositiveDenominators([spec.leftDenominator, spec.rightDenominator]);

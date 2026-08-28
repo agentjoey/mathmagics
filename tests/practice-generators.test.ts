@@ -10,6 +10,7 @@ import type { DailyLesson } from '@/lib/planning';
 import {
   derivePracticeBlueprint,
   getPracticeItemGenerator,
+  supportsPracticeObjective,
 } from '@/lib/practice';
 import type {
   PracticeItemGenerationInput,
@@ -119,6 +120,22 @@ describe('structured practice generators', () => {
     }
   });
 
+  it('generates auditable P2/P3 number-sequence continuation practice', () => {
+    for (const objectiveId of ['P2-WN-005', 'P3-WN-005']) {
+      const items = getPracticeItemGenerator(objectiveId).generate(inputFor(objectiveId));
+      expect(items).toHaveLength(4);
+      for (const item of items) {
+        expect(item.problemSpec.kind).toBe('NUMBER_SEQUENCE');
+        if (item.problemSpec.kind !== 'NUMBER_SEQUENCE') throw new Error('unexpected spec');
+        const { terms, step, nextValue } = item.problemSpec;
+        expect(terms.length).toBeGreaterThanOrEqual(3);
+        expect(terms.slice(1).every((value, index) => value - terms[index]! === step)).toBe(true);
+        expect(nextValue).toBe(terms.at(-1)! + step);
+        expect(item.answerSpec).toEqual({ kind: 'INTEGER', value: String(nextValue) });
+      }
+    }
+  });
+
   it('compares P3 unlike fractions by integer cross multiplication with denominator <= 12', () => {
     const items = getPracticeItemGenerator('P3-FRA-003').generate(inputFor('P3-FRA-003'));
     for (const item of items) {
@@ -147,16 +164,19 @@ describe('structured practice generators', () => {
     }
   });
 
-  it('supports exactly the approved deep-slice objective registry and fails closed otherwise', () => {
+  it('reports practice availability without throwing and fails closed for unsupported objectives', () => {
     const supported = [
+      'P2-WN-005', 'P3-WN-005',
       'P2-MD-001', 'P2-MD-002', 'P2-MD-003', 'P2-MD-004', 'P2-MD-005', 'P2-MD-006',
       'P3-FRA-001', 'P3-FRA-002', 'P3-FRA-003', 'P3-FRA-004', 'P3-FRA-005',
       'P2-AS-002', 'P3-AS-002', 'P3-MD-005',
     ];
     for (const objectiveId of supported) {
+      expect(supportsPracticeObjective(objectiveId)).toBe(true);
       expect(getPracticeItemGenerator(objectiveId).supports(objectiveId)).toBe(true);
       expect(getPracticeItemGenerator(objectiveId).generate(inputFor(objectiveId))).toHaveLength(4);
     }
+    expect(supportsPracticeObjective('P3-MONEY-001')).toBe(false);
     expect(() => getPracticeItemGenerator('P3-MONEY-001'))
       .toThrow('Unsupported practice objective: P3-MONEY-001');
   });
