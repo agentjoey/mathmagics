@@ -7,7 +7,7 @@ import type {
   LessonExecutionEventType,
   PlanningRepository,
 } from '@/lib/planning';
-import { toStudentPracticeItem } from '@/lib/practice';
+import { supportsPracticeObjective, toStudentPracticeItem } from '@/lib/practice';
 import type {
   Attempt,
   PracticeItem,
@@ -38,6 +38,7 @@ export interface PilotLessonSessionView {
   lessonId: string;
   intent: DailyLesson['intent'];
   objectiveIds: string[];
+  practiceAvailable: boolean;
   adapted: boolean;
   execution: DailyLessonExecutionState;
 }
@@ -248,10 +249,14 @@ export class PilotSessionService {
   }
 
   private lessonView(lesson: DailyLesson, adapted: boolean, execution: DailyLessonExecutionState): PilotLessonSessionView {
+    const objectiveId = lesson.objectiveIds[0];
     return {
       lessonId: lesson.id,
       intent: lesson.intent,
       objectiveIds: [...lesson.objectiveIds],
+      practiceAvailable: (lesson.intent === 'PRACTICE' || lesson.intent === 'REVIEW')
+        && objectiveId !== undefined
+        && supportsPracticeObjective(objectiveId),
       adapted,
       execution: structuredClone(execution),
     };

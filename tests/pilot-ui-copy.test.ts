@@ -75,9 +75,10 @@ describe('Phase 8 family pilot shell', () => {
     expect(text).toContain('levelId');
   });
 
-  it('offers the practice action only for lesson intents accepted by PracticeService', () => {
+  it('offers the practice action only when the server projects it as available', () => {
     const text = source('components/pilot/PilotStudentClient.tsx');
-    expect(text).toContain("lesson.intent === 'PRACTICE' || lesson.intent === 'REVIEW'");
+    expect(text).toContain('practiceAvailable: boolean');
+    expect(text).toContain('lesson.practiceAvailable &&');
     expect(text).not.toContain("lesson.intent !== 'CORRECTION'");
   });
 
