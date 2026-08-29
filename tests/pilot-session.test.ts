@@ -46,9 +46,9 @@ function attempt(input: SubmitAttemptInput): Attempt {
   };
 }
 
-async function harness() {
+async function harness(lessons: DailyLesson[] = [lesson, lesson2]) {
   const planning = new MemoryPlanningRepository();
-  await planning.createWeeklyPlan(plan, [lesson, lesson2]);
+  await planning.createWeeklyPlan(plan, lessons);
   const adaptive = new MemoryAdaptiveRepository(planning);
   const createPracticeSession = vi.fn(async () => practiceSession());
   const revealHint = vi.fn(async () => 'trusted hint');
@@ -88,6 +88,23 @@ describe('PilotSessionService', () => {
     const repeated = await service.startNextLesson(STUDENT, '2026-08-27T08:05:00.000Z');
     expect(repeated).toMatchObject({ lessonId: lesson.id, execution: { status: 'STARTED' } });
     expect(await planning.listExecutionEvents(lesson.id)).toHaveLength(1);
+  });
+
+  it('projects practice availability only for supported PRACTICE or REVIEW lessons', async () => {
+    const cases: Array<[DailyLesson, boolean]> = [
+      [{ ...lesson, id: 'supported-practice' }, true],
+      [{ ...lesson, id: 'supported-review', intent: 'REVIEW' }, true],
+      [{ ...lesson, id: 'learn', intent: 'LEARN' }, false],
+      [{ ...lesson, id: 'unsupported-practice', objectiveIds: ['P3-TIME-003'] }, false],
+    ];
+
+    for (const [candidate, practiceAvailable] of cases) {
+      const { service } = await harness([candidate]);
+      await expect(service.startNextLesson(STUDENT, START_AT)).resolves.toMatchObject({
+        lessonId: candidate.id,
+        practiceAvailable,
+      });
+    }
   });
 
   it('completes only the owning student lesson and rejects repeated terminal transitions', async () => {

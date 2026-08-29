@@ -20,6 +20,7 @@ type LessonSession = {
   lessonId: string;
   intent: string;
   objectiveIds: string[];
+  practiceAvailable: boolean;
   adapted: boolean;
   execution: { status: string };
 };
@@ -638,7 +639,7 @@ export function PilotStudentClient() {
               {lesson.adapted && <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800">受控调整</span>}
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
-              {lesson.intent !== 'CORRECTION' && (
+              {lesson.practiceAvailable && (
                 <button onClick={beginPractice} disabled={busy !== ''} className="rounded-2xl border border-stone-300 px-4 py-2.5 font-medium hover:bg-stone-50">练习</button>
               )}
               <label className="flex items-center gap-2 rounded-2xl border border-stone-200 px-3 py-2 text-sm text-stone-600">
