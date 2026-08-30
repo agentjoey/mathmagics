@@ -268,6 +268,7 @@ function contentFor(original: PracticeProblemSpec, round: number): TransferConte
     case 'FRACTION_SIMPLIFY': return fractionSimplify(round);
     case 'FRACTION_OPERATION': return fractionOperation(original.operation, round);
     case 'WORD_PROBLEM': return wordProblem(original, round);
+    case 'TIME_24_HOUR': throw new UnsupportedCorrectionTransferError('TIME_24_HOUR correction transfer is not supported');
   }
 }
 

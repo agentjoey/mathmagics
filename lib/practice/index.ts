@@ -40,6 +40,7 @@ export type {
   PracticeProblemSpec,
   PracticeSession,
   SubmitAttemptInput,
+  Time24HourProblemSpec,
   WordProblemSpec,
   WordProblemStep,
 } from './types';

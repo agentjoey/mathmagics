@@ -95,7 +95,7 @@ describe('PilotSessionService', () => {
       [{ ...lesson, id: 'supported-practice' }, true],
       [{ ...lesson, id: 'supported-review', intent: 'REVIEW' }, true],
       [{ ...lesson, id: 'learn', intent: 'LEARN' }, false],
-      [{ ...lesson, id: 'unsupported-practice', objectiveIds: ['P3-TIME-003'] }, false],
+      [{ ...lesson, id: 'unsupported-practice', objectiveIds: ['P3-MONEY-001'] }, false],
     ];
 
     for (const [candidate, practiceAvailable] of cases) {

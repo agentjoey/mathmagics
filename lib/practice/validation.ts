@@ -74,6 +74,25 @@ function assertValidProblemSpec(spec: PracticeProblemSpec): void {
       }
       return;
     }
+    case 'TIME_24_HOUR': {
+      requireFinite([spec.hour24, spec.minute, spec.hour12]);
+      if (!Number.isInteger(spec.hour24) || spec.hour24 < 0 || spec.hour24 > 23) {
+        throw new Error('24-hour clock hour24 must be an integer from 0 to 23');
+      }
+      if (!Number.isInteger(spec.minute) || spec.minute < 0 || spec.minute > 59) {
+        throw new Error('24-hour clock minute must be an integer from 0 to 59');
+      }
+      if (!Number.isInteger(spec.hour12) || spec.hour12 < 1 || spec.hour12 > 12) {
+        throw new Error('24-hour clock hour12 must be an integer from 1 to 12');
+      }
+      const expectedHour24 = spec.period === 'AM'
+        ? spec.hour12 % 12
+        : (spec.hour12 % 12) + 12;
+      if (spec.hour24 !== expectedHour24) {
+        throw new Error('24-hour clock representations must describe the same time');
+      }
+      return;
+    }
     case 'FRACTION_COMPARE':
       requireFinite([spec.leftNumerator, spec.leftDenominator, spec.rightNumerator, spec.rightDenominator]);
       requirePositiveDenominators([spec.leftDenominator, spec.rightDenominator]);
