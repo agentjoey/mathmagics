@@ -3,6 +3,7 @@ import type { PracticeBlueprint, PracticeItem, PracticeSession } from '../types'
 import { fractionPracticeGenerator } from './fractions';
 import { multiplicationPracticeGenerator } from './multiplication';
 import { numberSequencePracticeGenerator } from './number-sequences';
+import { time24HourPracticeGenerator } from './time-24-hour';
 import { wordProblemPracticeGenerator } from './word-problems';
 
 export interface PracticeItemGenerationInput {
@@ -22,6 +23,7 @@ const GENERATORS: PracticeItemGenerator[] = [
   multiplicationPracticeGenerator,
   fractionPracticeGenerator,
   wordProblemPracticeGenerator,
+  time24HourPracticeGenerator,
 ];
 
 export function supportsPracticeObjective(objectiveId: string): boolean {

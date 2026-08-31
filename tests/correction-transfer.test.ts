@@ -157,6 +157,13 @@ describe('correction-transfer-v1', () => {
     }, { kind: 'INTEGER', value: '12' });
     expect(() => generateCorrectionTransfer(context(source))).toThrow(UnsupportedCorrectionTransferError);
   });
+
+  test('fails closed for TIME_24_HOUR until correction transfer support is explicitly added', () => {
+    const source = original('P3-TIME-003', {
+      kind: 'TIME_24_HOUR', direction: 'TWELVE_TO_24', hour24: 19, minute: 45, hour12: 7, period: 'PM',
+    }, { kind: 'EXACT_TEXT', acceptedValues: ['19:45', '1945'], caseSensitive: false });
+    expect(() => generateCorrectionTransfer(context(source))).toThrow(UnsupportedCorrectionTransferError);
+  });
 });
 
 const originalItem: CorrectionItem = {

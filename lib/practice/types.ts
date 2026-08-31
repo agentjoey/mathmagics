@@ -83,12 +83,22 @@ export type WordProblemSpec = {
   templateId: string;
 };
 
+export type Time24HourProblemSpec = {
+  kind: 'TIME_24_HOUR';
+  direction: 'TWELVE_TO_24' | 'TWENTY_FOUR_TO_12';
+  hour24: number;
+  minute: number;
+  hour12: number;
+  period: 'AM' | 'PM';
+};
+
 export type PracticeProblemSpec =
   | ArithmeticProblemSpec
   | EquationChoiceProblemSpec
   | NumberSequenceProblemSpec
   | FractionProblemSpec
-  | WordProblemSpec;
+  | WordProblemSpec
+  | Time24HourProblemSpec;
 
 export type AnswerSpec =
   | { kind: 'INTEGER'; value: string }
