@@ -2,8 +2,9 @@ import { assertValidPracticeItem } from '../validation';
 import type { PracticeItem } from '../types';
 import type { PracticeItemGenerationInput, PracticeItemGenerator } from './registry';
 
-const OBJECTIVES = new Set(['P2-MD-001', 'P2-MD-002', 'P2-MD-003', 'P2-MD-004', 'P2-MD-006']);
-const TABLES = [2, 3, 4, 5, 10] as const;
+const OBJECTIVES = new Set(['P2-MD-001', 'P2-MD-002', 'P2-MD-003', 'P2-MD-004', 'P2-MD-006', 'P3-MD-001']);
+const P2_TABLES = [2, 3, 4, 5, 10] as const;
+const P3_TABLES = [6, 7, 8, 9] as const;
 
 function requireInput(input: PracticeItemGenerationInput): void {
   if (input.session.objectiveId !== input.context.objective.id || input.blueprint.objectiveId !== input.session.objectiveId) {
@@ -14,14 +15,15 @@ function requireInput(input: PracticeItemGenerationInput): void {
   }
 }
 
-function parameters(sequence: number): { factor: number; companion: number; total: number } {
-  const factor = TABLES[(sequence - 1) % TABLES.length]!;
+function parameters(sequence: number, tables: readonly number[] = P2_TABLES): { factor: number; companion: number; total: number } {
+  const factor = tables[(sequence - 1) % tables.length]!;
   const companion = ((sequence * 2) % 9) + 2;
   return { factor, companion, total: factor * companion };
 }
 
 function makeArithmetic(input: PracticeItemGenerationInput, sequence: number, operation: 'MULTIPLY' | 'DIVIDE'): PracticeItem {
-  const { factor, companion, total } = parameters(sequence);
+  const tables = input.session.objectiveId === 'P3-MD-001' ? P3_TABLES : P2_TABLES;
+  const { factor, companion, total } = parameters(sequence, tables);
   const left = operation === 'MULTIPLY' ? factor : total;
   const right = operation === 'MULTIPLY' ? companion : factor;
   const answer = operation === 'MULTIPLY' ? factor * companion : total / factor;
