@@ -105,6 +105,23 @@ describe('structured practice generators', () => {
     }
   });
 
+  it('generates P3 multiplication practice for the 6, 7, 8, and 9 tables', () => {
+    expect(supportsPracticeObjective('P3-MD-001')).toBe(true);
+    const items = getPracticeItemGenerator('P3-MD-001').generate(inputFor('P3-MD-001'));
+    expect(items).toHaveLength(4);
+    expect(items.map((item) => item.problemSpec.kind === 'ARITHMETIC' ? item.problemSpec.left : null))
+      .toEqual([6, 7, 8, 9]);
+    for (const item of items) {
+      expect(item.problemSpec.kind).toBe('ARITHMETIC');
+      if (item.problemSpec.kind !== 'ARITHMETIC') throw new Error('unexpected spec');
+      expect(item.problemSpec.operation).toBe('MULTIPLY');
+      expect(item.answerSpec).toEqual({
+        kind: 'INTEGER',
+        value: String(item.problemSpec.left * item.problemSpec.right),
+      });
+    }
+  });
+
   it('uses code-owned equation choices for P2 division-symbol practice', () => {
     const items = getPracticeItemGenerator('P2-MD-002').generate(inputFor('P2-MD-002'));
     for (const item of items) {
