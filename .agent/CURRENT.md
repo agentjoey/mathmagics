@@ -2,8 +2,8 @@
 
 Version:        v0.8.0-dev
 Phase:          Phase 8 — Family Pilot
-Phase Status:   🟡 P8-1 Non-Production Activation Verified / Production Human Gate Pending
-Last Updated:   2026-08-28 by agent
+Phase Status:   🟡 P8-1 Verified / Production Human Gate Approved / Activation Pending
+Last Updated:   2026-09-20 by agent
 
 ## Product Positioning
 
@@ -219,7 +219,7 @@ Implementation plan:
 
 ## Phase 8 — Family Pilot
 
-**🟡 Active. P8-1 non-production activation is verified; Production activation is waiting at the explicit Human Gate.**
+**🟡 Active. P8-1 non-production activation is verified; the Production Human Gate was explicitly approved on 2026-09-20, and migration/deploy/smoke execution is now the active activation step.**
 
 Approved primary scope:
 - multi-week household pilot on the existing P2/P3 curriculum;
@@ -265,7 +265,7 @@ Committed migration chain:
 - ✅ fresh-unmigrated RED observed before migration;
 - ✅ committed `0000`–`0004` migrations applied to non-production only;
 - ✅ learning/planning, practice, homework, correction, strategy/adaptive and full-loop Neon contracts passed with explicit `TEST_DATABASE_URL`, zero integration skips;
-- ⏸ Production database URL separation, production migration, exact-SHA deployment and production smoke remain behind the explicit Human Gate;
+- 🟡 Production Human Gate approved on 2026-09-20; production URL separation, migrations `0000`–`0004`, exact-SHA deployment and production smoke are pending controlled execution;
 - never point tests or Vercel Preview at production `DATABASE_URL`.
 
 No Phase 7/Phase 8 migration has been applied to production by this task.
@@ -274,6 +274,6 @@ No Phase 7/Phase 8 migration has been applied to production by this task.
 
 - Standalone GrandeGPT `validate:curriculum` and `db:generate` profiles are still absent. Exact typecheck and curriculum validation are enforced through `tests/release-gate-scripts.test.ts` inside the controlled MathMagics `test` profile; adding standalone profiles is an operational convenience, not a release blocker.
 - `npm ci` currently reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental Phase 8 work.
-- Production Neon activation remains an explicit Human Gate even though the non-production live contracts are now GREEN.
+- Production Neon activation is explicitly approved but not yet complete; do not mark activation complete until migration, exact-SHA deploy and production smoke all have durable evidence.
 - Durable homework-image retention remains deliberately unselected until historical image review is a real requirement.
 - Multi-household identity/tenancy remains deferred; V1 is still single-household signed-session access.
