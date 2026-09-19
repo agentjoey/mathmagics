@@ -62,7 +62,7 @@ TEST_DATABASE_URL='<non-production-neon-url>' npm run db:migrate:test
 
 The migration runner validates `TEST_DATABASE_URL` first, then supplies that exact URL as the child `DATABASE_URL` required by Drizzle. It refuses to run when the test URL is missing or equals the production URL.
 
-After the Phase 8 full-loop Neon contract exists, run the fixed pilot contract whitelist:
+Run the fixed pilot contract whitelist:
 
 ```bash
 TEST_DATABASE_URL='<non-production-neon-url>' npm run verify:pilot-neon
@@ -77,9 +77,34 @@ The verification child receives the validated `TEST_DATABASE_URL` and does not i
 - `tests/persistence-neon-phase7-contract.test.ts`
 - `tests/pilot-neon-full-loop.test.ts`
 
-`tests/pilot-neon-full-loop.test.ts` is introduced later in the approved Phase 8 implementation sequence. Until it exists, the harness is prepared but the final six-suite pilot verification gate is intentionally incomplete rather than silently weakened.
+### Verified non-production state
 
-Only after the complete non-production migration and six-suite verification evidence passes may the separate Production migration/deployment Human Gate be requested.
+Task 7 completed the approved non-production gate on 2026-08-28:
+
+- isolated Neon testing branch in `ap-southeast-1` (Singapore);
+- fresh-unmigrated RED observed before migration;
+- committed migrations `0000` through `0004` applied only to the testing branch;
+- `npm run verify:pilot-neon`: **6/6 files passed, 13/13 tests passed, zero integration skips**;
+- full learning loop, PilotReview historical replay, adaptive SUPERSEDE and forward KEEP verified;
+- test-owned rows cleaned without truncating shared tables.
+
+This evidence authorizes requesting the separate Production Human Gate. It does **not** authorize production migration or deployment by itself.
+
+### Production activation checklist
+
+Production activation remains a Human Owner action. Before executing it, record or confirm all of the following without committing secrets:
+
+1. exact pilot release SHA to be activated;
+2. Production Neon is in Singapore and its `DATABASE_URL` is distinct from the tested non-production branch;
+3. migration chain is still exactly `0000` through `0004`; no incidental `0005` exists;
+4. candidate verification for the exact release SHA is current;
+5. Human Owner explicitly approves Production migration/deployment;
+6. apply the approved migration chain to Production;
+7. deploy the exact approved SHA;
+8. smoke-test auth, `/api/pilot/review`, `/api/learning/next`, student lesson flow and parent view;
+9. record only environment/region, SHA, migration result and smoke result.
+
+Do not run steps 6–9 without the explicit Production Human Gate.
 
 ## Vercel Deployment
 
