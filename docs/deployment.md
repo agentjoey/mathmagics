@@ -106,6 +106,40 @@ Production activation remains a Human Owner action. Before executing it, record 
 
 Do not run steps 6–9 without the explicit Production Human Gate.
 
+
+### GrandeGPT production execution contract
+
+The repository declares only trusted profile references in `.grande/deploy.yaml`. Executable argv remains outside the repository in the GrandeGPT control plane.
+
+The host control plane must preserve the existing MathMagics profiles and add these two entries to `~/.grande-control/config/profiles.yaml`:
+
+```yaml
+repos:
+  mathmagics:
+    deploy-production:
+      argv: ["node", "scripts/production-activation.ts", "deploy"]
+      timeoutSeconds: 1200
+      execution: deployment-host
+    verify-production:
+      argv: ["node", "scripts/production-activation.ts", "verify"]
+      timeoutSeconds: 300
+      execution: deployment-host
+```
+
+The deploy wrapper:
+
+1. requires a clean exact Git SHA and the exact committed migration chain `0000`–`0004`;
+2. links/inspects the fixed Vercel project `agentjoeys-projects/mathmagics`;
+3. probes Production and Preview `DATABASE_URL` through `vercel env run` without writing the secret to disk;
+4. requires Production Neon to identify as Singapore and requires Production/Preview database fingerprints to differ;
+5. runs the migration with Production Vercel environment injection;
+6. deploys Production with the exact SHA in Vercel Git metadata;
+7. writes only `target / deploymentId / sourceSha` to GrandeGPT's bounded delivery-evidence file.
+
+The verify wrapper requires the same SHA and exact deployment URL, confirms a READY Production deployment with the same `githubCommitSha`, authenticates through the real Production auth endpoint, checks the Student and Parent pilot surfaces, and exercises authenticated PilotReview/next-lesson reads using a guaranteed-missing smoke student so verification does not create learning facts. The temporary session cookie is mode `0600` and removed after verification.
+
+Production secrets remain in Vercel. Do not add Production `DATABASE_URL`, `SITE_PASSWORD`, `SESSION_SECRET`, Vercel tokens or session cookies to the repository or GrandeGPT profile argv.
+
 ## Vercel Deployment
 
 1. `vercel link` on first setup.
