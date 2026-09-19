@@ -2,7 +2,7 @@ import { assertValidPracticeItem } from '../validation';
 import type { PracticeItem } from '../types';
 import type { PracticeItemGenerationInput, PracticeItemGenerator } from './registry';
 
-const OBJECTIVES = new Set(['P2-MD-001', 'P2-MD-002', 'P2-MD-003', 'P2-MD-004', 'P2-MD-006', 'P3-MD-001']);
+const OBJECTIVES = new Set(['P2-MD-001', 'P2-MD-002', 'P2-MD-003', 'P2-MD-004', 'P2-MD-006', 'P3-MD-001', 'P3-MD-002']);
 const P2_TABLES = [2, 3, 4, 5, 10] as const;
 const P3_TABLES = [6, 7, 8, 9] as const;
 
@@ -22,7 +22,9 @@ function parameters(sequence: number, tables: readonly number[] = P2_TABLES): { 
 }
 
 function makeArithmetic(input: PracticeItemGenerationInput, sequence: number, operation: 'MULTIPLY' | 'DIVIDE'): PracticeItem {
-  const tables = input.session.objectiveId === 'P3-MD-001' ? P3_TABLES : P2_TABLES;
+  const tables = input.session.objectiveId === 'P3-MD-001' || input.session.objectiveId === 'P3-MD-002'
+    ? P3_TABLES
+    : P2_TABLES;
   const { factor, companion, total } = parameters(sequence, tables);
   const left = operation === 'MULTIPLY' ? factor : total;
   const right = operation === 'MULTIPLY' ? companion : factor;
@@ -98,7 +100,7 @@ export const multiplicationPracticeGenerator: PracticeItemGenerator = {
       const sequence = index + 1;
       if (objectiveId === 'P2-MD-002') return makeEquationChoice(input, sequence, false);
       if (objectiveId === 'P2-MD-003') return makeEquationChoice(input, sequence, true);
-      if (objectiveId === 'P2-MD-004' || objectiveId === 'P2-MD-006') {
+      if (objectiveId === 'P2-MD-004' || objectiveId === 'P2-MD-006' || objectiveId === 'P3-MD-002') {
         return makeArithmetic(input, sequence, sequence % 2 === 1 ? 'MULTIPLY' : 'DIVIDE');
       }
       return makeArithmetic(input, sequence, 'MULTIPLY');

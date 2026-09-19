@@ -122,6 +122,29 @@ describe('structured practice generators', () => {
     }
   });
 
+  it('generates P3 multiplication and exact division practice for the 6, 7, 8, and 9 tables', () => {
+    expect(supportsPracticeObjective('P3-MD-002')).toBe(true);
+    const items = getPracticeItemGenerator('P3-MD-002').generate(inputFor('P3-MD-002'));
+    expect(items).toHaveLength(4);
+    expect(items.map((item) => item.problemSpec.kind === 'ARITHMETIC'
+      ? (item.problemSpec.operation === 'MULTIPLY' ? item.problemSpec.left : item.problemSpec.right)
+      : null)).toEqual([6, 7, 8, 9]);
+    expect(items.map((item) => item.problemSpec.kind === 'ARITHMETIC' ? item.problemSpec.operation : null))
+      .toEqual(['MULTIPLY', 'DIVIDE', 'MULTIPLY', 'DIVIDE']);
+    for (const item of items) {
+      expect(item.problemSpec.kind).toBe('ARITHMETIC');
+      if (item.problemSpec.kind !== 'ARITHMETIC') throw new Error('unexpected spec');
+      const expected = item.problemSpec.operation === 'MULTIPLY'
+        ? item.problemSpec.left * item.problemSpec.right
+        : item.problemSpec.left / item.problemSpec.right;
+      if (item.problemSpec.operation === 'DIVIDE') {
+        expect(item.problemSpec.left % item.problemSpec.right).toBe(0);
+      }
+      expect(item.answerSpec).toEqual({ kind: 'INTEGER', value: String(expected) });
+      expect(Number.isInteger(expected)).toBe(true);
+    }
+  });
+
   it('uses code-owned equation choices for P2 division-symbol practice', () => {
     const items = getPracticeItemGenerator('P2-MD-002').generate(inputFor('P2-MD-002'));
     for (const item of items) {
