@@ -9,9 +9,10 @@ Updated: 2026-09-29. Follow the [new roadmap](../docs/superpowers/specs/2026-09-
 - [x] Write A1 count-in-tens/hundreds complete sample.
 - [x] Write A2 equal-groups/multiply/divide two-part sample.
 - [x] Write A3 P3 two-step Bar Model sample.
-- [x] Record sources and textbook-mapping limits.
-- [x] Finish mechanical checks and record results in the acceptance document.
-- [ ] Consolidated owner review of the written design package.
+- [x] Add user-requested A4 AMC Pre-A-target geometry: three short sections, 15 authored cases, exact figure definitions and independent geometry QA.
+- [x] Record source and textbook limits; distinguish verified Pre-A age band from uncalibrated original geometry difficulty.
+- [x] Record A1–A3 mechanical verification.
+- [ ] Consolidated owner review of the four written designs; latest A4 check results remain in commit/PR evidence.
 
 Writing completion does not mark courses PUBLISHED. A delivers designs, not shipped features.
 
@@ -30,6 +31,7 @@ Writing completion does not mark courses PUBLISHED. A delivers designs, not ship
 - [ ] Reverify the official syllabus and exact textbook editions, not just existing node counts.
 - [ ] Per-objective coverage matrix: teaching, practice, remediation, rendering, browser checks, trial evidence, publication.
 - [ ] Complete remaining units including fractions, measurement, money, time, geometry and data.
+- [ ] Implement the optional A4 geometry track with shape/turn/tile/grid renderers; verify against traceable Pre-A samples before claiming exam-level equivalence. Do not count enrichment as core geometry coverage or block mainline learning.
 - [ ] Scoped homework/photo flow, source-region confirmation, question tutoring, mistake history and unsupported states.
 - [ ] Parent settings, language controls, student isolation and required retention/deletion controls.
 
