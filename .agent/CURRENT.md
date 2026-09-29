@@ -1,279 +1,37 @@
 # Current Status — MathMagics
 
-Version:        v0.8.0-dev
-Phase:          Phase 8 — Family Pilot
-Phase Status:   🟡 P8-1 Non-Production Activation Verified / Production Human Gate Pending
-Last Updated:   2026-08-28 by agent
+Updated: 2026-09-29
+Product direction: user-approved curriculum-first learning product roadmap
+Active milestone: A — product scope and complete lesson designs
+Milestone state: A1–A3 drafted and checked; user-requested A4 geometry added for verification and consolidated design review. Not implemented or pilot-validated.
+Baseline: `d5b475cb6501cadbc009169ee27fd6fda19056e8`
 
-## Product Positioning
+## Read first
 
-MathMagics is a Singapore Math home-education AI learning system / teaching copilot for families.
+- [Approved direction and new roadmap](../docs/superpowers/specs/2026-09-29-mathmagics-learning-product-roadmap.md)
+- [Milestone A package](../docs/milestone-a/README.md)
+- [Active backlog](BACKLOG.md)
 
-Primary users:
-- Parent / Tutor
-- Student
+The existing application is a learning-management/engine prototype with partial practice and correction, not a usable P2/P3 teaching product. Engineering completion and deployment readiness do not prove that children can learn from it. Lesson content and interactive teaching are core scope, not optional post-pilot expansion.
 
-Initial curriculum scope:
-- Singapore Primary Mathematics
-- Primary 2 and Primary 3
+## Milestone A
 
-Core learning loop:
+Four original designs: A1 P2 count in tens/hundreds, A2 P2 equal groups/multiplication/division, A3 P3 two-step Bar Model, and the user-requested [A4 AMC Pre-A-target geometry](../docs/milestone-a/lessons/pre-a-geometry.md). Each includes teaching copy, examples, questions, answers, hints, error branches and recovery.
 
-`Plan → Learn → Practice → Correct → Track → Adapt → next Learn`
+A4 is optional enrichment targeting the Australian AMC China Pre-A Years 1–2 level. Public organizer pages establish the division, not an exact geometry syllabus or empirically calibrated item difficulty. It is original, not official exam content. Geometry success/failure does not directly alter core curriculum Mastery. P2/P3 breadth remains unchanged.
 
-Curriculum truth and learning history remain application-owned. AI explains and generates teaching language inside trusted context; AI does not own curriculum truth, Evidence, Mastery, Readiness, StrategyEvidence, MistakePriority, adaptive candidate ranking, lesson intent/objective selection, mathematical answer keys or grades.
+Historical A1–A3 verification: 599 passed / 12 skipped; lint passed; 63 arithmetic equations and document integrity checked. A4 adds 15 geometric cases and separate geometry QA. Latest exact results belong to the corresponding commit/PR evidence, not those historical counts. See [acceptance](../docs/milestone-a/acceptance.md).
 
-## Phase 1 — Curriculum Foundation
+After consolidated review, prepare B's executable plan for a continuous P2 number-learning unit, lesson player, tutoring, saved progress and parent summary. A4 also informs later geometry content/renderer acceptance; it does not silently expand B or restart product positioning.
 
-**✅ Completed.**
+## Delivery boundary
 
-- MOE-backed P2/P3 curriculum graph with 25 nodes and 68 LearningObjectives (P2=32, P3=36).
-- Three teaching-knowledge deep slices: P2 Multiplication & Division, P3 Fractions, P2/P3 Word Problems + Bar Model.
-- Prerequisite edges, CPA representations, strategies, misconceptions, readiness evidence and mastery evidence.
-- 18 Primary Mathematics 2022 textbook mappings.
-- Deterministic curriculum loader, validator and query API.
+A changes design documents, author-only geometry fixtures and design tests only. No app/runtime, authoritative curriculum data, grading policy, migration, secrets or production deployment is changed. New specifications do not silently authorize runtime policy changes.
 
-## Phase 2 — Student & Mastery Core
+The existing activation task `task-mathmagics-phase8-production-activation-20260920-001` / PR #28 remains separate. Approval exists; this task claims no merge/deploy/verify completion and does not bypass the reported GrandeGPT readiness issue.
 
-**✅ Completed.**
+PR #28 edits the former CURRENT.md. Reconcile valid activation evidence into this new status; do not restore the old product roadmap. This task does not merge, close or clean up historical tasks.
 
-- `StudentProfile` and manual `CurrentPositionAssumption`.
-- Append-only `EvidenceRecord` ledger.
-- Deterministic `NOT_STARTED / INTRODUCED / DEVELOPING / MASTERED` projection and review policy.
-- Deterministic prerequisite readiness: `READY / NEEDS_SUPPORT / BLOCKED`.
-- No mutable Mastery/Readiness persistence or Evidence update/delete path.
+## Historical evidence
 
-## Phase 3 — Teaching Planner / Lesson Prep
-
-**✅ Completed / Merged — PR #3.**
-
-- Signed stateless `mm_session` household auth and Next.js proxy guard.
-- Deterministic `LearningPosition` and prerequisite-aware candidate selection.
-- Immutable `WeeklyPlan` / `DailyLesson` snapshots plus append-only execution history.
-- Trusted lesson-preparation context and narrow MiniMax lesson-brief boundary.
-- Neon/Drizzle persistence foundation.
-
-## Phase 4 — Practice / Attempt Core
-
-**✅ Completed / Merged — PR #4.**
-
-- Deterministic P2/P3 practice generation and code-owned `PracticeProblemSpec + AnswerSpec`.
-- Exact deterministic grading.
-- Server-observed hint use, append-only retry provenance and immutable canonical `Attempt`.
-- Replay-safe Attempt → Evidence projection.
-- Memory + Neon PracticeRepository and migration `0001_fantastic_shocker.sql`.
-
-## Phase 5 — Homework Vision
-
-**✅ Completed / Merged — PR #5.**
-
-- JPEG/PNG/WebP homework intake with non-durable raw-image boundary.
-- Observation-only vision provider with confidence/provenance.
-- Deterministic mathematical reconstruction and conservative objective mapping.
-- Canonical `Attempt` ledger generalized to `PRACTICE | HOMEWORK`.
-- Memory + Neon homework persistence and migration `0002_gorgeous_obadiah_stane.sql`.
-- No object storage, queue, worker, Redis or adaptive scoring introduced.
-
-## Phase 6 — Correction + Mistake Book
-
-**✅ Completed / Merged — PR #6.**
-
-Authority chain:
-
-```text
-INCORRECT canonical Attempt { PRACTICE | HOMEWORK }
-→ Mistake episode
-→ deterministic/constrained diagnosis
-→ confirmed target
-→ Socratic correction
-→ canonical CORRECTION Attempt
-→ corrected Evidence
-→ structured reasoning
-→ explained_independently Evidence
-→ deterministic transfer
-→ application_correct Evidence
-→ projectMistakeState()
-→ RESOLVED
-```
-
-Implemented:
-- Immutable Mistake episodes with append-only events/links.
-- `AttemptSource = PRACTICE | HOMEWORK | CORRECTION` in one canonical Attempt ledger.
-- Recurrence creates a new episode; resolved episodes never reopen.
-- AI can phrase correction guidance but cannot decide diagnosis confirmation, grading, Evidence type or lifecycle state.
-- Resolution requires `corrected + explained_independently + qualifying transfer` hard facts.
-- Student/Parent mistake projections are deterministic.
-- Memory + Neon correction repositories and migration `0003_stale_mercury.sql`.
-
-Post-merge canonical Host verification for Phase 6 passed on merge SHA `a0b0c0aa37c882b2c8fd9850a76327f3068b487f` after dependency bootstrap:
-- 311 passed / 6 skipped tests.
-- typecheck PASS.
-- curriculum validation PASS: 25 nodes, 68 objectives, 18 mappings.
-- lint PASS.
-- production build PASS.
-
-No Phase 6 migration was applied to production during implementation or verification.
-
-## Phase 7 — Progress + Adaptive Learning Loop
-
-**✅ Completed and release-closed by P8-0.**
-
-Authority chain:
-
-```text
-Canonical Facts
-├ EvidenceRecord
-├ Attempt
-├ LessonExecutionEvent
-├ Mistake / MistakeEvent
-└ StrategyInteraction / StrategyEvidence
-        ↓
-Progress Projection
-├ Coverage
-├ Mastery
-├ Performance
-└ Strategy
-        ↓
-Adaptive Context
-        ↓
-Deterministic Adaptive Policy
-     ├ KEEP
-     └ SUPERSEDE
-          ↓
-AdaptiveDecision + immutable replacement DailyLesson + LessonSupersession
-```
-
-Implemented:
-- ✅ Coverage projection: `NOT_SEEN / INTRODUCED / ENGAGED / PRACTISED`.
-- ✅ Existing Phase 2 Mastery authority remains unchanged.
-- ✅ Performance projection: `INSUFFICIENT_DATA / STRUGGLING / UNSTABLE / STABLE` over `7 days ∩ latest 12 root PRACTICE/HOMEWORK Attempts`; CORRECTION Attempts are excluded.
-- ✅ Cross-topic Strategy progress: `NOT_OBSERVED / DEVELOPING / RELIABLE` from server-observed structured interactions only.
-- ✅ Strategy facts support `PROMPTED_USE / INDEPENDENT_USE / INDEPENDENT_TRANSFER / MISAPPLICATION`; a correct answer alone never proves strategy use.
-- ✅ Deterministic MistakePriority: `LOW / NORMAL / BLOCKING`.
-- ✅ Next Best Lesson priority: `BLOCKING_CORRECTION > PREREQUISITE_SUPPORT > NORMAL_CORRECTION > REVIEW > CURRENT_POSITION > NEXT_IN_SEQUENCE`.
-- ✅ Starvation guard restores forward learning after two completed CORRECTION/REVIEW lessons unless a BLOCKING mistake or blocked prerequisite overrides.
-- ✅ Weekly plans remain immutable initial plans; adaptation occurs only at lesson boundaries.
-- ✅ STARTED lessons are never superseded.
-- ✅ One source lesson has at most one immutable replacement; replacement-of-replacement chains are forbidden.
-- ✅ `AdaptiveDecision` records policy version, input fact cutoff, selected lesson and rationale codes for replay/audit.
-- ✅ Same evaluation key is idempotent; multiple KEEP decisions at later cutoffs are allowed, but only one SUPERSEDE can be adopted.
-- ✅ Parent/Tutor Progress View keeps Coverage, Mastery, Performance and Strategy separate and explains adapted next lessons with code-owned rationale text.
-- ✅ Student next-lesson view exposes only lesson identity, intent, objective summary and adapted flag.
-- ✅ APIs are thin authenticated surfaces; clients cannot submit authoritative intent/objective/Mastery/MistakePriority/cutoff fields.
-- ✅ Full-loop E2E covers Practice → Mistake → Correction → recurrence → adaptive CORRECTION → resolution → forward learning.
-- ✅ Service-level starvation E2E proves normal remediation yields to forward learning after two completed remediation lessons.
-- ✅ Static authority audit found no mutable Progress/Adaptive setters, combined learning score, persisted current recommendation, or AI provider dependency in `lib/progress`, `lib/adaptation` or `lib/strategy` authority paths.
-
-### Phase 7 persistence
-
-Durable fact tables now total 23.
-
-Phase 7 adds exactly:
-
-```text
-strategy_interactions
-strategy_evidence
-adaptive_decisions
-lesson_supersessions
-```
-
-Generated migration:
-- ✅ `migrations/0004_strange_meteorite.sql`
-- SHA-256: `40248aff69a6bd7052ad356b374418b3b3ded0bbe37779be867d0b11dd590cb7`
-- Adds only the four approved Phase 7 fact tables plus required FKs/indexes.
-- Drops `daily_lesson_plan_sequence_uq` so immutable replacement lessons can share the source lesson logical sequence.
-- Adds non-unique `daily_lesson_plan_sequence_idx` for deterministic ordering.
-- Does not add mutable Progress/Strategy/Performance/current-recommendation state.
-- **Not applied to production.**
-
-### P8-0 release-closure correction and final evidence
-
-The original Phase 7 implementation merge was PR #8 / `61fb3e16485d645692c69a527db2d1f2ba36fa96`. P8-0 did **not** retroactively mark that SHA as exact-HEAD verified. Release verification exposed real blockers after the merge:
-
-- the unused `next/font/google` Geist imports made sandbox builds depend on Google Fonts network access;
-- Next 16 Turbopack PostCSS evaluation attempted a sandbox-disallowed local bind;
-- three App Router route modules exported test handler factories that are invalid Next 16 route exports;
-- the curriculum CLI depended on `tsx`/esbuild IPC/process behavior that could not execute inside the controlled sandbox.
-
-Those release blockers were repaired through PR #9 and PR #10. The repaired canonical release candidate verified by P8-0 is:
-
-`2bb70584ca189b43015a3cd2736b6262a8b2e78a`
-
-Fresh disposable GrandeGPT worktree evidence on that exact SHA:
-- ✅ `npm test`: 82 test files passed / 4 skipped; 386 tests passed / 8 intentionally skipped.
-- ✅ The release-contract suite executed the exact `npm run typecheck` command successfully.
-- ✅ The release-contract suite executed the exact `npm run validate:curriculum` command successfully and observed `25 nodes / 68 objectives (P2=32, P3=36) / 18 textbook mappings`.
-- ✅ `npm run lint`: PASS, exit 0.
-- ✅ `npm run build`: PASS, Next.js 16.2.6 webpack production build completed TypeScript, page-data collection, static generation 12/12, optimization and build traces.
-- ✅ Worktree was clean before the documentation-only closeout edits.
-- ⚠️ Live Neon suites remained intentionally skipped because no explicit `TEST_DATABASE_URL` was supplied; P8-0 does not claim live integration coverage.
-- ✅ P8-0 performed no production database migration and no production deployment.
-
-Formal design spec:
-
-`docs/superpowers/specs/2026-08-26-mathmagics-phase7-progress-adaptive-learning-design.md`
-
-Implementation plan:
-
-`docs/superpowers/plans/2026-08-26-mathmagics-phase7-progress-adaptive-learning.md`
-
-## Phase 8 — Family Pilot
-
-**🟡 Active. P8-1 non-production activation is verified; Production activation is waiting at the explicit Human Gate.**
-
-Approved primary scope:
-- multi-week household pilot on the existing P2/P3 curriculum;
-- validate that families can understand what was learned, mastered, recently unstable, still needs correction, and should be taught next;
-- validate adaptive lesson changes and rationale in real household use;
-- collect product evidence before expanding curriculum, identity/tenancy or analytics scope.
-
-### P8-1 / Task 7 non-production activation evidence
-
-On 2026-08-28, an isolated Singapore Neon testing branch was verified through the approved RED → migration → GREEN sequence:
-
-- fresh unmigrated RED: PostgreSQL `42P01`, `relation "students" does not exist`;
-- committed migrations `0000`–`0004` applied only to the testing branch through `db:migrate:test`;
-- final `verify:pilot-neon`: **6/6 files passed, 13/13 tests passed, zero integration skips**;
-- live full-loop proved plan/execution → Practice/Evidence → Mistake → correction/transfer → recurrence → StrategyEvidence → adaptive SUPERSEDE → historical ParentProgress/PilotReview → recurrence resolution → forward KEEP;
-- generated test-student rows were cleaned in FK-safe order without truncating shared tables;
-- production database migration/deployment was not executed.
-
-The live gate also exposed two real pilot read-path blockers. ParentProgress/PilotReview and forward adaptive KEEP evaluation were performing N+1/repeated Neon reads. They now use request/cutoff-scoped shared snapshots and batched/concurrent independent reads. Query-budget regression tests preserve this constraint while keeping `adaptive-policy-v1`, Mastery, correction rules and curriculum unchanged.
-
-Phase 8 formal design spec:
-
-`docs/superpowers/specs/2026-08-26-mathmagics-phase8-family-pilot-design.md`
-
-Phase 8 implementation plan:
-
-`docs/superpowers/plans/2026-08-26-mathmagics-phase8-family-pilot.md`
-
-## Persistence & Deployment
-
-Committed migration chain:
-
-```text
-0000_old_bushwacker.sql
-0001_fantastic_shocker.sql
-0002_gorgeous_obadiah_stane.sql
-0003_stale_mercury.sql
-0004_strange_meteorite.sql
-```
-
-**P8-1 activation state:**
-- ✅ isolated Singapore non-production Neon branch verified;
-- ✅ fresh-unmigrated RED observed before migration;
-- ✅ committed `0000`–`0004` migrations applied to non-production only;
-- ✅ learning/planning, practice, homework, correction, strategy/adaptive and full-loop Neon contracts passed with explicit `TEST_DATABASE_URL`, zero integration skips;
-- ⏸ Production database URL separation, production migration, exact-SHA deployment and production smoke remain behind the explicit Human Gate;
-- never point tests or Vercel Preview at production `DATABASE_URL`.
-
-No Phase 7/Phase 8 migration has been applied to production by this task.
-
-## Known Non-blocking Technical Debt / Gates
-
-- Standalone GrandeGPT `validate:curriculum` and `db:generate` profiles are still absent. Exact typecheck and curriculum validation are enforced through `tests/release-gate-scripts.test.ts` inside the controlled MathMagics `test` profile; adding standalone profiles is an operational convenience, not a release blocker.
-- `npm ci` currently reports 13 audit findings (1 low, 4 moderate, 8 high); review separately, never force-upgrade as incidental Phase 8 work.
-- Production Neon activation remains an explicit Human Gate even though the non-production live contracts are now GREEN.
-- Durable homework-image retention remains deliberately unselected until historical image review is a real requirement.
-- Multi-household identity/tenancy remains deferred; V1 is still single-household signed-session access.
+The former status and backlog remain verbatim in [historical current](history/2026-09-29-pre-milestone-a-current.md) and [historical backlog](history/2026-09-29-pre-milestone-a-backlog.md). Their dates/status labels are historical, not current product-readiness claims.

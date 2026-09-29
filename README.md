@@ -1,16 +1,19 @@
 # MathMagics
 
-Singapore Math home-education AI learning system / teaching copilot for families.
+Singapore Math learning for families, initially P2/P3: actual lessons, interactive representations, contextual tutoring, meaningful practice and correction, with parent support.
 
-Current V1 curriculum scope: Singapore Primary Mathematics P2/P3.
+## Current product work
 
-Core loop:
+The existing app is an engineering prototype, not a complete child-ready course. The user approved a curriculum-first product reset on 2026-09-29, then requested AMC Pre-A-target geometry in the lesson-design package.
 
-`Plan → Learn → Practice → Correct → Track → Adapt`
+- [Product scope and roadmap](docs/superpowers/specs/2026-09-29-mathmagics-learning-product-roadmap.md)
+- [Milestone A: four complete lesson designs](docs/milestone-a/README.md)
+- [A4: geometry enrichment](docs/milestone-a/lessons/pre-a-geometry.md)
+- [Current status](.agent/CURRENT.md) and [backlog](.agent/BACKLOG.md)
 
-Current foundation includes curriculum truth, append-only learning evidence, derived mastery/readiness, deterministic teaching planning, parent/tutor lesson preparation, and Neon/PostgreSQL persistence adapters.
+A contains design specifications, not a deployed classroom or full P2/P3 coverage. Existing evidence, grading and persistence are reusable assets; legacy phase completion is not a teaching-quality claim. A4 targets the Australian AMC China Pre-A age band; its original item difficulty still needs official-sample calibration, and it is not official exam content.
 
-See [CLAUDE.md](CLAUDE.md), [Architecture](docs/architecture.md), and [Deployment](docs/deployment.md).
+See [CLAUDE.md](CLAUDE.md), [existing architecture](docs/architecture.md), and [deployment](docs/deployment.md) for current implementation and operating constraints.
 
 ## Development
 
